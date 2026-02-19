@@ -11,13 +11,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.ui.theme.OfflinePlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var controllerManager: MediaControllerManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Setup compose UI here later
+
         enableEdgeToEdge()
         setContent {
             OfflinePlayerTheme {
@@ -28,6 +36,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            controllerManager.releaseController()
         }
     }
 }
