@@ -47,5 +47,6 @@ interface PlaylistDao {
     suspend fun updateMediaPosition(item: PlaylistMediaItems)
 
     //DELETE - Remove song from playlist
+    @Delete
     suspend fun removeMediaFromPlaylist(item: PlaylistMediaItems)
 }
