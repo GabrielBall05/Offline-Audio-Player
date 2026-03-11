@@ -32,3 +32,7 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+
+# Test mp3 files
+test files to add to app

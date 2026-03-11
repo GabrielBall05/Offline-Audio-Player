@@ -14,6 +14,10 @@ interface MediaDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMedia(media: MediaEntity): Long
 
+    //CREATE media items
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMediaList(mediaList: List<MediaEntity>): List<Long>
+
     //READ - Get all media items
     @Query("SELECT * FROM media_items ORDER BY dateAdded DESC")
     fun getAllMedia(): Flow<List<MediaEntity>>

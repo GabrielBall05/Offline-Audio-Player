@@ -1,0 +1,5 @@
+Notes + Ideas:
+
+change db + table names to vars in a DatabaseVars file
+use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
+	keep option to upload own image file for artwork image

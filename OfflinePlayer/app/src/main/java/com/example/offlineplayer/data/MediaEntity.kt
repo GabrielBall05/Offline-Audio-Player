@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "media_items")
 data class MediaEntity(
     @PrimaryKey(autoGenerate = true)
-    val mediaId: Int = 0,        //Auto-incremented and auto-generated primary key
+    val mediaId: Int = 0,   //Auto-incremented and auto-generated primary key.
+                            //Default 0 w/ autoGen - assign next available int to mediaID in DB table
     val uri: String,        //Location of the file
     val title: String,      //Title of the song, podcast, audiobook, etc
     val creator: String,    //Name of artist, podcaster, author, etc
@@ -16,6 +17,5 @@ data class MediaEntity(
     val mimeType: String?,  //File type (ex: mp3, wav)
     val artworkUri: String? //Local path to associated image
 ) {
-
 
 }

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,7 +141,7 @@ fun MiniPlayerBar(controllerManager: MediaControllerManager) {
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(4.dp),
                 color = Color.Gray
-            ) { /*PUT IMAGE HERE*/ }
+            ) { /*PUT IMAGE HERE OR REPLACE SURFACE WITH IMAGE*/ }
 
             //Title & Creator
             Column(
@@ -148,18 +149,29 @@ fun MiniPlayerBar(controllerManager: MediaControllerManager) {
                     .weight(1f)
                     .padding(start = 12.dp)
             ) {
-                Text("Media Title", maxLines = 1, style = MaterialTheme.typography.bodyLarge)
-                Text("Creator Name", maxLines = 1, style = MaterialTheme.typography.bodySmall)
+                //TO DO - Replace with actual text from db
+                Text(
+                    text = "Media Title",
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                )
+                Text(
+                    text = "Creator Name",
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                )
             }
 
             //Controls
-            IconButton(onClick = { /*PREVIOUS TRACK*/ }) {
+            IconButton(onClick = { /*TO DO - PREVIOUS TRACK*/ }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
             }
-            IconButton(onClick = { /*PLAY/PAUSE*/ }) {
+            IconButton(onClick = { /*TO DO - PLAY/PAUSE*/ }) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Play/Pause")
             }
-            IconButton(onClick = { /*NEXT TRACK*/ }) {
+            IconButton(onClick = { /*TO DO - NEXT TRACK*/ }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
             }
         }

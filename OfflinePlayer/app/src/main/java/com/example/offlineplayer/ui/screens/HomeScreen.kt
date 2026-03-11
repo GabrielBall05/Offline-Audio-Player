@@ -1,9 +1,13 @@
 package com.example.offlineplayer.ui.screens
 
+import android.net.Uri
 import android.widget.CheckBox
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
@@ -42,30 +47,50 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.offlineplayer.ui.viewmodels.HomeViewModel
 
 @Composable
-fun HomeScreen(navController: NavController) {
-    //TEMPORARY - Will be moved to ViewModel
-    var searchQuery by remember { mutableStateOf("") }
+fun HomeScreen(
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel() //Let Hilt inject the ViewModel
+) {
+    val context = LocalContext.current
 
-    //Tracks IDs of selected media items
+    //Observe list of (all) media from HomeViewModel (StateFlow - Hot)
+    val mediaList by viewModel.allMedia.collectAsState()
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    //Tracks IDs of selected media items - WILL BE MOVING TO VIEWMODEL
     val selectedMediaIds = remember { mutableStateListOf<Int>() }
     val isAnySelected = selectedMediaIds.isNotEmpty()
 
-    //TEMPORARY count '20'
-    val totalItems = 20
-    val isAllSelected = selectedMediaIds.size == totalItems && totalItems > 0
+    val totalItems = mediaList.size
+    val isAllSelected = (selectedMediaIds.size == totalItems) && (totalItems > 0)
+
+    //File Picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
+        uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            viewModel.importMedia(uris)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         //Page Title
@@ -97,6 +122,7 @@ fun HomeScreen(navController: NavController) {
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.weight(1f),
+                singleLine = true,
                 placeholder = { Text("Search media...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 shape = RoundedCornerShape(12.dp),
@@ -121,13 +147,10 @@ fun HomeScreen(navController: NavController) {
         ) {
             //Bulk Action - Select All Toggle
             IconButton(onClick = { //Move to separate function for clean code
-                if (isAllSelected)
-                    selectedMediaIds.clear()
-                else {
-                    selectedMediaIds.clear()
-                    repeat (totalItems) {
-                        selectedMediaIds.add(it)
-                    }
+                selectedMediaIds.clear()
+                if (!isAllSelected) {
+                    val allIds = mediaList.map { it.mediaId }
+                    selectedMediaIds.addAll(allIds)
                 }
             }) {
                 Icon(
@@ -161,19 +184,17 @@ fun HomeScreen(navController: NavController) {
                     end = 0.dp
                 )
         ) {
-            //To Do - Replace 'items(20)' with real data from Room
-            items(20) { index ->
-                val isSelected = selectedMediaIds.contains(index)
-
+            items(mediaList) { media ->
+                val isSelected = selectedMediaIds.contains(media.mediaId)
                 MediaListItem(
-                    title = "Media Title $index", //Temporary hardcoded strings
-                    creator = "Creator Name",
+                    title = media.title,
+                    creator = media.creator,
                     isSelected = isSelected,
-                    onCheckBoxClick = {
-                        if (isSelected) selectedMediaIds.remove(index)
-                        else selectedMediaIds.add(index)
+                    onCheckBoxClick = { //Maybe move to separate function
+                        if (isSelected) selectedMediaIds.remove(media.mediaId)
+                        else selectedMediaIds.add(media.mediaId)
                     },
-                    onMoreClick = { /*To Do - Show Options Menu*/ }
+                    onMoreVertClick = { /*To Do - Show Options Menu (maybe in separate function)*/ }
                 )
             }
         }
@@ -186,7 +207,7 @@ fun HomeScreen(navController: NavController) {
             horizontalArrangement = Arrangement.Center
         ) {
             //Action Button - Add Media
-            Button(onClick = { /*To Do - Open File Picker*/ }) {
+            Button(onClick = { filePickerLauncher.launch(arrayOf("audio/*")) }) { //Filters for audio files only
                 Icon(Icons.Default.Add, contentDescription = "Add Media")
             }
         }
@@ -200,7 +221,7 @@ fun MediaListItem(
     creator: String,
     isSelected: Boolean,
     onCheckBoxClick: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreVertClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -238,12 +259,24 @@ fun MediaListItem(
                 .weight(1f)
                 .padding(horizontal = 12.dp)
         ) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
-            Text(creator, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            //Title
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+            )
+            //Creator
+            Text(
+                text = creator,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+            )
         }
 
         //More Button (ellipses) - brings up menu for edit, play, add to playlist, delete, etc.
-        IconButton(onClick = onMoreClick) {
+        IconButton(onClick = onMoreVertClick) {
             Icon(Icons.Default.MoreVert, contentDescription = "Edit", tint = Color.Gray)
         }
     }
