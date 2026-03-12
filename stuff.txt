@@ -1,3 +1,11 @@
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+
+
 this is what you told me to do for letting users use file picker to add media items:
 To add media items (single or bulk), we will use the Modern Android Photo Picker (which now supports audio) or the standard Document Picker. In 2026, the GetMultipleContents contract is the most reliable way to let users pick several audio files at once.
 We need to follow the MVVM pattern here:

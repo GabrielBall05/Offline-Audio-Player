@@ -29,4 +29,8 @@ interface MediaDao {
     //DELETE media item
     @Delete
     suspend fun deleteMedia(media: MediaEntity)
+
+    //DELETE media items
+    @Query("DELETE FROM media_items WHERE mediaId IN (:idList)")
+    suspend fun deleteMediaList(idList: List<Int>)
 }

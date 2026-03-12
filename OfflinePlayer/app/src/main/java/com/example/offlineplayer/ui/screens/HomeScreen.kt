@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -72,17 +73,14 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
 
-    //Observe list of (all) media from HomeViewModel (StateFlow - Hot)
+    //Collect states from ViewModel
     val mediaList by viewModel.allMedia.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedIds by viewModel.selectedMediaIds.collectAsState()
+    val isAnySelected by viewModel.isAnySelected.collectAsState()
 
-    var searchQuery by rememberSaveable { mutableStateOf("") }
-
-    //Tracks IDs of selected media items - WILL BE MOVING TO VIEWMODEL
-    val selectedMediaIds = remember { mutableStateListOf<Int>() }
-    val isAnySelected = selectedMediaIds.isNotEmpty()
-
-    val totalItems = mediaList.size
-    val isAllSelected = (selectedMediaIds.size == totalItems) && (totalItems > 0)
+    val isAllSelected = mediaList.isNotEmpty() && (selectedIds.size == mediaList.size)
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
@@ -120,7 +118,7 @@ fun HomeScreen(
         ) {
             TextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = { viewModel.onSearchQueryChange(it) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 placeholder = { Text("Search media...") },
@@ -146,27 +144,17 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.Absolute.Left
         ) {
             //Bulk Action - Select All Toggle
-            IconButton(onClick = { //Move to separate function for clean code
-                selectedMediaIds.clear()
-                if (!isAllSelected) {
-                    val allIds = mediaList.map { it.mediaId }
-                    selectedMediaIds.addAll(allIds)
-                }
-            }) {
-                Icon(
-                    imageVector = if(isAllSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                    contentDescription = if (isAllSelected) "Select All" else "Deselect All",
-                    tint = if (isAllSelected) MaterialTheme.colorScheme.primary else Color.Gray
-                )
+            IconButton(onClick = { viewModel.toggleSelectAll() }) {
+                SelectionIcon(isAllSelected)
             }
 
             //Bulk Actions - Add to Playlist, Delete
-            AnimatedVisibility(visible = isAnySelected) { //Only show if > 0 items selected
+            AnimatedVisibility(visible = isAnySelected) { //Only show if 1 or more items selected
                 Row {
                     IconButton(onClick = { /*ADD TO PLAYLIST*/ }) {
                         Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                     }
-                    IconButton(onClick = { /*DELETE*/ }) {
+                    IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
                     }
                 }
@@ -185,32 +173,53 @@ fun HomeScreen(
                 )
         ) {
             items(mediaList) { media ->
-                val isSelected = selectedMediaIds.contains(media.mediaId)
                 MediaListItem(
                     title = media.title,
                     creator = media.creator,
-                    isSelected = isSelected,
-                    onCheckBoxClick = { //Maybe move to separate function
-                        if (isSelected) selectedMediaIds.remove(media.mediaId)
-                        else selectedMediaIds.add(media.mediaId)
-                    },
-                    onMoreVertClick = { /*To Do - Show Options Menu (maybe in separate function)*/ }
+                    isSelected = selectedIds.contains(media.mediaId),
+                    onCheckBoxClick = { viewModel.toggleSelection(media.mediaId) },
+                    onMoreClick = { /*To Do - Show Options Menu (maybe in separate function)*/ }
                 )
             }
         }
 
-        //Action Buttons
+        //Other Buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(6.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            //Action Button - Add Media
+            //Add Media Button
             Button(onClick = { filePickerLauncher.launch(arrayOf("audio/*")) }) { //Filters for audio files only
                 Icon(Icons.Default.Add, contentDescription = "Add Media")
             }
         }
+    }
+
+    //Show delete confirmation dialog if user hit delete
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Media") },
+            text = { Text("Are you sure you want to remove ${selectedIds.size} item${if (selectedIds.size != 1) "s" else ""}" +
+                    " from your library? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMedia()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -221,7 +230,7 @@ fun MediaListItem(
     creator: String,
     isSelected: Boolean,
     onCheckBoxClick: () -> Unit,
-    onMoreVertClick: () -> Unit
+    onMoreClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -236,11 +245,7 @@ fun MediaListItem(
     ) {
         //Selection Checkbox
         IconButton(onClick = onCheckBoxClick) {
-            Icon(
-                imageVector = if(isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                contentDescription = if (isSelected) "Select Item" else "Deselect Item",
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
-            )
+            SelectionIcon(isSelected)
         }
 
         //Artwork Placeholder
@@ -275,14 +280,25 @@ fun MediaListItem(
             )
         }
 
-        //More Button (ellipses) - brings up menu for edit, play, add to playlist, delete, etc.
-        IconButton(onClick = onMoreVertClick) {
-            Icon(Icons.Default.MoreVert, contentDescription = "Edit", tint = Color.Gray)
+        //More Button (ellipsis) - brings up menu for edit, play, add to playlist, delete, etc.
+        IconButton(onClick = onMoreClick) {
+            Icon(Icons.Default.MoreVert, contentDescription = "More Options", tint = Color.Gray)
         }
     }
 }
 
-
+@Composable
+fun SelectionIcon(
+    isSelected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Icon(
+        imageVector = if(isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+        contentDescription = if (isSelected) "Select Item" else "Deselect Item",
+        tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+        modifier = modifier
+    )
+}
 
 
 
