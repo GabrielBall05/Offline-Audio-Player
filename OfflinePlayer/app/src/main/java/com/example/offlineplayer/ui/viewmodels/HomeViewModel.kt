@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.MediaDao
+import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,7 +44,9 @@ class HomeViewModel @Inject constructor(
     val selectedMediaIds = _selectedMediaIds.asStateFlow()
     val isAnySelected = selectedMediaIds.map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
+    val isAllSelected = allMedia.combine(selectedMediaIds) { all, selected ->
+        all.isNotEmpty() && all.size == selected.size
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
@@ -56,12 +60,9 @@ class HomeViewModel @Inject constructor(
     }
 
     fun toggleSelectAll() {
-        val currentMedia = allMedia.value
-        val currentSelected = _selectedMediaIds.value
-
         _selectedMediaIds.value =
-            if (currentSelected.size == currentMedia.size) emptySet() //Deselect all
-            else currentMedia.map { it.mediaId }.toSet() //Select all
+            if (_selectedMediaIds.value.size == allMedia.value.size) emptySet() //Deselect all
+            else allMedia.value.map { it.mediaId }.toSet() //Select all
     }
 
     fun importMedia(uriList: List<Uri>) {
@@ -82,11 +83,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun deleteMedia() {
-        val idList = _selectedMediaIds.value.toList()
+    fun deleteMediaByIds(ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaDao.deleteMediaList(idList)
-            _selectedMediaIds.value = emptySet() //Clear selection set
+            mediaDao.deleteMediaList(ids)
+            _selectedMediaIds.value -= ids
         }
     }
 }

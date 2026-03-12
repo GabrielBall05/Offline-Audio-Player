@@ -127,7 +127,7 @@ fun MiniPlayerBar(controllerManager: MediaControllerManager) {
             .height(70.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable {
-                //TO DO - Expand to Full Player
+                //TODO: Expand to Full Player
             }
     ) {
         Row(
@@ -149,7 +149,7 @@ fun MiniPlayerBar(controllerManager: MediaControllerManager) {
                     .weight(1f)
                     .padding(start = 12.dp)
             ) {
-                //TO DO - Replace with actual text from db
+                //TODO: Replace with actual text from db
                 Text(
                     text = "Media Title",
                     maxLines = 1,
@@ -165,13 +165,13 @@ fun MiniPlayerBar(controllerManager: MediaControllerManager) {
             }
 
             //Controls
-            IconButton(onClick = { /*TO DO - PREVIOUS TRACK*/ }) {
+            IconButton(onClick = { /*TODO: PREVIOUS TRACK*/ }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
             }
-            IconButton(onClick = { /*TO DO - PLAY/PAUSE*/ }) {
+            IconButton(onClick = { /*TODO: PLAY/PAUSE*/ }) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Play/Pause")
             }
-            IconButton(onClick = { /*TO DO - NEXT TRACK*/ }) {
+            IconButton(onClick = { /*TODO: NEXT TRACK*/ }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
             }
         }

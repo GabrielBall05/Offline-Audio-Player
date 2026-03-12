@@ -22,7 +22,7 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
             ?: "Unknown Creator"
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
         val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-        //TO DO - use getEmbeddedPicture to extract image if there. For now, just pass in null for artworkUri
+        //TODO: use getEmbeddedPicture to extract image if there. For now, just pass in null for artworkUri
 
         Log.d("MetadataHelper", "Returning MediaEntity with the extracted metadata values and other values:" +
             "\nuri: $uri" +
