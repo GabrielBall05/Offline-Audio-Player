@@ -11,10 +11,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
@@ -39,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,9 +51,11 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.ui.viewmodels.HomeViewModel
@@ -72,15 +79,16 @@ fun HomeScreen(
     val context = LocalContext.current
 
     //Collect states from ViewModel
-    val mediaList by viewModel.allMedia.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedIds by viewModel.selectedMediaIds.collectAsState()
-    val isAnySelected by viewModel.isAnySelected.collectAsState()
-    val isAllSelected by viewModel.isAllSelected.collectAsState()
+    val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
+    val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
+    val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
 
-    var idsToDelete by remember { mutableStateOf<List<Int>>(emptyList()) }
+    var idsToDelete by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     val sheetState = rememberModalBottomSheetState()
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
+    var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
@@ -211,7 +219,7 @@ fun HomeScreen(
                     val media = selectedMediaItemForMenu!!
                     selectedMediaItemForMenu = null
                     when (option) {
-                        "EDIT" -> { /*TODO: Open Edit Dialog*/ }
+                        "EDIT" -> { mediaToEdit = media }
                         "ADD_TO_PLAYLIST" -> { /*TODO: Open Playlist Selector*/ }
                         "PLAY" -> { /*TODO: Connect to MediaController*/ }
                         "DELETE" -> { idsToDelete = listOf(media.mediaId) }
@@ -219,6 +227,17 @@ fun HomeScreen(
                 }
             )
         }
+    }
+
+    if (mediaToEdit != null) {
+        EditMediaDialog(
+            media = mediaToEdit!!,
+            onDismiss = { mediaToEdit = null },
+            onConfirm = { updatedMedia ->
+                viewModel.updateMediaItem(updatedMedia)
+                mediaToEdit = null
+            }
+        )
     }
 
     //Show delete confirmation dialog if user hit delete
@@ -365,14 +384,96 @@ fun SelectionIcon(
     modifier: Modifier = Modifier
 ) {
     Icon(
-        imageVector = if(isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+        imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
         contentDescription = if (isSelected) "Select Item" else "Deselect Item",
         tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
         modifier = modifier
     )
 }
 
+@Composable
+fun EditMediaDialog(
+    media: MediaEntity,
+    onDismiss: () -> Unit,
+    onConfirm: (MediaEntity) -> Unit
+) {
+    var title by remember { mutableStateOf(media.title) }
+    var creator by remember { mutableStateOf(media.creator) }
+    var artworkUri by remember { mutableStateOf(media.artworkUri) }
 
+    //Launcher for picking cover image
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { artworkUri = it.toString() }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Item") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                //Edit title input
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                //Edit creator input
+                OutlinedTextField(
+                    value = creator,
+                    onValueChange = { creator = it },
+                    label = { Text("Creator") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Surface(
+                        modifier = Modifier.size(60.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.LightGray
+                    ) {
+                        if (artworkUri != null) { //TODO: Change to actual artwork using Coil and AsyncImage
+                            Icon(Icons.Default.Image, contentDescription = "Artwork Image", modifier = Modifier.padding(16.dp))
+                        } else {
+                            Icon(Icons.Default.MusicNote, contentDescription = "Artwork Image", modifier = Modifier.padding(16.dp))
+                        }
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    TextButton(onClick = { pickImageLauncher.launch("image/*") }) {
+                        Text("Change Artwork")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(media.copy(
+                        title = title,
+                        creator = creator,
+                        artworkUri = artworkUri
+                    ))
+                },
+                enabled = title.isNotBlank() && creator.isNotBlank()
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
 
 
 

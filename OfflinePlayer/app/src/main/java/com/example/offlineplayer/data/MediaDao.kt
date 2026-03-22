@@ -10,27 +10,35 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaDao {
-    //CREATE media item
+    //----------CREATE----------
+    //Create single media item
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMedia(media: MediaEntity): Long
 
-    //CREATE media items
+    //Create list of media items
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMediaList(mediaList: List<MediaEntity>): List<Long>
 
-    //READ - Get all media items
+    //----------READ----------
+    //Get all media items
     @Query("SELECT * FROM media_items ORDER BY dateAdded DESC")
     fun getAllMedia(): Flow<List<MediaEntity>>
 
-    //UPDATE media item
+    //Get all media items based on search query
+
+    //implement returning list based on search query + filter + order
+
+    //----------UPDATE----------
+    //Update single media item
     @Update
     suspend fun updateMedia(media: MediaEntity)
 
-    //DELETE media item
+    //----------DELETE----------
+    //Delete single media item
     @Delete
     suspend fun deleteMedia(media: MediaEntity)
 
-    //DELETE media items
+    //Delete list of media items (by mediaId)
     @Query("DELETE FROM media_items WHERE mediaId IN (:idList)")
     suspend fun deleteMediaList(idList: List<Int>)
 }
