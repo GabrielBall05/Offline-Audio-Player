@@ -1,0 +1,80 @@
+package com.example.offlineplayer.ui.components.media
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistRemove
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.ui.components.common.MenuOptionItem
+
+enum class MediaOption {
+    PLAY, EDIT, ADD_TO_PLAYLIST, REMOVE_FROM_PLAYLIST, DELETE
+}
+
+@Composable
+fun MediaOptionsSheetContent(
+    media: MediaEntity,
+    showRemoveOption: Boolean = false,
+    onOptionClick: (MediaOption) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp)
+    ) {
+        Text(
+            text = media.title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(16.dp),
+            maxLines = 1
+        )
+
+        HorizontalDivider()
+
+        //Menu Options
+        //Edit
+        MenuOptionItem(
+            icon = Icons.Default.Edit,
+            label = "Edit Details",
+            onClick = { onOptionClick(MediaOption.EDIT) }
+        )
+        //Add to playlist
+        MenuOptionItem(
+            icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+            label = "Add to Playlist",
+            onClick = { onOptionClick(MediaOption.ADD_TO_PLAYLIST) }
+        )
+        //Remove from playlist
+        if (showRemoveOption) {
+            MenuOptionItem(
+                icon = Icons.Default.PlaylistRemove,
+                label = "Remove from Playlist",
+                onClick = { onOptionClick(MediaOption.REMOVE_FROM_PLAYLIST) }
+            )
+        }
+        //Play
+        MenuOptionItem(
+            icon = Icons.Default.PlayArrow,
+            label = "Play",
+            onClick = { onOptionClick(MediaOption.PLAY) }
+        )
+        //Delete
+        MenuOptionItem(
+            icon = Icons.Default.DeleteForever,
+            label = "Delete",
+            isDestructive = true,
+            onClick = { onOptionClick(MediaOption.DELETE) }
+        )
+    }
+}
