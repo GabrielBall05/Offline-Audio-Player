@@ -3,3 +3,28 @@ Notes + Ideas:
 change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
+
+To insert metadata:
+PS C:\WINDOWS\system32> cd c:/users/gabe/downloads
+PS C:\users\gabe\downloads> ffmpeg -i broken_clocks_test_with_ffmpeg.ogg -metadata artist="Amos Roddy" -c copy broken_clocks_new.ogg
+
+For multiple at once:
+Inside C:\users\gabe\downloads directory:
+PowerShell
+Get-ChildItem *.ogg | ForEach-Object { 
+    ffmpeg -i $_.Name -metadata artist="Amos Roddy" -c copy ("fixed_" + $_.Name) 
+}
+
+
+For Title Case and title/name metadata as well:
+$TextInfo = (Get-Culture).TextInfo
+Get-ChildItem *.ogg | ForEach-Object {
+    # 1. Remove extension and replace underscores with spaces
+    $CleanName = $_.BaseName -replace '_', ' '
+    
+    # 2. Capitalize the first letter of every word (Title Case)
+    $FinalName = $TextInfo.ToTitleCase($CleanName)
+    
+    # 3. Run ffmpeg with the new name as the Title metadata
+    ffmpeg -i $_.Name -metadata artist="Amos Roddy" -metadata title="$FinalName" -c copy "$FinalName.ogg"
+}

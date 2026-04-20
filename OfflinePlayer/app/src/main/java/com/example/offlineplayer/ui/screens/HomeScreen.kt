@@ -200,9 +200,13 @@ fun HomeScreen(
                 .padding(6.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            //Add Media Button
+            //Upload Media Button
             Button(onClick = { filePickerLauncher.launch(arrayOf("audio/*")) }) { //Filters for audio files only
-                Icon(Icons.Default.Add, contentDescription = "Add Media")
+                Icon(Icons.Default.Add, contentDescription = "Upload Media")
+                Spacer(Modifier.width(12.dp))
+                Text("Upload Media")
+                Spacer(Modifier.width(12.dp))
+                Icon(Icons.Default.Add, contentDescription = "Upload Media")
             }
         }
     }
@@ -474,7 +478,3 @@ fun EditMediaDialog(
         }
     )
 }
-
-
-
-

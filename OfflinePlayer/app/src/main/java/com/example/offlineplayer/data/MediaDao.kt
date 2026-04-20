@@ -24,10 +24,6 @@ interface MediaDao {
     @Query("SELECT * FROM media_items ORDER BY dateAdded DESC")
     fun getAllMedia(): Flow<List<MediaEntity>>
 
-    //Get all media items based on search query
-
-    //implement returning list based on search query + filter + order
-
     //----------UPDATE----------
     //Update single media item
     @Update
