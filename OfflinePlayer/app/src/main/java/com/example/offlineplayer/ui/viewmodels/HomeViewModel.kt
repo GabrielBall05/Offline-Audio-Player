@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.MediaDao
 import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,14 +27,17 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val mediaDao: MediaDao,
+    private val controllerManager: MediaControllerManager,
     @ApplicationContext private val context: Context
-) : ViewModel() {
+): ViewModel() {
+
     //Search variables
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
     //Get all media entities from DB
     private val _rawMedia = mediaDao.getAllMedia()
+
     //Filter full list by combining with the search query (this is the list shown in UI)
     val filteredMedia = combine(_rawMedia, _searchQuery) { media, query ->
         if (query.isBlank()) { //Search field empty, show whole list
@@ -59,6 +63,10 @@ class HomeViewModel @Inject constructor(
     val isAllSelected = filteredMedia.combine(selectedMediaIds) { all, selected ->
         all.isNotEmpty() && all.size == selected.size
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    //Player variables providing access to the MediaControllerManager's states for UI
+    val currentMediaItem = controllerManager.currentMediaItem
+    val isPlaying = controllerManager.isPlaying
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
@@ -109,4 +117,8 @@ class HomeViewModel @Inject constructor(
             mediaDao.updateMedia(item) //Perform db update
         }
     }
+
+    fun playMedia(media: MediaEntity) = controllerManager.playNow(media)
+
+    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media)
 }

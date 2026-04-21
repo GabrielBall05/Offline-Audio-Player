@@ -41,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -49,18 +51,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.ui.Screen
+import com.example.offlineplayer.ui.components.media.MiniPlayerBar
 import com.example.offlineplayer.ui.screens.HomeScreen
 import com.example.offlineplayer.ui.screens.PlaylistScreen
 import com.example.offlineplayer.ui.screens.SettingsScreen
 import com.example.offlineplayer.ui.theme.OfflinePlayerTheme
+import com.example.offlineplayer.ui.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject lateinit var controllerManager: MediaControllerManager
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -71,29 +72,25 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(controllerManager)
+                    MainScreen()
                 }
             }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isFinishing) {
-            controllerManager.releaseController()
         }
     }
 }
 
 @Composable
-fun MainScreen(controllerManager: MediaControllerManager) {
+fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val navController = rememberNavController()
 
     Scaffold(
         bottomBar = {
             //Stack Player and Nav Bar vertically
             Column(modifier = Modifier.fillMaxWidth()) {
-                MiniPlayerBar(controllerManager)
+                MiniPlayerBar(
+                    viewModel = mainViewModel,
+                    onExpand = { /*TODO: Expand to full player screen*/ }
+                )
                 BottomNavigationBar(navController)
             }
         }
@@ -104,88 +101,20 @@ fun MainScreen(controllerManager: MediaControllerManager) {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
-                HomeScreen(navController)
-            }
-            composable(Screen.Playlists.route) {
-                PlaylistScreen(navController)
-            }
-            composable(Screen.Settings.route) {
-                SettingsScreen(navController)
-            }
+            composable(
+                route = Screen.Home.route,
+                content = { HomeScreen(navController) }
+            )
+            composable(
+                route = Screen.Playlists.route,
+                content = { PlaylistScreen(navController) }
+            )
+            composable(
+                route = Screen.Settings.route,
+                content = { SettingsScreen(navController) }
+            )
             // Detail screens go here too...
         }
-    }
-}
-
-@Composable
-fun MiniPlayerBar(controllerManager: MediaControllerManager) {
-    //This Box allows me to layer the Progress Bar at the very bottom
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(70.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable {
-                //TODO: Expand to Full Player
-            }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            //Artwork Placeholder
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(4.dp),
-                color = Color.Gray
-            ) { /*PUT IMAGE HERE OR REPLACE SURFACE WITH IMAGE*/ }
-
-            //Title & Creator
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
-                //TODO: Replace with actual text from db
-                Text(
-                    text = "Media Title",
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-                )
-                Text(
-                    text = "Creator Name",
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-                )
-            }
-
-            //Controls
-            IconButton(onClick = { /*TODO: PREVIOUS TRACK*/ }) {
-                Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
-            }
-            IconButton(onClick = { /*TODO: PLAY/PAUSE*/ }) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Play/Pause")
-            }
-            IconButton(onClick = { /*TODO: NEXT TRACK*/ }) {
-                Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
-            }
-        }
-
-        //Progress Line
-        LinearProgressIndicator(
-            progress = { 0.4f }, //PLACEHOLDER (40%) for actual duration progressed
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .height(3.dp), //Very thin line
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.Transparent
-        )
     }
 }
 

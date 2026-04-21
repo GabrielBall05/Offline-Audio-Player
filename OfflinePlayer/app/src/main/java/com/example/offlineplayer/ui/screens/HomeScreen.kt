@@ -223,9 +223,10 @@ fun HomeScreen(
                     selectedMediaItemForMenu = null
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
-                        MediaOption.ADD_TO_PLAYLIST -> { /* TODO: Open Playlist Selector */ }
+                        MediaOption.PLAY_NOW -> { viewModel.playMedia(media) }
+                        MediaOption.ADD_TO_QUEUE -> { viewModel.addMediaToQueue(media) }
+                        MediaOption.ADD_TO_PLAYLIST -> { /* TODO: Open Playlist Picker */ }
                         MediaOption.REMOVE_FROM_PLAYLIST -> { /* Not used in home screen */ }
-                        MediaOption.PLAY -> { /* TODO: Connect to MediaController */ }
                         MediaOption.DELETE -> idsToDelete = listOf(media.mediaId)
                     }
                 }
