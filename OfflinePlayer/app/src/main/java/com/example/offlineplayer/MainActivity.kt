@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,17 +27,25 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -83,6 +92,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val navController = rememberNavController()
@@ -91,18 +101,18 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val currentRoute = navBackStackEntry?.destination?.route
     val hideBottomBars = currentRoute == Screen.Player.route //Hide bottom bars if Player is expanded
 
+    //State for ExpandedPlayerScreen Sheet
+    var showPlayerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     Scaffold(
         bottomBar = {
-            //Only show if we are not on expanded Player screen
-            if (!hideBottomBars) {
-                //Stack Player and Nav Bar vertically
-                Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                     MiniPlayerBar(
                         viewModel = mainViewModel,
-                        onExpand = { navController.navigate(Screen.Player.route) }
+                        onExpand = { showPlayerSheet = true }
                     )
                     BottomNavigationBar(navController)
-                }
             }
         }
     ) { innerPadding ->
@@ -124,16 +134,23 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                 route = Screen.Settings.route,
                 content = { SettingsScreen(navController) }
             )
+        }
 
-            composable(
-                route = Screen.Player.route,
-                content = {
-                    ExpandedPlayerScreen(
-                        viewModel = mainViewModel,
-                        onCollapse = { navController.popBackStack() }
-                    )
-                }
-            )
+        if (showPlayerSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showPlayerSheet = false },
+                sheetState = sheetState,
+                dragHandle = null,
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxSize(),
+                windowInsets = WindowInsets(0)
+            ) {
+                ExpandedPlayerScreen(
+                    viewModel = mainViewModel,
+                    onCollapse = { showPlayerSheet = false }
+                )
+            }
         }
     }
 }
@@ -149,7 +166,7 @@ fun BottomNavigationBar(navController: NavController) {
         items.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    //WILL BE CUSTOMIZING THESE LATER
+                    //TODO: Customize
                     val icon = when(screen) {
                         Screen.Home -> Icons.Default.Home
                         Screen.Playlists -> Icons.AutoMirrored.Filled.List

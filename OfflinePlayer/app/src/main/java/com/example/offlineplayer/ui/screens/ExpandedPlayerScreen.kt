@@ -71,34 +71,11 @@ fun ExpandedPlayerScreen(
     //Sync slider with actual position unless user is dragging it
     LaunchedEffect(currentPosition) { if (!isDragging) sliderPosition = currentPosition.toFloat() }
 
-    //For swipe down gesture
-    val offsetY = remember { androidx.compose.animation.core.Animatable(0f) }
-    val scope = rememberCoroutineScope()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .offset { IntOffset(0, offsetY.value.toInt()) }
-            .background(MaterialTheme.colorScheme.surface)
-            //Swipe down to collapse gesture
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onVerticalDrag = { change, dragAmount ->
-                        change.consume()
-                        val newOffset = (offsetY.value + dragAmount).coerceAtLeast(0f)
-                        scope.launch { offsetY.snapTo(newOffset) }
-                    },
-                    onDragEnd = {
-                        if (offsetY.value > 400f) {
-                            scope.launch {
-                                offsetY.animateTo(targetValue = 3000f)
-                                onCollapse()
-                            }
-                        } else { scope.launch { offsetY.animateTo(targetValue = 0f) } }
-                    }
-                )
-            },
+            .background(MaterialTheme.colorScheme.surface),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -151,7 +128,7 @@ fun ExpandedPlayerScreen(
                 .fillMaxWidth()
                 .padding(start = 18.dp, end = 18.dp, top = 0.dp, bottom = 100.dp)
         ) {
-            //Title + Creator + Add To Playlist Button
+            //Title + Creator + Repeat Mode + Add To Playlist Button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -179,8 +156,8 @@ fun ExpandedPlayerScreen(
                 //Repeat Button
                 IconButton(
                     modifier = Modifier
-                        .size(36.dp)
-                        .padding(end = 8.dp)
+                        .size(46.dp)
+                        .padding(horizontal = 8.dp)
                         .aspectRatio(1f),
                     onClick = { viewModel.onRepeatModeClicked() }
                 ) {

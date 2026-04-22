@@ -3,7 +3,14 @@ Notes + Ideas:
 change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
-Make ExpandedPlayer a ModalBottomSheet
+Make ExpandedPlayer a BottomSheetScaffold (harder but has good gesture/animation options)
+
+
+
+
+
+
+
 
 To insert metadata:
 PS C:\WINDOWS\system32> cd c:/users/gabe/downloads
