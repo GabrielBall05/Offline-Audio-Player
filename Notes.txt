@@ -3,6 +3,7 @@ Notes + Ideas:
 change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
+Make ExpandedPlayer a ModalBottomSheet
 
 To insert metadata:
 PS C:\WINDOWS\system32> cd c:/users/gabe/downloads
@@ -12,19 +13,17 @@ For multiple at once:
 Inside C:\users\gabe\downloads directory:
 PowerShell
 Get-ChildItem *.ogg | ForEach-Object { 
-    ffmpeg -i $_.Name -metadata artist="Amos Roddy" -c copy ("fixed_" + $_.Name) 
+    ffmpeg -i $_.Name -metadata artist="Kumi Tanioka" -c copy ("fixed_" + $_.Name) 
 }
 
 
-For Title Case and title/name metadata as well:
+For Title Case file name and title metadata:
 $TextInfo = (Get-Culture).TextInfo
 Get-ChildItem *.ogg | ForEach-Object {
-    # 1. Remove extension and replace underscores with spaces
     $CleanName = $_.BaseName -replace '_', ' '
     
-    # 2. Capitalize the first letter of every word (Title Case)
     $FinalName = $TextInfo.ToTitleCase($CleanName)
     
-    # 3. Run ffmpeg with the new name as the Title metadata
-    ffmpeg -i $_.Name -metadata artist="Amos Roddy" -metadata title="$FinalName" -c copy "$FinalName.ogg"
+    ffmpeg -i $_.Name -metadata title="$FinalName" -c copy "$FinalName.ogg"
 }
+

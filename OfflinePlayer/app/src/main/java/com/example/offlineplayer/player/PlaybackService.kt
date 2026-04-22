@@ -81,7 +81,7 @@ class PlaybackService : MediaSessionService() {
 
     private fun applyCrossfade() {
         //TO IMPLEMENT
-        Log.d("OfflinePlayer", "Crossfading audio items (to be implemented) for $crossFadeMs ms")
+        Log.d("OfflineAudioSuite", "PlaybackService: Crossfading audio items (to be implemented) for $crossFadeMs ms")
         //TO IMPLEMENT
     }
 }

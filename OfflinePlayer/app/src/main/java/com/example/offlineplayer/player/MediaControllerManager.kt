@@ -150,6 +150,13 @@ class MediaControllerManager @Inject constructor(
         }, MoreExecutors.directExecutor())
     }
 
+    fun updateCurrentPosition() {
+        controller?.let {
+            _currentPosition.value = it.currentPosition
+            _duration.value = it.duration.coerceAtLeast(0L)
+        }
+    }
+
     fun releaseController() {
         controllerFuture?.let {
             MediaController.releaseFuture(it)

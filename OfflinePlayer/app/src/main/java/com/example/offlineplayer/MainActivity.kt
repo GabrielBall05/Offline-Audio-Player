@@ -9,6 +9,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -48,10 +50,12 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.ui.Screen
 import com.example.offlineplayer.ui.components.media.MiniPlayerBar
+import com.example.offlineplayer.ui.screens.ExpandedPlayerScreen
 import com.example.offlineplayer.ui.screens.HomeScreen
 import com.example.offlineplayer.ui.screens.PlaylistScreen
 import com.example.offlineplayer.ui.screens.SettingsScreen
@@ -83,15 +87,22 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val navController = rememberNavController()
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val hideBottomBars = currentRoute == Screen.Player.route //Hide bottom bars if Player is expanded
+
     Scaffold(
         bottomBar = {
-            //Stack Player and Nav Bar vertically
-            Column(modifier = Modifier.fillMaxWidth()) {
-                MiniPlayerBar(
-                    viewModel = mainViewModel,
-                    onExpand = { /*TODO: Expand to full player screen*/ }
-                )
-                BottomNavigationBar(navController)
+            //Only show if we are not on expanded Player screen
+            if (!hideBottomBars) {
+                //Stack Player and Nav Bar vertically
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    MiniPlayerBar(
+                        viewModel = mainViewModel,
+                        onExpand = { navController.navigate(Screen.Player.route) }
+                    )
+                    BottomNavigationBar(navController)
+                }
             }
         }
     ) { innerPadding ->
@@ -99,7 +110,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(if (hideBottomBars) PaddingValues(0.dp) else innerPadding)
         ) {
             composable(
                 route = Screen.Home.route,
@@ -113,7 +124,16 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                 route = Screen.Settings.route,
                 content = { SettingsScreen(navController) }
             )
-            // Detail screens go here too...
+
+            composable(
+                route = Screen.Player.route,
+                content = {
+                    ExpandedPlayerScreen(
+                        viewModel = mainViewModel,
+                        onCollapse = { navController.popBackStack() }
+                    )
+                }
+            )
         }
     }
 }

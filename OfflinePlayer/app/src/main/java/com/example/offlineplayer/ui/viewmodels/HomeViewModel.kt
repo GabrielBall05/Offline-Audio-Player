@@ -97,7 +97,7 @@ class HomeViewModel @Inject constructor(
                     //If only specific individual metadata fields are empty, default values are placed
                     getMediaMetadata(context, uri)
                 } catch (e: Exception) {
-                    Log.e("HomeViewModel", "Failed to get permission for $uri", e)
+                    Log.e("OfflineAudioSuite", "HomeVM: Failed to get permission for $uri", e)
                     null //Skip this one
                 }
             }

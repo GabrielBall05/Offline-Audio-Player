@@ -40,9 +40,13 @@ fun MiniPlayerBar(
 ) {
     val currentMedia by viewModel.currentMediaItem.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
+    val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
+    val duration by viewModel.duration.collectAsStateWithLifecycle()
 
     //If nothing is loaded in the player (no media items), don't show the bar at all
     if (currentMedia == null) return
+
+    val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
 
     //This Box allows me to layer the Progress Bar at the very bottom
     Box(
@@ -50,9 +54,7 @@ fun MiniPlayerBar(
             .fillMaxWidth()
             .height(70.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable {
-                //TODO: Expand to Full Player
-            }
+            .clickable(onClick = onExpand)
     ) {
         Row(
             modifier = Modifier
@@ -103,7 +105,7 @@ fun MiniPlayerBar(
 
         //Progress Line
         LinearProgressIndicator(
-            progress = { 0.4f }, //PLACEHOLDER (40%) for actual duration progressed
+            progress = { progress },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)

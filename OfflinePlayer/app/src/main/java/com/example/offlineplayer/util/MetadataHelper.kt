@@ -24,7 +24,7 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
         val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
         //TODO: use getEmbeddedPicture to extract image if there. For now, just pass in null for artworkUri
 
-        Log.d("MetadataHelper", "Returning MediaEntity with the extracted metadata values and other values:" +
+        Log.d("OfflineAudioSuite", "MetadataHelper: Returning MediaEntity with the extracted metadata values and other values:" +
             "\nuri: $uri" +
             "\ntitle: $title" +
             "\ncreator: $creator" +
@@ -47,7 +47,7 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
         )
     } catch (e: Exception) {
         //If metadata is corrupted, return essentially blank default MediaEntity
-        Log.e("MetadataHelper", "Metadata extraction failed for $uri", e)
+        Log.e("OfflineAudioSuite", "MetadataHelper: Metadata extraction failed for $uri", e)
         MediaEntity(
             mediaId = 0,
             uri = uri.toString(),
