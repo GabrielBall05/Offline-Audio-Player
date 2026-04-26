@@ -82,7 +82,6 @@ class MediaControllerManager @Inject constructor(
     fun playPlaylist(mediaList: List<MediaEntity>, startIndex: Int = 0) {
         controller?.let { player ->
             val mediaItems = mediaList.map { it.toMediaItem() }
-
             //Replace current queue with the new playlist
             player.setMediaItems(mediaItems, startIndex, 0)
             player.prepare()

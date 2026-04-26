@@ -31,15 +31,15 @@ class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ): ViewModel() {
 
-    //Search variables
+    //For searching
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
     //Get all media entities from DB
-    private val _rawMedia = mediaDao.getAllMedia()
+    private val _allMedia = mediaDao.getAllMedia()
 
     //Filter full list by combining with the search query (this is the list shown in UI)
-    val filteredMedia = combine(_rawMedia, _searchQuery) { media, query ->
+    val filteredMedia = combine(_allMedia, _searchQuery) { media, query ->
         if (query.isBlank()) { //Search field empty, show whole list
             media
         } else { //Only show list where title or creator contains the search query (case insensitive)
@@ -50,14 +50,13 @@ class HomeViewModel @Inject constructor(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000), //MAY CAUSE PROBLEMS WITH BACKGROUND AUDIO PLAYING
+        started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
 
     //Selection variables
     private val _selectedMediaIds = MutableStateFlow<Set<Int>>(emptySet())
     val selectedMediaIds = _selectedMediaIds.asStateFlow()
-
     val isAnySelected = selectedMediaIds.map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val isAllSelected = filteredMedia.combine(selectedMediaIds) { all, selected ->

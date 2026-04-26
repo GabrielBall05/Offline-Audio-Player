@@ -124,15 +124,15 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
         ) {
             composable(
                 route = Screen.Home.route,
-                content = { HomeScreen(navController) }
+                content = { HomeScreen() }
             )
             composable(
                 route = Screen.Playlists.route,
-                content = { PlaylistScreen(navController) }
+                content = { PlaylistScreen() }
             )
             composable(
                 route = Screen.Settings.route,
-                content = { SettingsScreen(navController) }
+                content = { SettingsScreen() }
             )
         }
 

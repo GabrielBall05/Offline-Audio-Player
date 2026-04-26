@@ -1,0 +1,82 @@
+package com.example.offlineplayer.ui.viewmodels
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.offlineplayer.data.PlaylistDao
+import com.example.offlineplayer.data.PlaylistEntity
+import com.example.offlineplayer.player.MediaControllerManager
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class PlaylistsViewModel @Inject constructor(
+    private val playlistDao: PlaylistDao,
+    private val controllerManager: MediaControllerManager,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
+
+    //For searching
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    //Get all playlist entities from the db
+    private val allPlaylists = playlistDao.getAllPlaylists()
+
+    //Filter full list by combining with search query
+    val filteredPlaylists = combine(allPlaylists, _searchQuery) { playlists, query ->
+        if (query.isBlank()) //Search field empty, show whole list
+            playlists
+        else { //Only show list where title or description (if exists) contains query (case insensitive)
+            playlists.filter { item ->
+                item.name.contains(query, ignoreCase = true) ||
+                (item.description?.contains(query, ignoreCase = true) ?: false)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+
+    fun onSearchQueryChange(newQuery: String) {
+        _searchQuery.value = newQuery
+    }
+
+    fun createPlaylist(playlist: PlaylistEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.insertPlaylist(playlist)
+        }
+    }
+
+    fun editPlaylist(playlist: PlaylistEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.updatePlaylist(playlist)
+        }
+    }
+
+    fun deletePlaylist(playlist: PlaylistEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.deletePlaylist(playlist)
+        }
+    }
+
+    fun playPlaylistById(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            //Might be a good idea to wrap in try-catch
+            //Get all media items for the selected playlist, and set that list as the player's playlist
+            val mediaList = playlistDao.getMediaInPlaylist(id).first()
+            controllerManager.playPlaylist(mediaList)
+        }
+    }
+}
