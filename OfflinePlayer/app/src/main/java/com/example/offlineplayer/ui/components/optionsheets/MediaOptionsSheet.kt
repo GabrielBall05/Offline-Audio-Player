@@ -1,4 +1,4 @@
-package com.example.offlineplayer.ui.components.media
+package com.example.offlineplayer.ui.components.optionsheets
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.MediaEntity
-import com.example.offlineplayer.ui.components.common.MenuOptionItem
 
 enum class MediaOption {
     EDIT, PLAY_NOW, ADD_TO_QUEUE, ADD_TO_PLAYLIST, REMOVE_FROM_PLAYLIST, DELETE

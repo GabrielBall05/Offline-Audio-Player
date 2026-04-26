@@ -1,4 +1,4 @@
-package com.example.offlineplayer.ui.components.media
+package com.example.offlineplayer.ui.components.listitems
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee

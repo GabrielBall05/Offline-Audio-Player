@@ -1,4 +1,4 @@
-package com.example.offlineplayer.ui.components.media
+package com.example.offlineplayer.ui.components.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
 
 @Composable

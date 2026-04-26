@@ -1,4 +1,4 @@
-package com.example.offlineplayer.ui.components.common
+package com.example.offlineplayer.ui.components.optionsheets
 
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Icon

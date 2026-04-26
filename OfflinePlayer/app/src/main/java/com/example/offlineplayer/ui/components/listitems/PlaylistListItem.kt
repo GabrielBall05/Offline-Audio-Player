@@ -1,6 +1,7 @@
-package com.example.offlineplayer.ui.components.playlists
+package com.example.offlineplayer.ui.components.listitems
 
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,13 +31,13 @@ fun PlaylistListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp),
        verticalAlignment = Alignment.CenterVertically
     ) {
         //Artwork Placeholder
         Surface(
-            modifier = Modifier.size(60.dp),
-            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.size(50.dp),
+            shape = RoundedCornerShape(8.dp),
             color = Color.LightGray
         ) {
             //PLACEHOLDER IMAGE
@@ -48,7 +49,8 @@ fun PlaylistListItem(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             //Name
             Text(

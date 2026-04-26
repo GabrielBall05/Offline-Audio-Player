@@ -8,14 +8,15 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun DeleteConfirmationDialog(
-    count: Int,
+    title: String,
+    text: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = { onDismiss },
-        title = { Text("Delete Media") },
-        text = { Text("Are you sure you want to delete ${if (count > 1) " these $count items" else "this item"} from your library? This action cannot be undone.")},
+        title = { Text(title) },
+        text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("Delete", color = Color.Red)

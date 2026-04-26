@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.runtime.Composable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -21,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,61 +31,54 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.data.PlaylistEntity
 
 @Composable
-fun EditMediaDialog(
-    media: MediaEntity,
+fun CreatePlaylistDialog(
     onDismiss: () -> Unit,
-    onConfirm: (MediaEntity) -> Unit
+    onConfirm: (PlaylistEntity) -> Unit
 ) {
-    var title by remember { mutableStateOf(media.title) }
-    var creator by remember { mutableStateOf(media.creator) }
-    var artworkUri by remember { mutableStateOf(media.artworkUri) }
+    var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var coverUri by remember { mutableStateOf("") }
 
-    var titleTouched by remember { mutableStateOf(false) }
-    var creatorTouched by remember { mutableStateOf(false) }
+    var nameTouched by remember { mutableStateOf(false) }
 
-    //Launcher for picking artwork image
+    //Launcher for picking cover image
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let { artworkUri = it.toString() }
+        uri?.let { coverUri = it.toString() }
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Item") },
+        title = { Text("Create Playlist") },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                //Edit title input
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                //Name input
                 OutlinedTextField(
-                    value = title,
+                    value = name,
                     onValueChange = {
-                        title = it
-                        titleTouched = true
+                        name = it
+                        nameTouched = true
                     },
-                    isError = titleTouched && title.isBlank(),
-                    label = { Text("Title *") },
+                    label = { Text("Name *") },
+                    isError = nameTouched && name.isBlank(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                //Edit creator input
+                //Description input
                 OutlinedTextField(
-                    value = creator,
-                    onValueChange = {
-                        creator = it
-                        creatorTouched = true
-                    },
-                    isError = creatorTouched && creator.isBlank(),
-                    label = { Text("Creator *") },
-                    singleLine = true,
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    singleLine = false,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                //Artwork Image
+                //Cover Image
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -95,17 +88,17 @@ fun EditMediaDialog(
                         shape = RoundedCornerShape(8.dp),
                         color = Color.LightGray
                     ) {
-                        if (artworkUri != null) { //TODO: Change to actual artwork using Coil and AsyncImage
-                            Icon(Icons.Default.Image, contentDescription = "Artwork Image", modifier = Modifier.padding(16.dp))
+                        if (coverUri != null) { //TODO: Change to actual artwork using Coil and AsyncImage
+                            Icon(Icons.Default.Image, contentDescription = "Cover Image", modifier = Modifier.padding(16.dp))
                         } else {
-                            Icon(Icons.Default.MusicNote, contentDescription = "Artwork Image", modifier = Modifier.padding(16.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = "Cover Image", modifier = Modifier.padding(16.dp))
                         }
                     }
 
                     Spacer(Modifier.width(12.dp))
 
                     TextButton(onClick = { pickImageLauncher.launch("image/*") }) {
-                        Text("Change Artwork")
+                        Text("Select Cover Image")
                     }
                 }
             }
@@ -113,14 +106,13 @@ fun EditMediaDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(media.copy(
-                        title = title,
-                        creator = creator,
-                        artworkUri = artworkUri
-                    ))
+                    val finalDescription = description.takeIf { it.isNotBlank() }
+                    val finalCoverUri = coverUri.takeIf { it.isNotBlank() }
+                    val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = 0L)
+                    onConfirm(newPlaylist)
                 },
-                enabled = title.isNotBlank() && creator.isNotBlank()
-            ) { Text("Save") }
+                enabled = name.isNotBlank()
+            ) { Text("Create") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

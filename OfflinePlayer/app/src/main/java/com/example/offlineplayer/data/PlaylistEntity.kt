@@ -10,7 +10,7 @@ data class PlaylistEntity(
     val name: String,           //Name of playlist
     val description: String?,   //Optional description
     val dateCreated: Long,      //Date added
-    val coverImage: String?      //Local path to associated image
+    val coverImage: String?     //Local path to associated image
 ) {
 
 
