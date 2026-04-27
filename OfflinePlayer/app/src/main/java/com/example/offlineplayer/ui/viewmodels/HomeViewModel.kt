@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.MediaDao
 import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.data.PlaylistDao
+import com.example.offlineplayer.data.PlaylistMediaItem
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +17,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -27,8 +28,9 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val mediaDao: MediaDao,
+    private val playlistDao: PlaylistDao,
     private val controllerManager: MediaControllerManager,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ): ViewModel() {
 
     //For searching
@@ -67,6 +69,13 @@ class HomeViewModel @Inject constructor(
     val currentMediaItem = controllerManager.currentMediaItem
     val isPlaying = controllerManager.isPlaying
 
+    //All playlists for PlaylistPicker
+    val allPlaylists = playlistDao.getAllPlaylists().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
         _selectedMediaIds.value = emptySet() //Clear selections
@@ -84,6 +93,10 @@ class HomeViewModel @Inject constructor(
         _selectedMediaIds.value =
             if (_selectedMediaIds.value.size == filteredMedia.value.size) emptySet() //Deselect all
             else filteredMedia.value.map { it.mediaId }.toSet() //Select all
+    }
+
+    fun clearSelection() {
+        _selectedMediaIds.value = emptySet()
     }
 
     fun importMedia(uriList: List<Uri>) {
@@ -114,6 +127,16 @@ class HomeViewModel @Inject constructor(
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             mediaDao.updateMedia(item) //Perform db update
+        }
+    }
+
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            //TODO: Fix function to handle positionInPlaylist
+            val crossRefs = playlistIds.flatMap { pId ->
+                mediaIds.map { mId -> PlaylistMediaItem(playlistId = pId, mediaId = mId, positionInPlaylist = 0) }
+            }
+            playlistDao.addMediaToPlaylist(crossRefs)
         }
     }
 

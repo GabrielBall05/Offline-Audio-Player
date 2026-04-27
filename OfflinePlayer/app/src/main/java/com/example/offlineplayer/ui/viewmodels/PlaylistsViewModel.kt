@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -72,10 +73,12 @@ class PlaylistsViewModel @Inject constructor(
     }
 
     fun playPlaylistById(id: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            //Might be a good idea to wrap in try-catch
-            //Get all media items for the selected playlist, and set that list as the player's playlist
-            val mediaList = playlistDao.getMediaInPlaylist(id).first()
+        viewModelScope.launch {
+            //Perform DB operation on IO thread
+            val mediaList = withContext(Dispatchers.IO) {
+                playlistDao.getMediaInPlaylist(id).first()
+            }
+            //MediaController methods must be called on the main thread
             controllerManager.playPlaylist(mediaList)
         }
     }

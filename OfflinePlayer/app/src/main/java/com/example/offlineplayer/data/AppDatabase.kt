@@ -8,10 +8,10 @@ import androidx.room.RoomDatabase
     entities = [
         MediaEntity::class,
         PlaylistEntity::class,
-        PlaylistMediaItems::class,
+        PlaylistMediaItem::class,
         SettingsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

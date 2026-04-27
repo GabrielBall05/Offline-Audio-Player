@@ -4,6 +4,12 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +53,7 @@ import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.common.SelectionIcon
 import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.viewmodels.HomeViewModel
@@ -59,6 +67,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
+    val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
@@ -132,11 +141,18 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                 //Bulk Actions - Add to Playlist, Delete
                 AnimatedVisibility(visible = isAnySelected) { //Only show if 1 or more items selected
                     Row {
-                        IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
-                            Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
+                        Row(modifier = Modifier.weight(1f)) {
+                            IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
+                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
+                            }
+                            IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
+                                Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
+                            }
                         }
-                        IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
-                            Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
+                        Row {
+                            TextButton(onClick = { viewModel.clearSelection() }) {
+                                Text("Clear Selection")
+                            }
                         }
                     }
                 }
@@ -212,8 +228,14 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
 
     //Show PlaylistPicker if user clicks Add to Playlist (bulk or single)
     if (idsToAddToPlaylists.isNotEmpty()) {
-        //TODO: Open PlaylistPicker. Set its onConfirm to viewModel.addToPlaylistsByIds(idsToAddToPlaylist) or something along those lines.
-        //Will obviously need a viewmodel function to be implemented for this as well
+        PlaylistPicker(
+            playlists = playlists,
+            onDismiss = { idsToAddToPlaylists = emptyList() },
+            onConfirm = { selectedPlaylistIds ->
+                viewModel.addMediaToPlaylists(idsToAddToPlaylists, selectedPlaylistIds)
+                idsToAddToPlaylists = emptyList()
+            }
+        )
     }
 
     //Show delete confirmation dialog if user hit delete
