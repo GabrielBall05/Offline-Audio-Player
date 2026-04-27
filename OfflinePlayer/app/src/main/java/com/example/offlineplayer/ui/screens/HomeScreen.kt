@@ -64,6 +64,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
     val listState = rememberLazyListState()
 
     var idsToDelete by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
+    var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
 
@@ -131,7 +132,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                 //Bulk Actions - Add to Playlist, Delete
                 AnimatedVisibility(visible = isAnySelected) { //Only show if 1 or more items selected
                     Row {
-                        IconButton(onClick = { /*TODO: Open Playlist Picker*/ }) {
+                        IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                             Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                         }
                         IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
@@ -188,7 +189,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                         MediaOption.EDIT -> mediaToEdit = media
                         MediaOption.PLAY_NOW -> { viewModel.playMedia(media) }
                         MediaOption.ADD_TO_QUEUE -> { viewModel.addMediaToQueue(media) }
-                        MediaOption.ADD_TO_PLAYLIST -> { /* TODO: Open Playlist Picker */ }
+                        MediaOption.ADD_TO_PLAYLIST -> { idsToAddToPlaylists = listOf(media.mediaId) }
                         MediaOption.REMOVE_FROM_PLAYLIST -> { /* Not used in home screen */ }
                         MediaOption.DELETE -> idsToDelete = listOf(media.mediaId)
                     }
@@ -209,11 +210,16 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         )
     }
 
+    //Show PlaylistPicker if user clicks Add to Playlist (bulk or single)
+    if (idsToAddToPlaylists.isNotEmpty()) {
+        //TODO: Open PlaylistPicker. Set its onConfirm to viewModel.addToPlaylistsByIds(idsToAddToPlaylist) or something along those lines.
+        //Will obviously need a viewmodel function to be implemented for this as well
+    }
+
     //Show delete confirmation dialog if user hit delete
-    if (idsToDelete.isNotEmpty()) {
+    if (idsToDelete.isNotEmpty()) { //TODO: Maybe be more descriptive (show title) when deleting 1 item
         DeleteConfirmationDialog(
-            title = "Delete Media",
-            text = "Are you sure you want to delete ${if (idsToDelete.size > 1) "these ${idsToDelete.size} items" else "this item"} from your library? This action cannot be undone.",
+            title = "Delete ${if (idsToDelete.size > 1) "these ${idsToDelete.size} items" else "this item"} from your library?",
             onDismiss = { idsToDelete = emptyList() },
             onConfirm = {
                 viewModel.deleteMediaByIds(idsToDelete)

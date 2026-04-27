@@ -5,28 +5,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.data.PlaylistEntity
 
-enum class MediaOption {
-    EDIT, PLAY_NOW, ADD_TO_QUEUE, ADD_TO_PLAYLIST, REMOVE_FROM_PLAYLIST, DELETE
+enum class PlaylistOption {
+    EDIT, PLAY_NOW, ADD_MEDIA, DELETE
 }
 
 @Composable
-fun MediaOptionsSheetContent(
-    media: MediaEntity,
-    showRemoveOption: Boolean = false,
-    onOptionClick: (MediaOption) -> Unit
+fun PlaylistOptionsSheet(
+    playlist: PlaylistEntity,
+    onOptionClick: (PlaylistOption) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -34,7 +31,7 @@ fun MediaOptionsSheetContent(
             .padding(bottom = 32.dp)
     ) {
         Text(
-            text = media.title,
+            text = playlist.name,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(16.dp),
             maxLines = 1
@@ -45,41 +42,30 @@ fun MediaOptionsSheetContent(
         //Edit
         MenuOptionItem(
             icon = Icons.Default.Edit,
-            label = "Edit Details",
-            onClick = { onOptionClick(MediaOption.EDIT) }
+            label = "Edit",
+            onClick = { onOptionClick(PlaylistOption.EDIT) }
         )
-        //Play now
+
+        //Play Now
         MenuOptionItem(
             icon = Icons.Default.PlayArrow,
-            label = "Play",
-            onClick = { onOptionClick(MediaOption.PLAY_NOW) }
+            label = "Play Now",
+            onClick = { onOptionClick(PlaylistOption.PLAY_NOW) }
         )
-        //Add to Queue
-        MenuOptionItem(
-            icon = Icons.Default.AddToQueue,
-            label = "Add to Queue",
-            onClick = { onOptionClick(MediaOption.ADD_TO_QUEUE) }
-        )
-        //Add to Playlist
+
+        //Add Media
         MenuOptionItem(
             icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-            label = "Add to Playlist",
-            onClick = { onOptionClick(MediaOption.ADD_TO_PLAYLIST) }
+            label = "Add Media",
+            onClick = { onOptionClick(PlaylistOption.ADD_MEDIA) }
         )
-        //Remove from Playlist
-        if (showRemoveOption) {
-            MenuOptionItem(
-                icon = Icons.Default.PlaylistRemove,
-                label = "Remove from Playlist",
-                onClick = { onOptionClick(MediaOption.REMOVE_FROM_PLAYLIST) }
-            )
-        }
+
         //Delete
         MenuOptionItem(
             icon = Icons.Default.DeleteForever,
             label = "Delete",
             isDestructive = true,
-            onClick = { onOptionClick(MediaOption.DELETE) }
+            onClick = { onOptionClick(PlaylistOption.DELETE) }
         )
     }
 }

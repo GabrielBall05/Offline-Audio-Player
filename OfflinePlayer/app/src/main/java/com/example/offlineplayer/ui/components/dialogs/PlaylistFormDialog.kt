@@ -30,17 +30,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.data.PlaylistEntity
 
 @Composable
-fun CreatePlaylistDialog(
+fun PlaylistFormDialog(
+    playlistToEdit: PlaylistEntity? = null,
     onDismiss: () -> Unit,
     onConfirm: (PlaylistEntity) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var coverUri by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(playlistToEdit?.name ?: "") }
+    var description by remember { mutableStateOf(playlistToEdit?.description ?: "") }
+    var coverUri by remember { mutableStateOf(playlistToEdit?.coverImage ?: "") }
 
     var nameTouched by remember { mutableStateOf(false) }
 
@@ -53,7 +53,7 @@ fun CreatePlaylistDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create Playlist") },
+        title = { Text(playlistToEdit?.let { "Editing Playlist: \"${playlistToEdit.name}\"" } ?: "Create Playlist") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 //Name input
@@ -108,11 +108,16 @@ fun CreatePlaylistDialog(
                 onClick = {
                     val finalDescription = description.takeIf { it.isNotBlank() }
                     val finalCoverUri = coverUri.takeIf { it.isNotBlank() }
-                    val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = 0L)
-                    onConfirm(newPlaylist)
+
+                    playlistToEdit?.let {
+                        onConfirm(it.copy(name = name, description = finalDescription, coverImage = finalCoverUri))
+                    } ?: run {
+                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = 0L)
+                        onConfirm(newPlaylist)
+                    }
                 },
                 enabled = name.isNotBlank()
-            ) { Text("Create") }
+            ) { Text(playlistToEdit?.let { "Save" } ?: "Create") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

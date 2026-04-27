@@ -12,10 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,11 +32,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.PlaylistEntity
 import com.example.offlineplayer.ui.components.common.FilterButton
 import com.example.offlineplayer.ui.components.common.SearchBar
-import com.example.offlineplayer.ui.components.dialogs.CreatePlaylistDialog
 import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.listitems.PlaylistListItem
+import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
+import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt inject the ViewModel
     //Collect states from ViewModel
@@ -41,10 +47,12 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
     val playlistList by viewModel.filteredPlaylists.collectAsStateWithLifecycle()
 
     var creatingPlaylist by remember { mutableStateOf(false) }
+    var playlistToAddMedia by remember { mutableStateOf<PlaylistEntity?>(null) }
     var selectedPlaylistForMenu by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToEdit by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
 
+    val sheetState = rememberModalBottomSheetState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -109,10 +117,14 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
         }
     }
 
+    //Show MediaPicker if user clicks Add Media
+    playlistToAddMedia?.let {
+        //TODO: Create MediaPicker and invoke here
+    }
 
-    //Show CreatePlaylistDialog if user clicks FAB
+    //Show PlaylistFormDialog if user clicks FAB
     if (creatingPlaylist) {
-        CreatePlaylistDialog(
+        PlaylistFormDialog(
             onDismiss = { creatingPlaylist = false },
             onConfirm = { playlist ->
                 viewModel.createPlaylist(playlist)
@@ -123,19 +135,41 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
 
     //Show options menu if user hits ellipses on playlist
     selectedPlaylistForMenu?.let { playlist ->
-        //TODO: Create a PlaylistOptionsSheet composable and invoke it in a ModalBottomSheet in here
+        ModalBottomSheet(
+            onDismissRequest = { selectedPlaylistForMenu = null },
+            sheetState = sheetState
+        ) {
+            PlaylistOptionsSheet(
+                playlist = playlist,
+                onOptionClick = { option ->
+                    selectedPlaylistForMenu = null
+                    when (option) {
+                        PlaylistOption.EDIT -> { playlistToEdit = playlist }
+                        PlaylistOption.PLAY_NOW -> { viewModel.playPlaylistById(playlist.playlistId) }
+                        PlaylistOption.ADD_MEDIA -> { playlistToAddMedia = playlist }
+                        PlaylistOption.DELETE -> { playlistToDelete = playlist }
+                    }
+                }
+            )
+        }
     }
 
-    //Show edit dialog if user hits edit
-    playlistToEdit?.let { playlist ->
-        //TODO: Create an EditPlaylistDialog composable and invoke it in here
+    //Show PlaylistFormDialog if user clicks Edit
+    playlistToEdit?.let {
+        PlaylistFormDialog(
+            playlistToEdit = playlistToEdit,
+            onDismiss = { playlistToEdit = null },
+            onConfirm = { playlist ->
+                viewModel.editPlaylist(playlist)
+                playlistToEdit = null
+            }
+        )
     }
 
     //Show delete dialog if user hits delete
     playlistToDelete?.let { playlist ->
         DeleteConfirmationDialog(
-            title = "Delete Playlist",
-            text = "Are you sure you want to delete the playlist \"${playlist.name}\"? This action cannot be undone.",
+            title = "Delete Playlist: \"${playlist.name}\"?",
             onConfirm = {
                 viewModel.deletePlaylist(playlist)
                 playlistToDelete = null

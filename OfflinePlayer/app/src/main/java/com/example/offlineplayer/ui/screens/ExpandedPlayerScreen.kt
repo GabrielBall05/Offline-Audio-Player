@@ -75,6 +75,7 @@ fun ExpandedPlayerScreen(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .padding(bottom = 100.dp)
             .background(MaterialTheme.colorScheme.surface),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -126,7 +127,7 @@ fun ExpandedPlayerScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 18.dp, end = 18.dp, top = 0.dp, bottom = 100.dp)
+                .padding(horizontal = 18.dp)
         ) {
             //Title + Creator + Repeat Mode + Add To Playlist Button
             Row(

@@ -29,8 +29,8 @@ interface PlaylistDao {
     //======================== PLAYLIST MEDIA ITEMS ========================//
 
     //CREATE - Add song to playlist
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addMediaToPlaylist(item: PlaylistMediaItems)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addMediaToPlaylist(items: List<PlaylistMediaItems>)
 
     //READ - Get all songs in playlist
     @Query("""
@@ -48,5 +48,5 @@ interface PlaylistDao {
 
     //DELETE - Remove song from playlist
     @Delete
-    suspend fun removeMediaFromPlaylist(item: PlaylistMediaItems)
+    suspend fun removeMediaFromPlaylist(items: List<PlaylistMediaItems>)
 }

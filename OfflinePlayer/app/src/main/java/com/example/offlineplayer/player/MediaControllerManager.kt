@@ -2,6 +2,7 @@ package com.example.offlineplayer.player
 
 import android.content.ComponentName
 import android.content.Context
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -80,6 +81,10 @@ class MediaControllerManager @Inject constructor(
     }
 
     fun playPlaylist(mediaList: List<MediaEntity>, startIndex: Int = 0) {
+        if (mediaList.isEmpty()) {
+            Log.d("OfflineAudioSuite", "MediaControllerManager: Cannot play empty playlist")
+            return
+        }
         controller?.let { player ->
             val mediaItems = mediaList.map { it.toMediaItem() }
             //Replace current queue with the new playlist
