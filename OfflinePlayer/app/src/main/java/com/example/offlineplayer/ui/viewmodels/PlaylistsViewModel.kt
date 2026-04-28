@@ -55,8 +55,8 @@ class PlaylistsViewModel @Inject constructor(
             PlaylistSortOrder.NAME_DESC -> filtered.sortedByDescending { it.name.lowercase() }
             PlaylistSortOrder.ITEM_COUNT_ASC -> filtered //TODO: Implement sort by item count once item count is implemented
             PlaylistSortOrder.ITEM_COUNT_DESC -> filtered //TODO: Implement sort by item count once item count is implemented
-            PlaylistSortOrder.DATE_CREATED_ASC -> filtered.sortedBy { it.dateCreated }
-            PlaylistSortOrder.DATE_CREATED_DESC -> filtered.sortedByDescending { it.dateCreated }
+            PlaylistSortOrder.DATE_CREATED_MOST_RECENT -> filtered.sortedByDescending { it.dateCreated }
+            PlaylistSortOrder.DATE_CREATED_LEAST_RECENT -> filtered.sortedBy { it.dateCreated }
         }
     }.stateIn(
         scope = viewModelScope,

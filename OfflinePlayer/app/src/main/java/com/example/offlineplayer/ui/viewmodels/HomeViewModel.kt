@@ -64,8 +64,8 @@ class HomeViewModel @Inject constructor(
             MediaSortOrder.CREATOR_DESC -> filtered.sortedByDescending { it.creator.lowercase() }
             MediaSortOrder.DURATION_ASC -> filtered.sortedBy { it.duration }
             MediaSortOrder.DURATION_DESC -> filtered.sortedByDescending { it.duration }
-            MediaSortOrder.DATE_ADDED_ASC -> filtered.sortedBy { it.dateAdded }
-            MediaSortOrder.DATE_ADDED_DESC -> filtered.sortedByDescending { it.dateAdded }
+            MediaSortOrder.DATE_ADDED_MOST_RECENT -> filtered.sortedByDescending { it.dateAdded }
+            MediaSortOrder.DATE_ADDED_LEAST_RECENT -> filtered.sortedBy { it.dateAdded }
         }
     }.stateIn(
         scope = viewModelScope,

@@ -118,39 +118,52 @@ class MediaControllerManager @Inject constructor(
 
     fun togglePlayPause() {
         controller?.let {
-            if (it.isPlaying()) it.pause() else it.play()
+            if (it.isPlaying) it.pause() else it.play()
         }
     }
 
 
-    private fun setupController() {
+    fun setupController() {
+        if (controllerFuture != null) return
+
         val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
 
         controllerFuture?.addListener({
-            val player = controllerFuture?.get()
-            controller = player
+            try {
+                val player = controllerFuture?.get() ?: return@addListener
+                controller = player
 
-            //Attach listener to track state changes
-            player?.addListener(object : Player.Listener {
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    super.onMediaItemTransition(mediaItem, reason)
-                    _currentMediaItem.value = mediaItem
-                    _duration.value = player.duration.coerceAtLeast(0L)
-                }
+                // Sync initial state from the connected session
+                _currentMediaItem.value = player.currentMediaItem
+                _isPlaying.value = player.isPlaying
+                _duration.value = player.duration.coerceAtLeast(0L)
+                _currentPosition.value = player.currentPosition
 
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    super.onIsPlayingChanged(isPlaying)
-                    _isPlaying.value = isPlaying
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    super.onPlaybackStateChanged(playbackState)
-                    if (playbackState == Player.STATE_READY) {
+                //Attach listener to track state changes
+                player.addListener(object : Player.Listener {
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        super.onMediaItemTransition(mediaItem, reason)
+                        _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
                     }
-                }
-            })
+
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        super.onIsPlayingChanged(isPlaying)
+                        _isPlaying.value = isPlaying
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        super.onPlaybackStateChanged(playbackState)
+                        if (playbackState == Player.STATE_READY) {
+                            _duration.value = player.duration.coerceAtLeast(0L)
+                        }
+                    }
+                })
+            } catch (e: Exception) {
+                Log.e("OfflineAudioSuite", "MediaControllerManager: Failed to connect to MediaController", e)
+                controllerFuture = null
+            }
         }, MoreExecutors.directExecutor())
     }
 
@@ -164,6 +177,8 @@ class MediaControllerManager @Inject constructor(
     fun releaseController() {
         controllerFuture?.let {
             MediaController.releaseFuture(it)
+            controllerFuture = null
+            controller = null
         }
     }
 }

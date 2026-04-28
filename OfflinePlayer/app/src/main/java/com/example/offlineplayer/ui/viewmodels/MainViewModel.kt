@@ -31,6 +31,9 @@ class MainViewModel @Inject constructor(
     fun seekTo(positionMs: Long) = controllerManager.seekTo(positionMs)
 
     init {
+        // Ensure the controller is connected when the app starts or reopens
+        controllerManager.setupController()
+
         //Watch the isPlaying state to toggle ticker
         viewModelScope.launch {
             isPlaying.collect { playing ->
