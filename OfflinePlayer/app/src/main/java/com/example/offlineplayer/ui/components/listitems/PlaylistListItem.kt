@@ -62,7 +62,7 @@ fun PlaylistListItem(
 
             //Description
             Text(
-                text = playlist.description ?: "x items",
+                text = playlist.description ?: "x items", //TODO: Implement item count
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)

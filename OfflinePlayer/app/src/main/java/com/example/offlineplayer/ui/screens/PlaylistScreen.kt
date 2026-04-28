@@ -10,16 +10,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,14 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.PlaylistEntity
-import com.example.offlineplayer.ui.components.common.FilterButton
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
+import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
 import com.example.offlineplayer.ui.components.listitems.PlaylistListItem
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistsViewModel
+import com.example.offlineplayer.util.PlaylistSortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,14 +51,24 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
     //Collect states from ViewModel
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlistList by viewModel.filteredPlaylists.collectAsStateWithLifecycle()
+    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
+
+    val sheetState = rememberModalBottomSheetState()
+    val listState = rememberLazyListState()
 
     var creatingPlaylist by remember { mutableStateOf(false) }
     var playlistToAddMedia by remember { mutableStateOf<PlaylistEntity?>(null) }
     var selectedPlaylistForMenu by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToEdit by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
+    var showSortDialog by remember { mutableStateOf(false) }
 
-    val sheetState = rememberModalBottomSheetState()
+    //Jump to top of list when list size changes or sort order is changed
+    LaunchedEffect(playlistList.size, sortOrder) {
+        if (playlistList.isNotEmpty()) {
+            listState.scrollToItem(0)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -81,11 +97,14 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
                     value = searchQuery,
                     placeHolderText = "Search playlists...",
                     modifier = Modifier.weight(1f),
+                    onClear = { viewModel.onSearchQueryChange("") },
                     onValueChange = { viewModel.onSearchQueryChange(it) }
                 )
 
-                //Filter
-                FilterButton(onClick = { /* TODO: Open Filter/Sort Dialog for All Playlists List */ })
+                //Sort
+                IconButton(onClick = { showSortDialog = true }) {
+                    Icon(Icons.AutoMirrored.Default.Sort, contentDescription = "Sort List")
+                }
             }
 
             //Playlist List
@@ -162,6 +181,20 @@ fun PlaylistScreen(viewModel: PlaylistsViewModel = hiltViewModel()) { //Let Hilt
             onConfirm = { playlist ->
                 viewModel.editPlaylist(playlist)
                 playlistToEdit = null
+            }
+        )
+    }
+
+    //Show SortOrderDialog if user clicks Sort button
+    if (showSortDialog) {
+        SortOrderDialog(
+            title = "Sort Playlists By",
+            options = PlaylistSortOrder.entries.toTypedArray(),
+            currentSelection = sortOrder,
+            onDismiss = { showSortDialog = false },
+            onOptionSelected = { option ->
+                showSortDialog = false
+                viewModel.onSortOrderChange(option)
             }
         )
     }

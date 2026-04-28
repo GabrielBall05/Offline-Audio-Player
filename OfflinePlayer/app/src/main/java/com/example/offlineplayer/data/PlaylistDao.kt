@@ -49,4 +49,11 @@ interface PlaylistDao {
     //DELETE - Remove song from playlist
     @Delete
     suspend fun removeMediaFromPlaylist(items: List<PlaylistMediaItem>)
+
+    @Query("""
+        SELECT MAX(positionInPlaylist)
+        FROM playlist_media_items
+        WHERE playlistId = :playlistId
+    """)
+    suspend fun getMaxPositionInPlaylist(playlistId: Int): Int?
 }

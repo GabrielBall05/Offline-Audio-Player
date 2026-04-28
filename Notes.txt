@@ -4,7 +4,7 @@ change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
 Make ExpandedPlayer a BottomSheetScaffold (harder but has good gesture/animation options)
-
+Custom queue for ordering items to play. Send to player a few at a time
 
 
 

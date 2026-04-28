@@ -1,7 +1,9 @@
 package com.example.offlineplayer.ui.components.common
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -17,6 +19,7 @@ fun SearchBar(
     value: String,
     placeHolderText: String,
     modifier: Modifier = Modifier,
+    onClear: () -> Unit,
     onValueChange: (String) -> Unit
 ) {
     TextField(
@@ -26,6 +29,13 @@ fun SearchBar(
         singleLine = true,
         placeholder = { Text(placeHolderText) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        trailingIcon = {
+            if (value.isNotBlank()) Icon(
+                imageVector = Icons.Default.Clear,
+                contentDescription = "Clear Search",
+                modifier = Modifier.clickable(onClick = onClear)
+            )
+        },
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,

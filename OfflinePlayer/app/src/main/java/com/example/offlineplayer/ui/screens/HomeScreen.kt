@@ -4,12 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,8 +17,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -47,16 +43,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.MediaEntity
-import com.example.offlineplayer.ui.components.common.FilterButton
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.common.SelectionIcon
 import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
+import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.viewmodels.HomeViewModel
+import com.example.offlineplayer.util.MediaSortOrder
+import com.example.offlineplayer.util.SortOption
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +66,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
+    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
@@ -76,6 +75,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
     var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
+    var showSortDialog by remember { mutableStateOf(false) }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
@@ -85,7 +85,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         }
     }
 
-    LaunchedEffect(mediaList.size) {
+    //Jump to top of list when list size changes or sort order is changed
+    LaunchedEffect(mediaList.size, sortOrder) {
         if (mediaList.isNotEmpty()) {
             listState.scrollToItem(0)
         }
@@ -118,11 +119,14 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                     value = searchQuery,
                     placeHolderText = "Search media...",
                     modifier = Modifier.weight(1f),
+                    onClear = { viewModel.onSearchQueryChange("") },
                     onValueChange = { viewModel.onSearchQueryChange(it) }
                 )
 
-                //Filter
-                FilterButton(onClick = { /* TODO: Open Sort/Filter Dialog For All Media List */ })
+                //Sort
+                IconButton(onClick = { showSortDialog = true }) {
+                    Icon(Icons.AutoMirrored.Default.Sort, contentDescription = "Sort List")
+                }
             }
 
             //Bulk Actions
@@ -234,6 +238,20 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
             onConfirm = { selectedPlaylistIds ->
                 viewModel.addMediaToPlaylists(idsToAddToPlaylists, selectedPlaylistIds)
                 idsToAddToPlaylists = emptyList()
+            }
+        )
+    }
+
+    //Show SortOrderDialog if user clicks Sort button
+    if (showSortDialog) {
+        SortOrderDialog(
+            title = "Sort Media By",
+            options = MediaSortOrder.entries.toTypedArray(),
+            currentSelection = sortOrder,
+            onDismiss = { showSortDialog = false },
+            onOptionSelected = { option ->
+                showSortDialog = false
+                viewModel.onSortOrderChange(option)
             }
         )
     }

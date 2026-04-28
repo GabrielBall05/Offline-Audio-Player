@@ -112,7 +112,7 @@ fun PlaylistFormDialog(
                     playlistToEdit?.let {
                         onConfirm(it.copy(name = name, description = finalDescription, coverImage = finalCoverUri))
                     } ?: run {
-                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = 0L)
+                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = System.currentTimeMillis())
                         onConfirm(newPlaylist)
                     }
                 },
