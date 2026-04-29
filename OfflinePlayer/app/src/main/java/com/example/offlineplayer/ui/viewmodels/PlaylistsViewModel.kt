@@ -24,7 +24,7 @@ import javax.inject.Inject
 class PlaylistsViewModel @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val controllerManager: MediaControllerManager,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     //For searching
@@ -43,7 +43,7 @@ class PlaylistsViewModel @Inject constructor(
         //Filter first
         val filtered = if (query.isBlank()) //Search field empty, show whole list
             playlists
-        else { //Only show list where title or description (if exists) contains query (case insensitive)
+        else { //Only show list where name or description (if exists) contains query (case insensitive)
             playlists.filter { item ->
                 item.name.contains(query, ignoreCase = true) ||
                 (item.description?.contains(query, ignoreCase = true) ?: false)

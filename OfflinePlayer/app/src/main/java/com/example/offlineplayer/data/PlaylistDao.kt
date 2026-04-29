@@ -14,6 +14,10 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPlaylist(playlist: PlaylistEntity): Long
 
+    //READ - Get playlist by id
+    @Query("SELECT * FROM playlists WHERE playlistId = :id")
+    fun getPlaylistById(id: Int): Flow<PlaylistEntity>
+
     //READ - Get all playlists
     @Query("SELECT * FROM playlists ORDER BY dateCreated DESC")
     fun getAllPlaylists(): Flow<List<PlaylistEntity>>
@@ -50,6 +54,7 @@ interface PlaylistDao {
     @Delete
     suspend fun removeMediaFromPlaylist(items: List<PlaylistMediaItem>)
 
+    //Get the max position in a given playlist for ordering new media items
     @Query("""
         SELECT MAX(positionInPlaylist)
         FROM playlist_media_items

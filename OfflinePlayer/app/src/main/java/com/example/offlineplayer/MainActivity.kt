@@ -115,15 +115,13 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             )
             composable(
                 route = Screen.PlaylistDetails.route,
-                arguments = listOf(navArgument("id") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("id") ?: -1
-
-                PlaylistDetailsScreen(
-                    playlistId = id,
-                    onBack = { navController.popBackStack() }
-                )
-            }
+                arguments = listOf(navArgument("id") { type = NavType.IntType }),
+                content = {
+                    PlaylistDetailsScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            )
         }
 
         if (showExpandedPlayerSheet) {
