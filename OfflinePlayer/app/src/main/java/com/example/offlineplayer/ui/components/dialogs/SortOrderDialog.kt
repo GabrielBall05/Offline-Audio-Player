@@ -60,7 +60,7 @@ fun <T: SortOption> SortOrderDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
 }

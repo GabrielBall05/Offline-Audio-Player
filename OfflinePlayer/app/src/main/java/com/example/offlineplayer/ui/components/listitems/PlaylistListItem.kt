@@ -26,10 +26,11 @@ import com.example.offlineplayer.data.PlaylistEntity
 @Composable
 fun PlaylistListItem(
     playlist: PlaylistEntity,
+    modifier: Modifier = Modifier,
     onMoreClick: (PlaylistEntity) -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
        verticalAlignment = Alignment.CenterVertically

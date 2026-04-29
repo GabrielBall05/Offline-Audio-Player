@@ -35,14 +35,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.offlineplayer.ui.Screen
 import com.example.offlineplayer.ui.components.common.MiniPlayerBar
 import com.example.offlineplayer.ui.screens.ExpandedPlayerScreen
 import com.example.offlineplayer.ui.screens.HomeScreen
+import com.example.offlineplayer.ui.screens.PlaylistDetailsScreen
 import com.example.offlineplayer.ui.screens.PlaylistScreen
 import com.example.offlineplayer.ui.screens.SettingsScreen
 import com.example.offlineplayer.ui.theme.OfflinePlayerTheme
@@ -78,7 +81,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val hideBottomBars = currentRoute == Screen.Player.route //Hide bottom bars if Player is expanded
 
     //State for ExpandedPlayerScreen Sheet
-    var showPlayerSheet by remember { mutableStateOf(false) }
+    var showExpandedPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
@@ -86,7 +89,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             Column(modifier = Modifier.fillMaxWidth()) {
                     MiniPlayerBar(
                         viewModel = mainViewModel,
-                        onExpand = { showPlayerSheet = true }
+                        onExpand = { showExpandedPlayerSheet = true }
                     )
                     BottomNavigationBar(navController)
             }
@@ -104,17 +107,28 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             )
             composable(
                 route = Screen.Playlists.route,
-                content = { PlaylistScreen() }
+                content = { PlaylistScreen(navController) }
             )
             composable(
                 route = Screen.Settings.route,
                 content = { SettingsScreen() }
             )
+            composable(
+                route = Screen.PlaylistDetails.route,
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id") ?: -1
+
+                PlaylistDetailsScreen(
+                    playlistId = id,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
-        if (showPlayerSheet) {
+        if (showExpandedPlayerSheet) {
             ModalBottomSheet(
-                onDismissRequest = { showPlayerSheet = false },
+                onDismissRequest = { showExpandedPlayerSheet = false },
                 sheetState = sheetState,
                 dragHandle = null,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -124,7 +138,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             ) {
                 ExpandedPlayerScreen(
                     viewModel = mainViewModel,
-                    onCollapse = { showPlayerSheet = false }
+                    onCollapse = { showExpandedPlayerSheet = false }
                 )
             }
         }
