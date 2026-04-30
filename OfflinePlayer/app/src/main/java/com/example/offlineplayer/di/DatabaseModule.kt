@@ -2,10 +2,10 @@ package com.example.offlineplayer.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.offlineplayer.data.AppDatabase
-import com.example.offlineplayer.data.MediaDao
-import com.example.offlineplayer.data.PlaylistDao
-import com.example.offlineplayer.data.SettingsDao
+import com.example.offlineplayer.data.local.AppDatabase
+import com.example.offlineplayer.data.local.MediaDao
+import com.example.offlineplayer.data.local.PlaylistDao
+import com.example.offlineplayer.data.local.SettingsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,4 +1,4 @@
-package com.example.offlineplayer.data
+package com.example.offlineplayer.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

@@ -7,8 +7,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.offlineplayer.data.MediaEntity
-import com.example.offlineplayer.data.toMediaItem
+import com.example.offlineplayer.data.local.MediaEntity
+import com.example.offlineplayer.data.local.toMediaItem
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext

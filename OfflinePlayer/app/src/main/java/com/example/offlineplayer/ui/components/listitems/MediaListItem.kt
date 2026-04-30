@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.SelectionIcon
 
 @OptIn(ExperimentalFoundationApi::class)

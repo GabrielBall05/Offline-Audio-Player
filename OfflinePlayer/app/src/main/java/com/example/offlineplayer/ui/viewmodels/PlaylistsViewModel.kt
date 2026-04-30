@@ -1,31 +1,23 @@
 package com.example.offlineplayer.ui.viewmodels
 
-import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.PlaylistDao
-import com.example.offlineplayer.data.PlaylistEntity
-import com.example.offlineplayer.player.MediaControllerManager
+import com.example.offlineplayer.data.domain.PlaylistInteractor
+import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.util.PlaylistSortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
-    private val playlistDao: PlaylistDao,
-    private val controllerManager: MediaControllerManager,
-    @param:ApplicationContext private val context: Context
+    private val playlistInteractor: PlaylistInteractor
 ) : ViewModel() {
 
     //For searching
@@ -37,7 +29,7 @@ class PlaylistsViewModel @Inject constructor(
     val sortOrder = _sortOrder.asStateFlow()
 
     //Get all playlist entities from the db
-    private val _allPlaylists = playlistDao.getAllPlaylists()
+    private val _allPlaylists = playlistInteractor.allPlaylists
 
     //Filter full list by combining with search query
     val filteredPlaylists = combine(_allPlaylists, _searchQuery, _sortOrder) { playlists, query, sort ->
@@ -76,30 +68,25 @@ class PlaylistsViewModel @Inject constructor(
 
     fun createPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistDao.insertPlaylist(playlist)
+            playlistInteractor.createPlaylist(playlist)
         }
     }
 
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistDao.updatePlaylist(playlist)
+            playlistInteractor.editPlaylist(playlist)
         }
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistDao.deletePlaylist(playlist)
+            playlistInteractor.deletePlaylist(playlist)
         }
     }
 
     fun playPlaylistById(id: Int) {
         viewModelScope.launch {
-            //Perform DB operation on IO thread
-            val mediaList = withContext(Dispatchers.IO) {
-                playlistDao.getMediaInPlaylist(id).first()
-            }
-            //MediaController methods must be called on the main thread
-            controllerManager.playPlaylist(mediaList)
+            playlistInteractor.playPlaylistById(id)
         }
     }
 }

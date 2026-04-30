@@ -1,18 +1,13 @@
 package com.example.offlineplayer.ui.viewmodels
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.MediaDao
-import com.example.offlineplayer.data.MediaEntity
-import com.example.offlineplayer.data.PlaylistDao
-import com.example.offlineplayer.data.PlaylistMediaItem
-import com.example.offlineplayer.player.MediaControllerManager
+import com.example.offlineplayer.data.domain.MediaInteractor
+import com.example.offlineplayer.data.domain.PlaylistInteractor
+import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.util.MediaSortOrder
-import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -28,9 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val mediaDao: MediaDao,
-    private val playlistDao: PlaylistDao,
-    private val controllerManager: MediaControllerManager,
+    private val mediaInteractor: MediaInteractor,
+    private val playlistInteractor: PlaylistInteractor,
     @param:ApplicationContext private val context: Context
 ): ViewModel() {
 
@@ -42,8 +36,8 @@ class HomeViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(MediaSortOrder.TITLE_ASC)
     val sortOrder = _sortOrder.asStateFlow()
 
-    //Get all media entities from DB
-    private val _allMedia = mediaDao.getAllMedia()
+    //Get all media entities from DB using the interactor's shared flow
+    private val _allMedia = mediaInteractor.allMedia
 
     //Filter full list by combining with the search query (this is the list shown in UI)
     val filteredMedia = combine(_allMedia, _searchQuery, _sortOrder) { media, query, sort ->
@@ -83,7 +77,7 @@ class HomeViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     //All playlists for PlaylistPicker
-    val allPlaylists = playlistDao.getAllPlaylists()
+    val allPlaylists = playlistInteractor.allPlaylists
         .stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 
     fun onSearchQueryChange(newQuery: String) {
@@ -115,63 +109,30 @@ class HomeViewModel @Inject constructor(
 
     fun importMedia(uriList: List<Uri>) {
         viewModelScope.launch(Dispatchers.IO) {
-            val entities = uriList.mapNotNull { uri ->
-                try {
-                    //Ensures persistent permission
-                    context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    //Extract metadata - Default MediaEntity is returned if extraction fails
-                    //If only specific individual metadata fields are empty, default values are placed
-                    getMediaMetadata(context, uri)
-                } catch (e: Exception) {
-                    Log.e("OfflineAudioSuite", "HomeVM: Failed to get permission for $uri", e)
-                    null //Skip this one
-                }
-            }
-            mediaDao.insertMediaList(entities) //Perform db insertions
+            mediaInteractor.importMedia(uriList)
         }
     }
 
     fun deleteMediaByIds(ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaDao.deleteMediaList(ids) //Perform db deletions
-            _selectedMediaIds.value -= ids //Remove from selection list since they no longer exist
+            mediaInteractor.deleteMediaList(ids) //Perform db deletions
+            _selectedMediaIds.value -= ids.toSet() //Remove from selection list since they no longer exist
         }
     }
 
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaDao.updateMedia(item) //Perform db update
+            mediaInteractor.updateMedia(item) //Perform db update
         }
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            val allNewRefs = mutableListOf<PlaylistMediaItem>()
-
-            //Loop through selected playlists
-            playlistIds.forEach { pId ->
-                //Get max position in current playlist - start at 0 if empty (returning null
-                val currentMax = playlistDao.getMaxPositionInPlaylist(pId) ?: 0
-
-                //Make a PlaylistMediaItem out of all selected media items and the current playlist
-                val playlistRefs = mediaIds.mapIndexed { index, mId ->
-                    PlaylistMediaItem(
-                        playlistId = pId,
-                        mediaId = mId,
-                        positionInPlaylist = currentMax + index + 1 //Ensures proper incrementing
-                    )
-                }
-                allNewRefs.addAll(playlistRefs)
-            }
-
-            //Insert all items into all playlists
-            if (allNewRefs.isNotEmpty()) {
-                playlistDao.addMediaToPlaylist(allNewRefs)
-            }
+            playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
         }
     }
 
-    fun playMedia(media: MediaEntity) = controllerManager.playNow(media)
+    fun playMedia(media: MediaEntity) = mediaInteractor.playMedia(media)
 
-    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media)
+    fun addMediaToQueue(media: MediaEntity) = mediaInteractor.addMediaToQueue(media)
 }

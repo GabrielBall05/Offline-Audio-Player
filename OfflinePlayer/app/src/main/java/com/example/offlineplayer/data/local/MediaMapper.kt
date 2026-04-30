@@ -1,4 +1,4 @@
-package com.example.offlineplayer.data
+package com.example.offlineplayer.data.local
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata

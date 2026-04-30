@@ -1,4 +1,4 @@
-package com.example.offlineplayer.data
+package com.example.offlineplayer.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

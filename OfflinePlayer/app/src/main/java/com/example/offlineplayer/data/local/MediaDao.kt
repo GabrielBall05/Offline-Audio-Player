@@ -1,4 +1,4 @@
-package com.example.offlineplayer.data
+package com.example.offlineplayer.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -35,6 +35,6 @@ interface MediaDao {
     suspend fun deleteMedia(media: MediaEntity)
 
     //Delete list of media items (by mediaId)
-    @Query("DELETE FROM media_items WHERE mediaId IN (:idList)")
-    suspend fun deleteMediaList(idList: List<Int>)
+    @Query("DELETE FROM media_items WHERE mediaId IN (:mediaIds)")
+    suspend fun deleteMediaList(mediaIds: List<Int>)
 }

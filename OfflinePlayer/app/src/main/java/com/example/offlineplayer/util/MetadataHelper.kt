@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
-import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.data.local.MediaEntity
 
 fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
     val retriever = MediaMetadataRetriever()

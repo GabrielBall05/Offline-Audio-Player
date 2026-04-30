@@ -1,4 +1,4 @@
-package com.example.offlineplayer.data
+package com.example.offlineplayer.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -34,9 +34,9 @@ interface PlaylistDao {
 
     //CREATE - Add song to playlist
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun addMediaToPlaylist(items: List<PlaylistMediaItem>)
+    suspend fun addMediaToPlaylists(items: List<PlaylistMediaItem>)
 
-    //READ - Get all songs in playlist
+    //READ - Get all media in playlist
     @Query("""
         SELECT MI.* FROM media_items AS MI
         INNER JOIN playlist_media_items AS PMI
