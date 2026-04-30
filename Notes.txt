@@ -4,6 +4,8 @@ change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
 Make ExpandedPlayer a BottomSheetScaffold (harder but has good gesture/animation options)
+use Repository pattern to make different Repositories that hold ssots like playlist list for the several
+	areas that there are playlist pickers.
 Custom queue for ordering items to play. Send to player a few at a time
 
 

@@ -83,11 +83,8 @@ class HomeViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     //All playlists for PlaylistPicker
-    val allPlaylists = playlistDao.getAllPlaylists().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val allPlaylists = playlistDao.getAllPlaylists()
+        .stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery

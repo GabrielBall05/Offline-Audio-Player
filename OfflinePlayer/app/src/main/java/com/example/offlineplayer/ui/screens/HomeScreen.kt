@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.MediaEntity
+import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.common.SelectionIcon
@@ -130,35 +131,17 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
             }
 
             //Bulk Actions
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.Absolute.Left
+            BulkActionsBar(
+                isAnySelected = isAnySelected,
+                isAllSelected = isAllSelected,
+                onToggleAllClick = { viewModel.toggleSelectAll() },
+                onClearSelectionClick = { viewModel.clearSelection() }
             ) {
-                //Bulk Action - Select All Toggle
-                IconButton(onClick = { viewModel.toggleSelectAll() }) {
-                    SelectionIcon(isAllSelected)
+                IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
+                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                 }
-
-                //Bulk Actions - Add to Playlist, Delete
-                AnimatedVisibility(visible = isAnySelected) { //Only show if 1 or more items selected
-                    Row {
-                        Row(modifier = Modifier.weight(1f)) {
-                            IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
-                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
-                            }
-                            IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
-                                Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
-                            }
-                        }
-                        Row {
-                            TextButton(onClick = { viewModel.clearSelection() }) {
-                                Text("Clear Selection")
-                            }
-                        }
-                    }
+                IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
+                    Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
                 }
             }
 

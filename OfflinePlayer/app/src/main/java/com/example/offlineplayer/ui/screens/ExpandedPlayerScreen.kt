@@ -100,7 +100,7 @@ fun ExpandedPlayerScreen(
             //Title
             Text(
                 text = "Playing", //TODO: Show a good title for this, ex: playlist name if playing from a playlist
-                fontSize = 20.sp
+                style = MaterialTheme.typography.titleLarge
             )
 
             //Options Menu
