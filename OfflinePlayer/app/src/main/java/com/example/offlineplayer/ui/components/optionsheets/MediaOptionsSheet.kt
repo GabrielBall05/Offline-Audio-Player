@@ -26,6 +26,7 @@ enum class MediaOption {
 fun MediaOptionsSheetContent(
     media: MediaEntity,
     showRemoveOption: Boolean = false,
+    showDeleteOption: Boolean = false,
     onOptionClick: (MediaOption) -> Unit
 ) {
     Column(
@@ -71,15 +72,18 @@ fun MediaOptionsSheetContent(
             MenuOptionItem(
                 icon = Icons.Default.PlaylistRemove,
                 label = "Remove from Playlist",
+                isDestructive = true,
                 onClick = { onOptionClick(MediaOption.REMOVE_FROM_PLAYLIST) }
             )
         }
         //Delete
-        MenuOptionItem(
-            icon = Icons.Default.DeleteForever,
-            label = "Delete",
-            isDestructive = true,
-            onClick = { onOptionClick(MediaOption.DELETE) }
-        )
+        if (showDeleteOption) {
+            MenuOptionItem(
+                icon = Icons.Default.DeleteForever,
+                label = "Delete",
+                isDestructive = true,
+                onClick = { onOptionClick(MediaOption.DELETE) }
+            )
+        }
     }
 }

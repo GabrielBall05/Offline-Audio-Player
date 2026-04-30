@@ -37,7 +37,7 @@ import androidx.navigation.NavController
 import com.example.offlineplayer.data.PlaylistEntity
 import com.example.offlineplayer.ui.Screen
 import com.example.offlineplayer.ui.components.common.SearchBar
-import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
 import com.example.offlineplayer.ui.components.listitems.PlaylistListItem
@@ -186,8 +186,8 @@ fun PlaylistScreen(
             playlistToEdit = playlistToEdit,
             onDismiss = { playlistToEdit = null },
             onConfirm = { playlist ->
-                viewModel.editPlaylist(playlist)
                 playlistToEdit = null
+                viewModel.editPlaylist(playlist)
             }
         )
     }
@@ -208,8 +208,9 @@ fun PlaylistScreen(
 
     //Show delete dialog if user hits delete
     playlistToDelete?.let { playlist ->
-        DeleteConfirmationDialog(
-            title = "Delete Playlist: \"${playlist.name}\"?",
+        ConfirmationDialog(
+            title = "Are you sure you want to delete playlist: \"${playlist.name}\"?",
+            text = "This action cannot be undone",
             onConfirm = {
                 viewModel.deletePlaylist(playlist)
                 playlistToDelete = null

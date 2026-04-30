@@ -1,20 +1,27 @@
 package com.example.offlineplayer.ui.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.data.PlaylistDao
+import com.example.offlineplayer.data.PlaylistEntity
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -83,5 +90,38 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun clearSelection() {
         _selectedMediaIds.value = emptySet()
+    }
+
+    fun editPlaylist(playlist: PlaylistEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.updatePlaylist(playlist)
+        }
+    }
+
+    fun deletePlaylist(playlist: PlaylistEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.deletePlaylist(playlist)
+        }
+    }
+
+    fun removeMediaFromPlaylist(ids: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDao.removeMediaFromPlaylist(ids, playlistId)
+        }
+    }
+
+    fun playMedia(media: MediaEntity) = controllerManager.playNow(media)
+
+    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media)
+
+    fun playPlaylistById(id: Int) {
+        viewModelScope.launch {
+            //Perform DB operation on IO thread
+            val mediaList = withContext(Dispatchers.IO) {
+                playlistDao.getMediaInPlaylist(id).first()
+            }
+            //MediaController methods must be called on the main thread
+            controllerManager.playPlaylist(mediaList)
+        }
     }
 }

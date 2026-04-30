@@ -16,7 +16,7 @@ interface PlaylistDao {
 
     //READ - Get playlist by id
     @Query("SELECT * FROM playlists WHERE playlistId = :id")
-    fun getPlaylistById(id: Int): Flow<PlaylistEntity>
+    fun getPlaylistById(id: Int): Flow<PlaylistEntity?>
 
     //READ - Get all playlists
     @Query("SELECT * FROM playlists ORDER BY dateCreated DESC")
@@ -50,9 +50,13 @@ interface PlaylistDao {
     @Update
     suspend fun updateMediaPosition(item: PlaylistMediaItem)
 
-    //DELETE - Remove song from playlist
-    @Delete
-    suspend fun removeMediaFromPlaylist(items: List<PlaylistMediaItem>)
+    //DELETE - Remove media from playlist
+    @Query("""
+        DELETE FROM playlist_media_items
+        WHERE mediaId IN (:mediaIds)
+        AND playlistId = :playlistId
+    """)
+    suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int)
 
     //Get the max position in a given playlist for ordering new media items
     @Query("""

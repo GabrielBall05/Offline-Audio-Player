@@ -24,9 +24,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +43,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
+import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
+import com.example.offlineplayer.ui.components.optionsheets.MediaOption
+import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
+import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
+import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistDetailsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +61,7 @@ fun PlaylistDetailsScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
-    val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
+    val allPlaylists by viewModel.allPlaylists.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
@@ -67,7 +75,15 @@ fun PlaylistDetailsScreen(
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
     var showMediaPicker by remember { mutableStateOf(false) }
     var showPlaylistOptionsSheet by remember { mutableStateOf(false) }
-    var showEditPlaylistDialog by remember { mutableStateOf(false) }
+    var editingPlaylist by remember { mutableStateOf(false) }
+    var showDeletePlaylistConfirmation by remember { mutableStateOf(false) }
+
+    //Jump to top of list when list size changes
+    LaunchedEffect(mediaList.size) {
+        if (mediaList.isNotEmpty()) {
+            listState.scrollToItem(0)
+        }
+    }
 
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -92,7 +108,7 @@ fun PlaylistDetailsScreen(
                 Text(text = playlist?.name ?: "Playlist Details", style = MaterialTheme.typography.titleLarge)
 
                 //Options Menu
-                IconButton(onClick = { /* TODO: Open the same ModalBottomSheet as clicking more on a PlaylistListItem would */ }) {
+                IconButton(onClick = { showPlaylistOptionsSheet = true }) {
                     Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options")
                 }
             }
@@ -160,39 +176,110 @@ fun PlaylistDetailsScreen(
         }
     }
 
-    
-    //Show PlaylistFormDialog if user wants to edit this playlist
-    if (showEditPlaylistDialog) {
 
+    //Show ModalBottomSheet options for this playlist if user clicks the ellipsis at the top right
+    if (showPlaylistOptionsSheet) {
+        playlist?.let { currentPlaylist ->
+            ModalBottomSheet(
+                onDismissRequest = { showPlaylistOptionsSheet = false },
+                sheetState = sheetState
+            ) {
+                PlaylistOptionsSheet(
+                    playlist = currentPlaylist,
+                    onOptionClick = { option ->
+                        showPlaylistOptionsSheet = false
+                        when (option) {
+                            PlaylistOption.EDIT -> editingPlaylist = true
+                            PlaylistOption.PLAY_NOW -> viewModel.playPlaylistById(currentPlaylist.playlistId)
+                            PlaylistOption.ADD_MEDIA -> showMediaPicker = true
+                            PlaylistOption.DELETE -> showDeletePlaylistConfirmation = true
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    //Show PlaylistFormDialog if user wants to edit this playlist
+    if (editingPlaylist) {
+        playlist?.let { currentPlaylist ->
+            PlaylistFormDialog(
+                playlistToEdit = currentPlaylist,
+                onDismiss = { editingPlaylist = false },
+                onConfirm = { plist ->
+                    editingPlaylist = false
+                    viewModel.editPlaylist(plist)
+                }
+            )
+        }
+    }
+
+    //Show ConfirmationDialog if user wants to delete this playlist
+    if (showDeletePlaylistConfirmation) {
+        playlist?.let { currentPlaylist ->
+            ConfirmationDialog(
+                title = "Are you sure you want to delete the playlist \"${currentPlaylist.name}\"?",
+                text = "This action cannot be undone",
+                onDismiss = { showDeletePlaylistConfirmation = false },
+                onConfirm = {
+                    onBack()
+                    viewModel.deletePlaylist(currentPlaylist)
+                }
+            )
+        }
     }
 
     //Show ConfirmationDialog if user wants to remove media items from this playlist
     if (idsToRemove.isNotEmpty()) {
-
+        playlist?.let { currentPlaylist ->
+            ConfirmationDialog(
+                title = "Are you sure you want to remove ${if (idsToRemove.size > 1) "these ${idsToRemove.size} items" else "this item"} from \"${playlist?.name}\"?",
+                text = "You can always re-add ${if (idsToRemove.size > 1) "them" else "it"}.",
+                onDismiss = { idsToRemove = emptyList() },
+                onConfirm = {
+                    viewModel.removeMediaFromPlaylist(idsToRemove)
+                    idsToRemove = emptyList()
+                }
+            )
+        }
     }
 
     //Show ModalBottomSheet options for a media item if user clicks ellipsis on that item
-    selectedMediaItemForMenu?.let {
-
+    selectedMediaItemForMenu?.let { media ->
+        ModalBottomSheet(
+            onDismissRequest = { selectedMediaItemForMenu = null },
+            sheetState = sheetState
+        ) {
+            MediaOptionsSheetContent(
+                media = media,
+                showRemoveOption = true,
+                onOptionClick = { option ->
+                    selectedMediaItemForMenu = null
+                    when (option) {
+                        MediaOption.EDIT -> mediaToEdit = media
+                        MediaOption.PLAY_NOW -> viewModel.playMedia(media)
+                        MediaOption.ADD_TO_QUEUE -> viewModel.addMediaToQueue(media)
+                        MediaOption.ADD_TO_PLAYLIST -> idsToAddToAnotherPlaylist = listOf(media.mediaId)
+                        MediaOption.REMOVE_FROM_PLAYLIST -> idsToRemove = listOf(media.mediaId)
+                        MediaOption.DELETE -> { /* Not used in playlist details screen */ }
+                    }
+                }
+            )
+        }
     }
 
     //Show EditMediaDialog if user wants to edit a media item from here
-    mediaToEdit?.let {
-
+    mediaToEdit?.let { media ->
+        //TODO: Implement
     }
 
     //Show MediaPicker if user wants to add media to this playlist from here
     if (showMediaPicker) {
-
-    }
-
-    //Show ModalBottomSheet options for this playlist if user clicks the ellipsis at the top right
-    if (showPlaylistOptionsSheet) {
-
+        //TODO: Create MediaPicker and invoke here
     }
 
     //Show PlaylistPicker if user wants to add items to another playlist from here
     if (idsToAddToAnotherPlaylist.isNotEmpty()) {
-
+        //TODO: Implement
     }
 }

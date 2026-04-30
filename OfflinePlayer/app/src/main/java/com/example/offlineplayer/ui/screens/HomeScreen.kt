@@ -47,7 +47,7 @@ import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.common.SelectionIcon
-import com.example.offlineplayer.ui.components.dialogs.DeleteConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
@@ -186,13 +186,14 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         ) {
             MediaOptionsSheetContent(
                 media = media,
+                showDeleteOption = true,
                 onOptionClick = { option ->
                     selectedMediaItemForMenu = null
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
-                        MediaOption.PLAY_NOW -> { viewModel.playMedia(media) }
-                        MediaOption.ADD_TO_QUEUE -> { viewModel.addMediaToQueue(media) }
-                        MediaOption.ADD_TO_PLAYLIST -> { idsToAddToPlaylists = listOf(media.mediaId) }
+                        MediaOption.PLAY_NOW -> viewModel.playMedia(media)
+                        MediaOption.ADD_TO_QUEUE -> viewModel.addMediaToQueue(media)
+                        MediaOption.ADD_TO_PLAYLIST -> idsToAddToPlaylists = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> { /* Not used in home screen */ }
                         MediaOption.DELETE -> idsToDelete = listOf(media.mediaId)
                     }
@@ -241,8 +242,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
 
     //Show delete confirmation dialog if user hit delete
     if (idsToDelete.isNotEmpty()) { //TODO: Maybe be more descriptive (show title) when deleting 1 item
-        DeleteConfirmationDialog(
-            title = "Delete ${if (idsToDelete.size > 1) "these ${idsToDelete.size} items" else "this item"} from your library?",
+        ConfirmationDialog(
+            title = "Are you sure you want to delete ${if (idsToDelete.size > 1) "these ${idsToDelete.size} items" else "this item"} from your library?",
+            text = "This action cannot be undone",
             onDismiss = { idsToDelete = emptyList() },
             onConfirm = {
                 viewModel.deleteMediaByIds(idsToDelete)
