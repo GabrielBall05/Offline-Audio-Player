@@ -207,9 +207,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         EditMediaDialog(
             media = media,
             onDismiss = { mediaToEdit = null },
-            onConfirm = { updated ->
-                viewModel.updateMediaItem(updated)
+            onConfirm = { updatedMedia ->
                 mediaToEdit = null
+                viewModel.updateMediaItem(updatedMedia)
             }
         )
     }

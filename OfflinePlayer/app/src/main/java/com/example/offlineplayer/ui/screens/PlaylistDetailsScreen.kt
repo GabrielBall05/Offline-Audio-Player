@@ -44,7 +44,9 @@ import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
@@ -233,7 +235,7 @@ fun PlaylistDetailsScreen(
     if (idsToRemove.isNotEmpty()) {
         playlist?.let { currentPlaylist ->
             ConfirmationDialog(
-                title = "Are you sure you want to remove ${if (idsToRemove.size > 1) "these ${idsToRemove.size} items" else "this item"} from \"${playlist?.name}\"?",
+                title = "Are you sure you want to remove ${if (idsToRemove.size > 1) "these ${idsToRemove.size} items" else "this item"} from \"${currentPlaylist.name}\"?",
                 text = "You can always re-add ${if (idsToRemove.size > 1) "them" else "it"}.",
                 onDismiss = { idsToRemove = emptyList() },
                 onConfirm = {
@@ -270,7 +272,14 @@ fun PlaylistDetailsScreen(
 
     //Show EditMediaDialog if user wants to edit a media item from here
     mediaToEdit?.let { media ->
-        //TODO: Implement
+        EditMediaDialog(
+            media = media,
+            onDismiss = { mediaToEdit = null },
+            onConfirm = { updatedMedia ->
+                mediaToEdit = null
+                viewModel.updateMediaItem(updatedMedia)
+            }
+        )
     }
 
     //Show MediaPicker if user wants to add media to this playlist from here
@@ -280,6 +289,13 @@ fun PlaylistDetailsScreen(
 
     //Show PlaylistPicker if user wants to add items to another playlist from here
     if (idsToAddToAnotherPlaylist.isNotEmpty()) {
-        //TODO: Implement
+        PlaylistPicker(
+            playlists = allPlaylists,
+            onDismiss = { idsToAddToAnotherPlaylist = emptyList() },
+            onConfirm = { playlistIds ->
+                viewModel.addMediaToPlaylists(idsToAddToAnotherPlaylist, playlistIds)
+                idsToAddToAnotherPlaylist = emptyList()
+            }
+        )
     }
 }

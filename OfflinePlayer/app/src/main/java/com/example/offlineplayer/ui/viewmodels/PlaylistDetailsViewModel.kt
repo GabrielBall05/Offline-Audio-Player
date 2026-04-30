@@ -5,9 +5,11 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.offlineplayer.data.MediaDao
 import com.example.offlineplayer.data.MediaEntity
 import com.example.offlineplayer.data.PlaylistDao
 import com.example.offlineplayer.data.PlaylistEntity
+import com.example.offlineplayer.data.PlaylistMediaItem
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,6 +29,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PlaylistDetailsViewModel @Inject constructor(
     private val playlistDao: PlaylistDao,
+    private val mediaDao: MediaDao,
     private val controllerManager: MediaControllerManager,
     savedStateHandle: SavedStateHandle,
     @param:ApplicationContext private val context: Context
@@ -107,6 +110,39 @@ class PlaylistDetailsViewModel @Inject constructor(
     fun removeMediaFromPlaylist(ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
             playlistDao.removeMediaFromPlaylist(ids, playlistId)
+        }
+    }
+
+    fun updateMediaItem(item: MediaEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaDao.updateMedia(item) //Perform db update
+        }
+    }
+
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val allNewRefs = mutableListOf<PlaylistMediaItem>()
+
+            //Loop through selected playlists
+            playlistIds.forEach { pId ->
+                //Get max position in current playlist - start at 0 if empty (returning null
+                val currentMax = playlistDao.getMaxPositionInPlaylist(pId) ?: 0
+
+                //Make a PlaylistMediaItem out of all selected media items and the current playlist
+                val playlistRefs = mediaIds.mapIndexed { index, mId ->
+                    PlaylistMediaItem(
+                        playlistId = pId,
+                        mediaId = mId,
+                        positionInPlaylist = currentMax + index + 1 //Ensures proper incrementing
+                    )
+                }
+                allNewRefs.addAll(playlistRefs)
+            }
+
+            //Insert all items into all playlists
+            if (allNewRefs.isNotEmpty()) {
+                playlistDao.addMediaToPlaylist(allNewRefs)
+            }
         }
     }
 
