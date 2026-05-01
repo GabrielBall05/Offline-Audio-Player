@@ -104,35 +104,47 @@ fun PlaylistDetailsScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            //Header (Back button, playlist details, menu button)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 60.dp, end = 60.dp, top = 10.dp),
-                horizontalArrangement = Arrangement.Start, //Maybe Arrangement.Center - I can't decide
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //Artwork Placeholder
-                Surface(
-                    modifier = Modifier.size(80.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.LightGray
-                ) { Icon(Icons.Default.LibraryMusic, contentDescription = "Artwork Image") }
+                //Back Button
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back")
+                }
 
-                //Playlist Details
-                Column(
-                    modifier = Modifier.padding(start = 8.dp),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Center
+                //Cover Image, Name, Description, Item Count
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row() {
+                    //Artwork Placeholder
+                    Surface(
+                        modifier = Modifier.size(80.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.LightGray
+                    ) { Icon(Icons.Default.LibraryMusic, contentDescription = "Artwork Image") }
+
+                    //Playlist Details
+                    Column(
+                        modifier = Modifier.padding(start = 8.dp),
+                        horizontalAlignment = Alignment.Start, //Maybe Arrangement.Center - I can't decide
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
-                    }
-                    Row() {
                         Text(text = playlist?.description ?: "Playlist Description", style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                    }
-                    Row() {
                         Text(text = "x items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
                     }
+                }
+
+                //Menu Button
+                IconButton(onClick = { showPlaylistOptionsSheet = true }) {
+                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options")
                 }
             }
 
@@ -187,22 +199,6 @@ fun PlaylistDetailsScreen(
                 }
             }
         }
-
-        //Back button
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 8.dp, top = 26.dp)
-        ) { Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back") }
-
-        //Options menu
-        IconButton(
-            onClick = { showPlaylistOptionsSheet = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = 8.dp, top = 26.dp)
-        ) { Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options") }
 
         //Add Media To Playlist Button
         FloatingActionButton(
