@@ -65,6 +65,7 @@ fun PlaylistDetailsScreen(
 ) {
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
+    val itemCount by viewModel.itemCount.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
     val allPlaylists by viewModel.allPlaylists.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
@@ -138,9 +139,9 @@ fun PlaylistDetailsScreen(
                     ) {
                         Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
                         playlist?.description?.let { description ->
-                            Text(text = description, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            Text(text = description, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                         }
-                        Text(text = "x items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+                        Text(text = "$itemCount items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
                     }
                 }
 

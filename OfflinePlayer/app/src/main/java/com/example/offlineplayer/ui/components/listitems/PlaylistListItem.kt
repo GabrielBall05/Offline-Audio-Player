@@ -51,23 +51,25 @@ fun PlaylistListItem(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.Center
         ) {
             //Name
             Text(
                 text = playlist.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 maxLines = 1,
                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
             )
 
             //Description
-            Text(
-                text = playlist.description ?: "x items", //TODO: Implement item count
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-            )
+            playlist.description?.let { description ->
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                )
+            }
         }
 
         //More Button - Brings up menu for things like delete

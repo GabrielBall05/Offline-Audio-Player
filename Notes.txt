@@ -1,7 +1,7 @@
 TODO:
-playlist item counts
 Handle images
 Custom queue for ordering items to play. Send to player a few at a time
+	Shuffle/repeat on expanded player screen
 default sort order setting
 keep screen on in expanded player setting
 

@@ -36,6 +36,9 @@ class PlaylistDetailsViewModel @Inject constructor(
     val playlist = playlistInteractor.getPlaylistById(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val itemCount = playlistInteractor.getPlaylistItemCount(playlistId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     //Get all media items in this playlist
     private val _playlistMedia = playlistInteractor.getMediaInPlaylist(playlistId)
 

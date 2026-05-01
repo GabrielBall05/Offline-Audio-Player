@@ -58,6 +58,10 @@ interface PlaylistDao {
     """)
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity>
 
+    //Get playlist item count
+    @Query("SELECT COUNT(*) FROM playlist_media_items WHERE playlistId = :playlistId")
+    fun getPlaylistItemCount(playlistId: Int): Flow<Int>
+
     //UPDATE - Change position in playlist
     @Update
     suspend fun updateMediaPosition(item: PlaylistMediaItem)

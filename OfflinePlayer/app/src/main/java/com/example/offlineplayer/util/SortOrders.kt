@@ -18,8 +18,6 @@ enum class MediaSortOrder(override val label: String) : SortOption {
 enum class PlaylistSortOrder(override val label: String): SortOption {
     NAME_ASC("Name (A-Z)"),
     NAME_DESC("Name (Z-A)"),
-    ITEM_COUNT_ASC("Items (Low-High)"),
-    ITEM_COUNT_DESC("Items (High-Low)"),
     DATE_CREATED_MOST_RECENT("Date Created (Most Recent)"),
     DATE_CREATED_LEAST_RECENT("Date Created (Least Recent)")
 }
