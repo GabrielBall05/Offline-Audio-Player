@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
+import com.example.offlineplayer.util.KeepScreenOn
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,6 +60,8 @@ fun ExpandedPlayerScreen(
     viewModel: MainViewModel,
     onCollapse: () -> Unit
 ) {
+    KeepScreenOn() //Call helper composable to ensure the screen stays on while this screen/composable is active
+
     val currentMediaItem by viewModel.currentMediaItem.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()

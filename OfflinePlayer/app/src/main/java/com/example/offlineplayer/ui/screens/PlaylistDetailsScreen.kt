@@ -137,7 +137,9 @@ fun PlaylistDetailsScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
-                        Text(text = playlist?.description ?: "Playlist Description", style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        playlist?.description?.let { description ->
+                            Text(text = description, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        }
                         Text(text = "x items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
                     }
                 }
