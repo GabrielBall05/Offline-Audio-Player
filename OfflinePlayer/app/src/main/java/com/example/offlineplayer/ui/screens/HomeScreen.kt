@@ -243,6 +243,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
             onConfirm = {
                 viewModel.deleteMediaByIds(idsToDelete)
                 idsToDelete = emptyList()
+                viewModel.clearSelection()
             }
         )
     }

@@ -7,14 +7,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -22,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -33,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,28 +104,35 @@ fun PlaylistDetailsScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-
-            //TODO: Put artwork somewhere.
-
-            //Back button, Title, Options menu
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(start = 60.dp, end = 60.dp, top = 10.dp),
+                horizontalArrangement = Arrangement.Start, //Maybe Arrangement.Center - I can't decide
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //Back button
-                IconButton(onClick = onBack) {
-                    Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back")
-                }
+                //Artwork Placeholder
+                Surface(
+                    modifier = Modifier.size(80.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.LightGray
+                ) { Icon(Icons.Default.LibraryMusic, contentDescription = "Artwork Image") }
 
-                //Title
-                Text(text = playlist?.name ?: "Playlist Details", style = MaterialTheme.typography.titleLarge)
-
-                //Options Menu
-                IconButton(onClick = { showPlaylistOptionsSheet = true }) {
-                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options")
+                //Playlist Details
+                Column(
+                    modifier = Modifier.padding(start = 8.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row() {
+                        Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
+                    }
+                    Row() {
+                        Text(text = playlist?.description ?: "Playlist Description", style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                    }
+                    Row() {
+                        Text(text = "x items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+                    }
                 }
             }
 
@@ -175,15 +188,29 @@ fun PlaylistDetailsScreen(
             }
         }
 
+        //Back button
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 8.dp, top = 26.dp)
+        ) { Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back") }
+
+        //Options menu
+        IconButton(
+            onClick = { showPlaylistOptionsSheet = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = 8.dp, top = 26.dp)
+        ) { Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options") }
+
         //Add Media To Playlist Button
         FloatingActionButton(
             onClick = { showMediaPicker = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 4.dp, bottom = 16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist")
-        }
+        ) { Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist") }
     }
 
 
@@ -250,6 +277,7 @@ fun PlaylistDetailsScreen(
                 onConfirm = {
                     viewModel.removeMediaFromPlaylist(idsToRemove)
                     idsToRemove = emptyList()
+                    viewModel.clearSelection()
                 }
             )
         }

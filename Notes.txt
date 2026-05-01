@@ -1,6 +1,5 @@
 Notes + Ideas:
-
-fix small issue with bulk actions still showing even when nothing is selected (happens after deleting the selected items)
+ 
 change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image
