@@ -23,7 +23,7 @@ fun PlaylistPicker(
     onConfirm: (List<Int>) -> Unit
 ) {
     val selectedPlaylistIds = remember { mutableStateListOf<Int>() }
-    //TODO: Already select playlists that they're already in. Also allow for removing from those playlists
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Choose Playlist(s)") },
@@ -55,7 +55,7 @@ fun PlaylistPicker(
             Button(
                 enabled = selectedPlaylistIds.isNotEmpty(),
                 onClick = { onConfirm(selectedPlaylistIds.toList()) }
-            ) { Text("Save") }
+            ) { Text("Add") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {

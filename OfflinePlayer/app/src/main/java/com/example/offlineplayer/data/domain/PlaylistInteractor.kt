@@ -36,6 +36,7 @@ class PlaylistInteractor @Inject constructor(
     suspend fun editPlaylist(playlist: PlaylistEntity) = repository.updatePlaylist(playlist)
     suspend fun deletePlaylist(playlist: PlaylistEntity) = repository.deletePlaylist(playlist)
     fun getMediaInPlaylist(playlistId: Int): Flow<List<MediaEntity>> = repository.getAllMediaInPlaylist(playlistId)
+    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = repository.getMediaNotInPlaylist(playlistId)
     suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = repository.removeMediaFromPlaylist(mediaIds, playlistId)
 
     //Shared Business Logic

@@ -34,10 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.ui.Screen
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
 import com.example.offlineplayer.ui.components.listitems.PlaylistListItem
@@ -62,6 +64,8 @@ fun PlaylistScreen(
 
     var creatingPlaylist by remember { mutableStateOf(false) }
     var playlistToAddMedia by remember { mutableStateOf<PlaylistEntity?>(null) }
+    var mediaNotInPlaylist by remember { mutableStateOf<List<MediaEntity>>(emptyList()) }
+    var isFetchingMedia by remember { mutableStateOf(false) }
     var selectedPlaylistForMenu by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToEdit by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
@@ -71,6 +75,15 @@ fun PlaylistScreen(
     LaunchedEffect(playlistList.size, sortOrder) {
         if (playlistList.isNotEmpty()) {
             listState.scrollToItem(0)
+        }
+    }
+
+    //Fetch media not in playlist when picker is shown for playlistToAddMedia
+    LaunchedEffect(playlistToAddMedia) {
+        playlistToAddMedia?.let { playlist ->
+            isFetchingMedia = true
+            mediaNotInPlaylist = viewModel.getMediaNotInPlaylist(playlist.playlistId)
+            isFetchingMedia = false
         }
     }
 
@@ -144,8 +157,15 @@ fun PlaylistScreen(
     }
 
     //Show MediaPicker if user clicks Add Media
-    playlistToAddMedia?.let {
-        //TODO: Create MediaPicker and invoke here
+    playlistToAddMedia?.let { currentPlaylist ->
+        MediaPicker(
+            media = mediaNotInPlaylist,
+            onDismiss = { playlistToAddMedia = null },
+            onConfirm = { mediaIds ->
+                viewModel.addMediaToPlaylists(mediaIds, listOf(currentPlaylist.playlistId))
+                playlistToAddMedia = null
+            }
+        )
     }
 
     //Show PlaylistFormDialog if user clicks FAB

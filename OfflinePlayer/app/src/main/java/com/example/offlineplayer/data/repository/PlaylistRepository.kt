@@ -26,6 +26,8 @@ class PlaylistRepository @Inject constructor(
 
     fun getAllMediaInPlaylist(playlistId: Int): Flow<List<MediaEntity>> = playlistDao.getMediaInPlaylist(playlistId)
 
+    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = playlistDao.getMediaNotInPlaylist(playlistId)
+
     suspend fun updateMediaPosition(item: PlaylistMediaItem) = playlistDao.updateMediaPosition(item)
 
     suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = playlistDao.removeMediaFromPlaylist(mediaIds, playlistId)

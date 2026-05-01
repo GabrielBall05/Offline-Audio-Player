@@ -41,6 +41,7 @@ import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
+import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
@@ -72,6 +73,8 @@ fun PlaylistDetailsScreen(
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
     var showMediaPicker by remember { mutableStateOf(false) }
+    var mediaNotInPlaylist by remember { mutableStateOf<List<MediaEntity>>(emptyList()) }
+    var isFetchingMedia by remember { mutableStateOf(false) }
     var showPlaylistOptionsSheet by remember { mutableStateOf(false) }
     var editingPlaylist by remember { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by remember { mutableStateOf(false) }
@@ -80,6 +83,15 @@ fun PlaylistDetailsScreen(
     LaunchedEffect(mediaList.size) {
         if (mediaList.isNotEmpty()) {
             listState.scrollToItem(0)
+        }
+    }
+
+    //Fetch media not in playlist when picker is shown
+    LaunchedEffect(showMediaPicker) {
+        if (showMediaPicker) {
+            isFetchingMedia = true
+            mediaNotInPlaylist = viewModel.getMediaNotInPlaylist()
+            isFetchingMedia = false
         }
     }
 
@@ -233,6 +245,7 @@ fun PlaylistDetailsScreen(
             ConfirmationDialog(
                 title = "Are you sure you want to remove ${if (idsToRemove.size > 1) "these ${idsToRemove.size} items" else "this item"} from \"${currentPlaylist.name}\"?",
                 text = "You can always re-add ${if (idsToRemove.size > 1) "them" else "it"}.",
+                confirmText = "Remove",
                 onDismiss = { idsToRemove = emptyList() },
                 onConfirm = {
                     viewModel.removeMediaFromPlaylist(idsToRemove)
@@ -279,8 +292,17 @@ fun PlaylistDetailsScreen(
     }
 
     //Show MediaPicker if user wants to add media to this playlist from here
-    if (showMediaPicker) {
-        //TODO: Create MediaPicker and invoke here
+    if (showMediaPicker && !isFetchingMedia) {
+        playlist?.let { currentPlaylist ->
+            MediaPicker(
+                media = mediaNotInPlaylist,
+                onDismiss = { showMediaPicker = false },
+                onConfirm = { mediaIds ->
+                    showMediaPicker = false
+                    viewModel.addMediaToPlaylists(mediaIds, listOf(currentPlaylist.playlistId))
+                }
+            )
+        }
     }
 
     //Show PlaylistPicker if user wants to add items to another playlist from here

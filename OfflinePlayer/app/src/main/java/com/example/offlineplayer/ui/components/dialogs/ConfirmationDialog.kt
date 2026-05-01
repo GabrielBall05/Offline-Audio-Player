@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 fun ConfirmationDialog(
     title: String,
     text: String,
+    confirmText: String = "Delete",
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -19,7 +20,7 @@ fun ConfirmationDialog(
         text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Delete", color = Color.Red)
+                Text(confirmText, color = Color.Red)
             }
         },
         dismissButton = {

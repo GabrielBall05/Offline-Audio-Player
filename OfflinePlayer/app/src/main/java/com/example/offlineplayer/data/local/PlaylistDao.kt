@@ -32,7 +32,7 @@ interface PlaylistDao {
 
     //======================== PLAYLIST MEDIA ITEMS ========================//
 
-    //CREATE - Add song to playlist
+    //CREATE - Add media to playlists
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addMediaToPlaylists(items: List<PlaylistMediaItem>)
 
@@ -45,6 +45,18 @@ interface PlaylistDao {
         ORDER BY PMI.positionInPlaylist ASC
     """)
     fun getMediaInPlaylist(playlistId: Int): Flow<List<MediaEntity>>
+
+    //Get all media not in given playlist
+    @Query("""
+        SELECT * FROM media_items AS M
+        WHERE NOT EXISTS (
+            SELECT 1 FROM playlist_media_items AS P
+            WHERE P.mediaId = M.mediaId 
+            AND P.playlistId = :playlistId
+        )
+        ORDER BY title ASC
+    """)
+    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity>
 
     //UPDATE - Change position in playlist
     @Update

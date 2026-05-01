@@ -3,6 +3,7 @@ package com.example.offlineplayer.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.domain.PlaylistInteractor
+import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.util.PlaylistSortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -82,6 +83,16 @@ class PlaylistsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             playlistInteractor.deletePlaylist(playlist)
         }
+    }
+
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
+        }
+    }
+
+    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> {
+        return playlistInteractor.getMediaNotInPlaylist(playlistId)
     }
 
     fun playPlaylistById(id: Int) {
