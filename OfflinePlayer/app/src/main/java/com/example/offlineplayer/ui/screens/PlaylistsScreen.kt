@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -128,7 +129,8 @@ fun PlaylistScreen(
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = 6.dp)
+                    .padding(top = 6.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(
                     items = playlistList,

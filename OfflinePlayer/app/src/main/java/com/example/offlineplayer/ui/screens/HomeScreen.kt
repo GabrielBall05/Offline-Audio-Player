@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -43,6 +46,7 @@ import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
@@ -70,6 +74,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
     var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
+    var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
+    var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showSortDialog by remember { mutableStateOf(false) }
 
     //File Picker launcher
@@ -78,6 +84,16 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         if (uris.isNotEmpty()) {
             viewModel.importMedia(uris)
         }
+    }
+
+    //Launcher for picking artwork image
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { 
+            viewModel.updateArtworkBulk(it.toString(), idsToUpdateArtwork)
+        }
+        idsToUpdateArtwork = emptyList()
     }
 
     //Jump to top of list when list size changes or sort order is changed
@@ -131,6 +147,15 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                 onToggleAllClick = { viewModel.toggleSelectAll() },
                 onClearSelectionClick = { viewModel.clearSelection() }
             ) {
+                IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                IconButton(onClick = { 
+                    idsToUpdateArtwork = selectedIds.toList()
+                    pickImageLauncher.launch("image/*")
+                }) {
+                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
+                }
                 IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                 }
@@ -144,7 +169,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = 6.dp)
+                    .padding(top = 6.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(
                     items = mediaList,
@@ -196,7 +222,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         }
     }
 
-    //Show edit dialog if user hit edit
+    //Show edit dialog if user hit edit (single)
     mediaToEdit?.let { media ->
         EditMediaDialog(
             media = media,
@@ -204,6 +230,19 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
             onConfirm = { updatedMedia ->
                 mediaToEdit = null
                 viewModel.updateMediaItem(updatedMedia)
+            }
+        )
+    }
+
+    //Show edit dialog if user hit edit (bulk)
+    if (idsToEdit.isNotEmpty()) {
+        EditMediaBulkDialog(
+            itemCount = idsToEdit.size,
+            commonCreator = viewModel.getCommonCreator(idsToEdit),
+            onDismiss = { idsToEdit = emptyList() },
+            onConfirm = { newCreator ->
+                viewModel.updateCreatorBulk(newCreator, idsToEdit)
+                idsToEdit = emptyList()
             }
         )
     }
@@ -248,4 +287,3 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
         )
     }
 }
-

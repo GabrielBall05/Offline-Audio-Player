@@ -1,8 +1,11 @@
 package com.example.offlineplayer.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,7 +18,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
@@ -46,6 +51,7 @@ import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
@@ -79,12 +85,24 @@ fun PlaylistDetailsScreen(
     var idsToAddToAnotherPlaylist by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
+    var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
+    var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showMediaPicker by remember { mutableStateOf(false) }
     var mediaNotInPlaylist by remember { mutableStateOf<List<MediaEntity>>(emptyList()) }
     var isFetchingMedia by remember { mutableStateOf(false) }
     var showPlaylistOptionsSheet by remember { mutableStateOf(false) }
     var editingPlaylist by remember { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by remember { mutableStateOf(false) }
+
+    //Launcher for picking artwork image
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            viewModel.updateArtworkBulk(it.toString(), idsToUpdateArtwork)
+        }
+        idsToUpdateArtwork = emptyList()
+    }
 
     //Jump to top of list when list size changes
     LaunchedEffect(mediaList.size) {
@@ -174,6 +192,15 @@ fun PlaylistDetailsScreen(
                 onToggleAllClick = { viewModel.toggleSelectAll() },
                 onClearSelectionClick = { viewModel.clearSelection() }
             ) {
+                IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                IconButton(onClick = {
+                    idsToUpdateArtwork = selectedIds.toList()
+                    pickImageLauncher.launch("image/*")
+                }) {
+                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
+                }
                 IconButton(onClick = { idsToAddToAnotherPlaylist = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
                 }
@@ -187,7 +214,8 @@ fun PlaylistDetailsScreen(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = 6.dp)
+                    .padding(top = 6.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(
                     items = mediaList,
@@ -314,6 +342,19 @@ fun PlaylistDetailsScreen(
             onConfirm = { updatedMedia ->
                 mediaToEdit = null
                 viewModel.updateMediaItem(updatedMedia)
+            }
+        )
+    }
+
+    //Show edit dialog if user hit edit (bulk)
+    if (idsToEdit.isNotEmpty()) {
+        EditMediaBulkDialog(
+            itemCount = idsToEdit.size,
+            commonCreator = viewModel.getCommonCreator(idsToEdit),
+            onDismiss = { idsToEdit = emptyList() },
+            onConfirm = { newCreator ->
+                viewModel.updateCreatorBulk(newCreator, idsToEdit)
+                idsToEdit = emptyList()
             }
         )
     }

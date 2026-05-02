@@ -1,4 +1,6 @@
 TODO:
+edit multiple media items at once
+remove currently-in playlists from playlist picker's playlist list
 Handle images
 Custom queue for ordering items to play. Send to player a few at a time
 	Shuffle/repeat on expanded player screen
@@ -8,6 +10,8 @@ keep screen on in expanded player setting
 
 Notes + Ideas:
 
+default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
+remove artwork option
 change db + table names to vars in a DatabaseVars file
 use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
 	keep option to upload own image file for artwork image

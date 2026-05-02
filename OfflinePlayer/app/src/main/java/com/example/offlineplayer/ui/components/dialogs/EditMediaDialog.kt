@@ -56,9 +56,7 @@ fun EditMediaDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Item") },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 //Edit title input
                 OutlinedTextField(
                     value = title,

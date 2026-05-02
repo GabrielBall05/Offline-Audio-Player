@@ -29,6 +29,23 @@ interface MediaDao {
     @Update
     suspend fun updateMedia(media: MediaEntity)
 
+    //Update creator bulk
+    @Query("""
+        UPDATE media_items
+        SET creator = :creator
+        WHERE mediaId IN (:ids)
+    """)
+    suspend fun updateCreatorBulk(creator: String, ids: List<Int>)
+
+    //Update artwork bulk
+    @Query("""
+        UPDATE media_items
+        SET artworkUri = :artworkUri
+        WHERE mediaId IN (:ids)
+    """)
+    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>)
+
+
     //----------DELETE----------
     //Delete single media item
     @Delete

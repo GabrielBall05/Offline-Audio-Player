@@ -27,6 +27,8 @@ class MediaInteractor @Inject constructor(
 
     //DB Actions
     suspend fun updateMedia(media: MediaEntity) = repository.updateMedia(media)
+    suspend fun updateCreatorBulk(creator: String, ids: List<Int>) = repository.updateCreatorBulk(creator, ids)
+    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = repository.updateArtworkBulk(artworkUri, ids)
     suspend fun deleteMedia(media: MediaEntity) = repository.deleteMedia(media)
     suspend fun deleteMediaList(mediaIds: List<Int>) = repository.deleteMediaList(mediaIds)
     suspend fun insertMedia(media: MediaEntity) = repository.insertMedia(media)

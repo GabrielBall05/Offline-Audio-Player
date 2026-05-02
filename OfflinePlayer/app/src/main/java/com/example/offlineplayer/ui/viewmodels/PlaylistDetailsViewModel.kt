@@ -92,6 +92,13 @@ class PlaylistDetailsViewModel @Inject constructor(
         _selectedMediaIds.value = emptySet()
     }
 
+    fun getCommonCreator(ids: List<Int>): String {
+        val selectedMedia = filteredMedia.value.filter { it.mediaId in ids }
+        if (selectedMedia.isEmpty()) return ""
+        val firstCreator = selectedMedia.first().creator
+        return if (selectedMedia.all { it.creator == firstCreator }) firstCreator else ""
+    }
+
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             playlistInteractor.editPlaylist(playlist)
@@ -113,6 +120,18 @@ class PlaylistDetailsViewModel @Inject constructor(
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             mediaInteractor.updateMedia(item) //Perform db update
+        }
+    }
+
+    fun updateCreatorBulk(creator: String, ids: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaInteractor.updateCreatorBulk(creator, ids)
+        }
+    }
+
+    fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            mediaInteractor.updateArtworkBulk(artworkUri, ids)
         }
     }
 
