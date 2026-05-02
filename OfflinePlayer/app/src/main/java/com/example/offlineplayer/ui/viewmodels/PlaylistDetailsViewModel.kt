@@ -8,6 +8,8 @@ import com.example.offlineplayer.data.domain.MediaInteractor
 import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.util.getCommonArtwork
+import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -93,10 +95,11 @@ class PlaylistDetailsViewModel @Inject constructor(
     }
 
     fun getCommonCreator(ids: List<Int>): String {
-        val selectedMedia = filteredMedia.value.filter { it.mediaId in ids }
-        if (selectedMedia.isEmpty()) return ""
-        val firstCreator = selectedMedia.first().creator
-        return if (selectedMedia.all { it.creator == firstCreator }) firstCreator else ""
+        return filteredMedia.value.filter { it.mediaId in ids }.getCommonCreator()
+    }
+
+    fun getCommonArtwork(ids: List<Int>): String? {
+        return filteredMedia.value.filter { it.mediaId in ids }.getCommonArtwork()
     }
 
     fun editPlaylist(playlist: PlaylistEntity) {

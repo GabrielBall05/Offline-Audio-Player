@@ -1,5 +1,4 @@
 TODO:
-edit multiple media items at once
 remove currently-in playlists from playlist picker's playlist list
 Handle images
 Custom queue for ordering items to play. Send to player a few at a time
