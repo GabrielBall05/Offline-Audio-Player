@@ -83,16 +83,16 @@ fun PlaylistDetailsScreen(
 
     var idsToRemove by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToAddToAnotherPlaylist by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
-    var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
+    var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
+    var mediaToEdit by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var showMediaPicker by remember { mutableStateOf(false) }
-    var mediaNotInPlaylist by remember { mutableStateOf<List<MediaEntity>>(emptyList()) }
-    var isFetchingMedia by remember { mutableStateOf(false) }
-    var showPlaylistOptionsSheet by remember { mutableStateOf(false) }
-    var editingPlaylist by remember { mutableStateOf(false) }
-    var showDeletePlaylistConfirmation by remember { mutableStateOf(false) }
+    var showMediaPicker by rememberSaveable { mutableStateOf(false) }
+    var mediaNotInPlaylist by rememberSaveable { mutableStateOf<List<MediaEntity>>(emptyList()) }
+    var isFetchingMedia by rememberSaveable { mutableStateOf(false) }
+    var showPlaylistOptionsSheet by rememberSaveable { mutableStateOf(false) }
+    var editingPlaylist by rememberSaveable { mutableStateOf(false) }
+    var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
 
     //Launcher for picking artwork image
     val pickImageLauncher = rememberLauncherForActivityResult(

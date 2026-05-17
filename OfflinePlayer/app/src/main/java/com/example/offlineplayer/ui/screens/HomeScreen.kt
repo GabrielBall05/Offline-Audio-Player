@@ -72,11 +72,11 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
 
     var idsToDelete by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var selectedMediaItemForMenu by remember { mutableStateOf<MediaEntity?>(null) }
-    var mediaToEdit by remember { mutableStateOf<MediaEntity?>(null) }
+    var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
+    var mediaToEdit by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var showSortDialog by remember { mutableStateOf(false) }
+    var showSortDialog by rememberSaveable { mutableStateOf(false) }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {

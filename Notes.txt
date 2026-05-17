@@ -1,6 +1,8 @@
 TODO:
-remove currently-in playlists from playlist picker's playlist list
+in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
 Handle images
+centralize all the bottomsheet/dialog popups in each major screen
+Log statements and toasts/snackbars
 Custom queue for ordering items to play. Send to player a few at a time
 	Shuffle/repeat on expanded player screen
 default sort order setting

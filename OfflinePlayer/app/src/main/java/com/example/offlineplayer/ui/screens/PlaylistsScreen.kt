@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,14 +64,14 @@ fun PlaylistScreen(
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
 
-    var creatingPlaylist by remember { mutableStateOf(false) }
-    var playlistToAddMedia by remember { mutableStateOf<PlaylistEntity?>(null) }
-    var mediaNotInPlaylist by remember { mutableStateOf<List<MediaEntity>>(emptyList()) }
-    var isFetchingMedia by remember { mutableStateOf(false) }
-    var selectedPlaylistForMenu by remember { mutableStateOf<PlaylistEntity?>(null) }
-    var playlistToEdit by remember { mutableStateOf<PlaylistEntity?>(null) }
-    var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
-    var showSortDialog by remember { mutableStateOf(false) }
+    var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
+    var playlistToAddMedia by rememberSaveable { mutableStateOf<PlaylistEntity?>(null) }
+    var mediaNotInPlaylist by rememberSaveable { mutableStateOf<List<MediaEntity>>(emptyList()) }
+    var isFetchingMedia by rememberSaveable { mutableStateOf(false) }
+    var selectedPlaylistForMenu by rememberSaveable { mutableStateOf<PlaylistEntity?>(null) }
+    var playlistToEdit by rememberSaveable { mutableStateOf<PlaylistEntity?>(null) }
+    var playlistToDelete by rememberSaveable { mutableStateOf<PlaylistEntity?>(null) }
+    var showSortDialog by rememberSaveable { mutableStateOf(false) }
 
     //Jump to top of list when list size changes or sort order is changed
     LaunchedEffect(playlistList.size, sortOrder) {
