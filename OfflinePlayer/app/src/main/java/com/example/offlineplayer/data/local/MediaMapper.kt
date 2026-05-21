@@ -1,5 +1,6 @@
 package com.example.offlineplayer.data.local
 
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 
@@ -11,7 +12,7 @@ fun MediaEntity.toMediaItem(): MediaItem {
             MediaMetadata.Builder()
                 .setTitle(this.title)
                 .setArtist(this.creator)
-                //TODO: Link artwork uri here
+                .setArtworkUri(this.artworkUri?.toUri())
                 .build()
         )
         .build()

@@ -1,5 +1,6 @@
 package com.example.offlineplayer.ui.components.common
 
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,20 +14,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 
 @Composable
 fun SurfacedImage(
     model: String?,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
     fallbackIcon: ImageVector = Icons.Default.MusicNote,
     fallbackIconTint: Color = MaterialTheme.colorScheme.surfaceTint,
-    contentDescription: String,
-    surfaceColor: Color = MaterialTheme.colorScheme.surfaceVariant
+    surfaceColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    sizeInDp: Dp = 40.dp
 ) {
+    Log.d("OfflineAudioSuite", "uri: $model")
     Surface(
-        modifier = Modifier.size(40.dp),
-        shape = RoundedCornerShape(4.dp),
+        modifier = modifier.size(sizeInDp),
+        shape = RoundedCornerShape((sizeInDp / 10.dp).dp),
         color = surfaceColor
     ) {
         SubcomposeAsyncImage(
