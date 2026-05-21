@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,9 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.SelectionIcon
+import com.example.offlineplayer.ui.components.common.SurfacedImage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,15 +47,11 @@ fun MediaListItem(
             SelectionIcon(isSelected)
         }
 
-        //Artwork Placeholder
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = RoundedCornerShape(4.dp),
-            color = Color.LightGray
-        ) {
-            //PLACEHOLDER IMAGE
-            Icon(Icons.Default.MusicNote, contentDescription = "Artwork Image")
-        }
+        //Artwork
+        SurfacedImage(
+            model = media.artworkUri,
+            contentDescription = "Artwork Image"
+        )
 
         //Media Item Info
         Column(

@@ -5,6 +5,9 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import com.example.offlineplayer.data.local.MediaEntity
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 
 fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
     val retriever = MediaMetadataRetriever()
@@ -22,7 +25,7 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
             ?: "Unknown Creator"
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
         val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-        //TODO: use getEmbeddedPicture to extract image if there. For now, just pass in null for artworkUri
+        val artworkUri = extractAlbumArt(context, retriever)
 
         Log.d("OfflineAudioSuite", "MetadataHelper: Returning MediaEntity with the extracted metadata values and other values:" +
             "\nuri: $uri" +
@@ -31,7 +34,8 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
             "\nduration: $duration" +
             "\nfileName: $actualFileName" +
             "\ndateAdded: ${System.currentTimeMillis()}" +
-            "\nmimeType: $mimeType")
+            "\nmimeType: $mimeType" +
+            "\nartworkUri: $artworkUri")
 
         //Return MediaEntity with extracted metadata values (or defaults if it was null) and other info
         MediaEntity(
@@ -43,7 +47,7 @@ fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
             fileName = actualFileName,
             dateAdded = System.currentTimeMillis(),
             mimeType = mimeType,
-            artworkUri = null
+            artworkUri = artworkUri
         )
     } catch (e: Exception) {
         //If metadata is corrupted, return essentially blank default MediaEntity
@@ -76,4 +80,28 @@ private fun getFileNameFromUri(context: Context, uri: Uri): String {
         }
     }
     return fileName
+}
+
+private fun extractAlbumArt(context: Context, retriever: MediaMetadataRetriever): String? {
+    //Get embedded picture, return null if there isn't one to get
+    val artBytes = retriever.embeddedPicture ?: return null
+
+    //Create a unique filename for the image (UUID)
+    val uniqueId = UUID.randomUUID().toString()
+    val fileName = "art_$uniqueId.jpg"
+
+    //Ensure directory exists, create it if not
+    val directory = File(context.filesDir, "media_art").apply {
+        if (!exists()) mkdirs()
+    }
+
+    val outputFile = File(directory, fileName)
+
+    //Write bytes to file and return path
+    return try {
+        FileOutputStream(outputFile).use { it.write(artBytes) }
+        outputFile.absolutePath
+    } catch (e: Exception) {
+        null
+    }
 }

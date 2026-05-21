@@ -3,7 +3,7 @@ in playlistpicker, have "already in" playlists already selected, and don't allow
 Handle images
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
-Custom queue for ordering items to play. Send to player a few at a time
+Use exoplayer/media3 methods to implement queue its manipulation
 	Shuffle/repeat on expanded player screen
 default sort order setting
 keep screen on in expanded player setting
