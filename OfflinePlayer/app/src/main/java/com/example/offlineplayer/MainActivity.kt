@@ -138,7 +138,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
                 modifier = Modifier.fillMaxSize(),
-                windowInsets = WindowInsets(0)
+                contentWindowInsets = { WindowInsets(0) }
             ) {
                 ExpandedPlayerScreen(
                     viewModel = mainViewModel,

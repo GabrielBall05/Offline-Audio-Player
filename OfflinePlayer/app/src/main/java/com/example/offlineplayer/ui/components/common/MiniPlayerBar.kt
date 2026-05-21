@@ -110,7 +110,8 @@ fun MiniPlayerBar(
                 .align(Alignment.BottomCenter)
                 .height(3.dp), //Very thin line
             color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.Transparent
+            trackColor = Color.Transparent,
+            drawStopIndicator = {}
         )
     }
 }
