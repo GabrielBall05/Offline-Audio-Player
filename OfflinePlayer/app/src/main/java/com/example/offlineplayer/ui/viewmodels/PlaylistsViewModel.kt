@@ -72,29 +72,13 @@ class PlaylistsViewModel @Inject constructor(
 
     fun createPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            //TODO: Centralize logic (it's the same as editPlaylist)
-            var newPlaylist = playlist
-            playlist.coverImage?.let { uri ->
-                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
-                permanentPath?.let {
-                    newPlaylist = playlist.copy(coverImage = permanentPath)
-                }
-            }
-            playlistInteractor.createPlaylist(newPlaylist) //Perform db insert
+            playlistInteractor.createPlaylist(playlist) //Perform db insert
         }
     }
 
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            //TODO: Centralize logic (it's the same as createPlaylist)
-            var updatedPlaylist = playlist
-            playlist.coverImage?.let { uri ->
-                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
-                permanentPath?.let {
-                    updatedPlaylist = playlist.copy(coverImage = permanentPath)
-                }
-            }
-            playlistInteractor.editPlaylist(updatedPlaylist) //Perform db insert
+            playlistInteractor.editPlaylist(playlist) //Perform db insert
         }
     }
 

@@ -1,10 +1,14 @@
 package com.example.offlineplayer.data.domain
 
+import android.content.Context
+import androidx.core.net.toUri
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.local.PlaylistMediaItem
 import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.player.MediaControllerManager
+import com.example.offlineplayer.util.copyUriToInternalStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -15,7 +19,8 @@ import javax.inject.Singleton
 @Singleton
 class PlaylistInteractor @Inject constructor(
     private val repository: PlaylistRepository,
-    private val controllerManager: MediaControllerManager
+    private val controllerManager: MediaControllerManager,
+    @param:ApplicationContext private val context: Context
 ) {
     //Shared Flow
     val allPlaylists = repository.allPlaylists
@@ -32,8 +37,14 @@ class PlaylistInteractor @Inject constructor(
 
     //DB Actions
     fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = repository.getPlaylistById(id)
-    suspend fun createPlaylist(playlist: PlaylistEntity): Long = repository.insertPlaylist(playlist)
-    suspend fun editPlaylist(playlist: PlaylistEntity) = repository.updatePlaylist(playlist)
+    suspend fun createPlaylist(playlist: PlaylistEntity): Long {
+        val newPlaylist = processPlaylistCover(playlist)
+        return repository.insertPlaylist(newPlaylist)
+    }
+    suspend fun editPlaylist(playlist: PlaylistEntity) {
+        val updatedPlaylist = processPlaylistCover(playlist)
+        repository.updatePlaylist(updatedPlaylist)
+    }
     suspend fun deletePlaylist(playlist: PlaylistEntity) = repository.deletePlaylist(playlist)
     fun getMediaInPlaylist(playlistId: Int): Flow<List<MediaEntity>> = repository.getAllMediaInPlaylist(playlistId)
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = repository.getMediaNotInPlaylist(playlistId)
@@ -64,5 +75,16 @@ class PlaylistInteractor @Inject constructor(
         if (allNewRefs.isNotEmpty()) {
             repository.addMediaToPlaylists(allNewRefs)
         }
+    }
+
+    private fun processPlaylistCover(playlist: PlaylistEntity): PlaylistEntity {
+        var updatedPlaylist = playlist
+        playlist.coverImage?.let { uri ->
+            val permanentPath = copyUriToInternalStorage(context, uri.toUri())
+            permanentPath?.let {
+                updatedPlaylist = playlist.copy(coverImage = it)
+            }
+        }
+        return updatedPlaylist
     }
 }

@@ -124,14 +124,7 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            var updatedItem = item
-            item.artworkUri?.let { uri ->
-                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
-                permanentPath?.let {
-                    updatedItem = item.copy(artworkUri = permanentPath)
-                }
-            }
-            mediaInteractor.updateMedia(updatedItem) //Perform db update
+            mediaInteractor.updateMedia(item) //Perform db update
         }
     }
 
@@ -143,11 +136,7 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            var permanentPath = artworkUri
-            artworkUri?.let { uri ->
-                permanentPath = copyUriToInternalStorage(context, uri.toUri())
-            }
-            mediaInteractor.updateArtworkBulk(permanentPath, ids) //Perform db update
+            mediaInteractor.updateArtworkBulk(artworkUri, ids) //Perform db update
         }
     }
 

@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.repository.MediaRepository
 import com.example.offlineplayer.player.MediaControllerManager
+import com.example.offlineplayer.util.copyUriToInternalStorage
 import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -26,9 +28,26 @@ class MediaInteractor @Inject constructor(
     fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media)
 
     //DB Actions
-    suspend fun updateMedia(media: MediaEntity) = repository.updateMedia(media)
+    suspend fun updateMedia(media: MediaEntity) {
+        var updatedItem = media
+        media.artworkUri?.let { uri ->
+            val permanentPath = copyUriToInternalStorage(context, uri.toUri())
+            permanentPath?.let {
+                updatedItem = media.copy(artworkUri = permanentPath)
+            }
+        }
+        repository.updateMedia(updatedItem)
+    }
+
     suspend fun updateCreatorBulk(creator: String, ids: List<Int>) = repository.updateCreatorBulk(creator, ids)
-    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = repository.updateArtworkBulk(artworkUri, ids)
+    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
+        var permanentPath = artworkUri
+        artworkUri?.let { uri ->
+            permanentPath = copyUriToInternalStorage(context, uri.toUri())
+        }
+        repository.updateArtworkBulk(permanentPath, ids)
+    }
+
     suspend fun deleteMedia(media: MediaEntity) = repository.deleteMedia(media)
     suspend fun deleteMediaList(mediaIds: List<Int>) = repository.deleteMediaList(mediaIds)
     suspend fun insertMedia(media: MediaEntity) = repository.insertMedia(media)

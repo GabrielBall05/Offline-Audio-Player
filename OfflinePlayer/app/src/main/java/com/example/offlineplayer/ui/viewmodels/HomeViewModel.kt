@@ -134,16 +134,8 @@ class HomeViewModel @Inject constructor(
     }
 
     fun updateMediaItem(item: MediaEntity) {
-        //TODO: This gets repeated in PlaylistDetailsVM, centralize this logic.
         viewModelScope.launch(Dispatchers.IO) {
-            var updatedItem = item
-            item.artworkUri?.let { uri ->
-                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
-                permanentPath?.let {
-                    updatedItem = item.copy(artworkUri = permanentPath)
-                }
-            }
-            mediaInteractor.updateMedia(updatedItem) //Perform db update
+            mediaInteractor.updateMedia(item) //Perform db update
         }
     }
 
@@ -155,12 +147,7 @@ class HomeViewModel @Inject constructor(
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            //TODO: This gets repeated in PlaylistDetailsVM, centralize this logic.
-            var permanentPath = artworkUri
-            artworkUri?.let { uri ->
-                permanentPath = copyUriToInternalStorage(context, uri.toUri())
-            }
-            mediaInteractor.updateArtworkBulk(permanentPath, ids) //Perform db update
+            mediaInteractor.updateArtworkBulk(artworkUri, ids) //Perform db update
         }
     }
 
