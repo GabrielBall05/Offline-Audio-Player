@@ -66,19 +66,24 @@ class MediaControllerManager @Inject constructor(
     }
 
     fun playNow(mediaItem: MediaItem) {
-        controller?.let { player ->
-            //If something is already playing, insert at next spot and go to it. Otherwise, set it and play
-            if (player.mediaItemCount > 0) {
-                val nextIndex = player.currentMediaItemIndex + 1
-                player.addMediaItem(nextIndex, mediaItem)
-                //player.seekToNextMediaItem()
-                player.seekToNext()
-            } else {
-                player.setMediaItem(mediaItem)
-                player.prepare()
-            }
-            player.play() //Ensure its playing (unpause if needed)
-        }
+        val player = controller ?: return
+        val wasEmpty = player.mediaItemCount == 0
+
+        //Insert media item at the from of manualQueue and rebuild the timeline
+        manualQueue.addFirst(mediaItem)
+        rebuildTimeline(player.currentMediaItem, isStartingNew = false)
+
+        //If something was already playing, force a jump to the new item
+        if (!wasEmpty) player.seekTo(player.currentMediaItemIndex + 1, 0L)
+
+        //Force play
+        player.play()
+    }
+
+    fun addToQueue(mediaItem: MediaItem) {
+        //Insert media item to the end of manualQueue and rebuild the timeline
+        manualQueue.addLast(mediaItem)
+        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }
 
     fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
@@ -93,15 +98,6 @@ class MediaControllerManager @Inject constructor(
 
         rebuildTimeline(startingItem, isStartingNew = true)
     }
-
-    fun addToQueue(mediaItem: MediaItem) {
-        manualQueue.addLast(mediaItem)
-        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
-    }
-
-    fun play() = controller?.play()
-
-    fun pause() = controller?.pause()
 
     fun seekToNext() {
         controller?.let {
@@ -118,8 +114,6 @@ class MediaControllerManager @Inject constructor(
     }
 
     fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
-
-    fun stop() { controller?.stop() }
 
     fun togglePlayPause() {
         controller?.let {
@@ -149,47 +143,49 @@ class MediaControllerManager @Inject constructor(
 
     private fun rebuildTimeline(currentPlayingItem: MediaItem?, isStartingNew: Boolean) {
         val player = controller ?: return
-        if (sourcePlaylist.isEmpty()) return
+        //Return if there is nothing to play at all
+        if (sourcePlaylist.isEmpty() && manualQueue.isEmpty()) return
 
-        val current = currentPlayingItem ?: sourcePlaylist.first()
-
-        //Determine which timeline we're following
+        //Identify the active base playlist (can be empty)
         val basePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
 
-        //Find where we are in the timeline
-        var baseIndex = basePlaylist.indexOfFirst { it.mediaId == current.mediaId }
-
-        if (baseIndex != -1) { //We are in base playlist - update tracker
-            lastKnownBaseItem = current
-        } else  { //Playing manual queue item - resume from last known base item
-            baseIndex = basePlaylist.indexOfFirst { it.mediaId == lastKnownBaseItem?.mediaId }
+        //Find our position in the base playlist (if one exists)
+        var baseIndex = -1
+        if (basePlaylist.isNotEmpty() && currentPlayingItem != null) {
+            baseIndex = basePlaylist.indexOfFirst { it.mediaId == currentPlayingItem.mediaId }
+            if (baseIndex != -1) {
+                lastKnownBaseItem = currentPlayingItem
+            } else {
+                baseIndex = basePlaylist.indexOfFirst { it.mediaId == lastKnownBaseItem?.mediaId }
+            }
         }
 
         //Get everything after current position
         val remainingBaseItems = if (baseIndex != -1 && baseIndex + 1 < basePlaylist.size) {
             basePlaylist.subList(baseIndex + 1, basePlaylist.size)
+        } else if (basePlaylist.isNotEmpty() && currentPlayingItem == null) {
+            basePlaylist //Nothing is playing yet, so all base items are upcoming
         } else {
-            emptyList()
+            emptyList() //No base playlist active, or we reached the end of it
         }
 
-        //Construct final active timeline
-        activeTimeline = listOfNotNull(current) + manualQueue + remainingBaseItems
+        //Construct the active timeline
+        activeTimeline = listOfNotNull(currentPlayingItem) + manualQueue + remainingBaseItems
+        //Return if there is still nothing to play
+        if (activeTimeline.isEmpty()) return
 
         //Give to ExoPlayer
-        if (isStartingNew) { //Hard reset for new playlist
+        if (isStartingNew || player.mediaItemCount == 0) { //Hard reset for new playlist or empty player
             player.setMediaItems(activeTimeline)
             player.prepare()
             player.play()
-        } else { //Seamless update - replace upcoming tracks without stopping currently playing media item
+        } else {
             val nextIndex = player.currentMediaItemIndex + 1
             val itemsToAdd = manualQueue.toList() + remainingBaseItems
 
-            //Clear everything after currently playing song
             if (player.mediaItemCount > nextIndex) {
                 player.removeMediaItems(nextIndex, player.mediaItemCount)
             }
-
-            //Inject newly calculated future
             player.addMediaItems(nextIndex, itemsToAdd)
         }
     }
@@ -218,10 +214,18 @@ class MediaControllerManager @Inject constructor(
                         _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
 
-                        //Check if the media item we just transitioned to was the next item in the manual queue
-                        if (manualQueue.isNotEmpty() && mediaItem?.mediaId == manualQueue.first().mediaId) {
-                            manualQueue.removeFirst() //Pop
-                        } else { //Update tracker
+                        if (mediaItem == null) return
+                        //Check if we just transitioned into the next manualQueue item - pop if so
+                        if (manualQueue.isNotEmpty() && mediaItem.mediaId == manualQueue.first().mediaId) {
+                            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
+                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+                                manualQueue.removeFirst()
+                            }
+                        }
+                        //Update tracker
+                        val isInBasePlaylist = sourcePlaylist.any { it.mediaId == mediaItem.mediaId }
+                        if (isInBasePlaylist) {
                             lastKnownBaseItem = mediaItem
                         }
                     }
@@ -244,6 +248,8 @@ class MediaControllerManager @Inject constructor(
             }
         }, MoreExecutors.directExecutor())
     }
+
+    fun stop() { controller?.stop() }
 
     fun releaseController() {
         controllerFuture?.let {

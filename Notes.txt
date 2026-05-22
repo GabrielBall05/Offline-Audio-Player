@@ -1,6 +1,4 @@
 TODO:
-Fix "add to queue" (only adds if there's a playlist playing)
-Fix "play" button (doesn't skip to it)
 Bulk add to queue
 in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
 centralize all the bottomsheet/dialog popups in each major screen
