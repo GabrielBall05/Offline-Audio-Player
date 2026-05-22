@@ -2,6 +2,7 @@ TODO:
 fix click error
 do coil for every image
 Remove image option
+Fix "play" button (doesn't skip to it)
 in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
 Handle images
 centralize all the bottomsheet/dialog popups in each major screen

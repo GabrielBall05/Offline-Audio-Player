@@ -40,13 +40,11 @@ fun SurfacedImage(
             contentScale = ContentScale.Crop, //TODO: Change ContentScale to something else if it crops badly
             modifier = Modifier.fillMaxSize(),
             error = {
-                Icon(
-                    imageVector = fallbackIcon,
-                    contentDescription = "Default $contentDescription",
-                    tint = fallbackIconTint //TODO: Change to something else or remove entirely
-                )
+                Icon(imageVector = fallbackIcon, contentDescription = "Default $contentDescription", tint = fallbackIconTint)
             },
-            loading = { /* Leaving blank to let Surface act as the loading placeholder TODO: Maybe change to the same image as error (default fallback) */ }
+            loading = {
+                Icon(imageVector = fallbackIcon, contentDescription = "Default $contentDescription", tint = fallbackIconTint)
+            }
         )
     }
 }

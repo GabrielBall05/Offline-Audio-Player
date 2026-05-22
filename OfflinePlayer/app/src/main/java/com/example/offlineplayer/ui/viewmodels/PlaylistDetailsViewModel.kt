@@ -1,6 +1,7 @@
 package com.example.offlineplayer.ui.viewmodels
 
 import android.content.Context
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import com.example.offlineplayer.data.domain.MediaInteractor
 import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.util.copyUriToInternalStorage
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -122,7 +124,14 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateMedia(item) //Perform db update
+            var updatedItem = item
+            item.artworkUri?.let { uri ->
+                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
+                permanentPath?.let {
+                    updatedItem = item.copy(artworkUri = permanentPath)
+                }
+            }
+            mediaInteractor.updateMedia(updatedItem) //Perform db update
         }
     }
 
@@ -134,7 +143,11 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateArtworkBulk(artworkUri, ids)
+            var permanentPath = artworkUri
+            artworkUri?.let { uri ->
+                permanentPath = copyUriToInternalStorage(context, uri.toUri())
+            }
+            mediaInteractor.updateArtworkBulk(permanentPath, ids) //Perform db update
         }
     }
 

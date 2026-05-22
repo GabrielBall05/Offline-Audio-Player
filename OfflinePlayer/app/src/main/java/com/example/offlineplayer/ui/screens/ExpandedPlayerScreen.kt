@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.offlineplayer.ui.components.common.SurfacedImage
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
 import com.example.offlineplayer.util.KeepScreenOn
 import kotlinx.coroutines.launch
@@ -122,15 +123,15 @@ fun ExpandedPlayerScreen(
             }
         }
 
-        //Artwork Placeholder
-        Surface(
+        //Artwork
+        SurfacedImage(
+            model = currentMediaItem?.mediaMetadata?.artworkUri?.toString(),
+            contentDescription = "Artwork Image",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .aspectRatio(1f),
-            shape = RoundedCornerShape(8.dp),
-            color = Color.Gray
-        ) { /*PUT IMAGE HERE OR REPLACE SURFACE WITH IMAGE*/ }
+        )
 
         //Information + Slider + Controls
         Column(

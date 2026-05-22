@@ -1,12 +1,16 @@
 package com.example.offlineplayer.ui.viewmodels
 
+import android.content.Context
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.util.PlaylistSortOrder
+import com.example.offlineplayer.util.copyUriToInternalStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
-    private val playlistInteractor: PlaylistInteractor
+    private val playlistInteractor: PlaylistInteractor,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     //For searching
@@ -67,13 +72,29 @@ class PlaylistsViewModel @Inject constructor(
 
     fun createPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.createPlaylist(playlist)
+            //TODO: Centralize logic (it's the same as editPlaylist)
+            var newPlaylist = playlist
+            playlist.coverImage?.let { uri ->
+                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
+                permanentPath?.let {
+                    newPlaylist = playlist.copy(coverImage = permanentPath)
+                }
+            }
+            playlistInteractor.createPlaylist(newPlaylist) //Perform db insert
         }
     }
 
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.editPlaylist(playlist)
+            //TODO: Centralize logic (it's the same as createPlaylist)
+            var updatedPlaylist = playlist
+            playlist.coverImage?.let { uri ->
+                val permanentPath = copyUriToInternalStorage(context, uri.toUri())
+                permanentPath?.let {
+                    updatedPlaylist = playlist.copy(coverImage = permanentPath)
+                }
+            }
+            playlistInteractor.editPlaylist(updatedPlaylist) //Perform db insert
         }
     }
 

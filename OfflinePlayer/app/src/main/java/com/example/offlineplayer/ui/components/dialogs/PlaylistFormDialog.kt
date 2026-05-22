@@ -4,33 +4,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.ui.components.common.ImagePickerRow
 
 @Composable
 fun PlaylistFormDialog(
@@ -40,7 +28,7 @@ fun PlaylistFormDialog(
 ) {
     var name by remember { mutableStateOf(playlistToEdit?.name ?: "") }
     var description by remember { mutableStateOf(playlistToEdit?.description ?: "") }
-    var coverUri by remember { mutableStateOf(playlistToEdit?.coverImage ?: "") }
+    var coverUri by remember { mutableStateOf(playlistToEdit?.coverImage) }
 
     var nameTouched by remember { mutableStateOf(false) }
 
@@ -79,40 +67,25 @@ fun PlaylistFormDialog(
                 )
 
                 //Cover Image
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Surface(
-                        modifier = Modifier.size(60.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color.LightGray
-                    ) {
-                        if (coverUri != null) { //TODO: Change to actual artwork using Coil and AsyncImage
-                            Icon(Icons.Default.Image, contentDescription = "Cover Image", modifier = Modifier.padding(16.dp))
-                        } else {
-                            Icon(Icons.Default.MusicNote, contentDescription = "Cover Image", modifier = Modifier.padding(16.dp))
-                        }
-                    }
-
-                    Spacer(Modifier.width(12.dp))
-
-                    TextButton(onClick = { pickImageLauncher.launch("image/*") }) {
-                        Text("Select Cover Image")
-                    }
-                }
+                ImagePickerRow(
+                    model = coverUri,
+                    contentDescription = "Cover Image",
+                    showRemoveButton = (coverUri != null),
+                    onImageClick = { pickImageLauncher.launch("image/*") },
+                    onRemoveClick = { coverUri = null }
+                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     val finalDescription = description.takeIf { it.isNotBlank() }
-                    val finalCoverUri = coverUri.takeIf { it.isNotBlank() }
+                    //val finalCoverUri = coverUri.takeIf { it.isNotBlank() }
 
                     playlistToEdit?.let {
-                        onConfirm(it.copy(name = name, description = finalDescription, coverImage = finalCoverUri))
+                        onConfirm(it.copy(name = name, description = finalDescription, coverImage = coverUri))
                     } ?: run {
-                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = finalCoverUri, dateCreated = System.currentTimeMillis())
+                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = coverUri, dateCreated = System.currentTimeMillis())
                         onConfirm(newPlaylist)
                     }
                 },

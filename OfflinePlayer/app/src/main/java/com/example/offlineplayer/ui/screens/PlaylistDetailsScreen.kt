@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
+import com.example.offlineplayer.ui.components.common.SurfacedImage
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
@@ -142,17 +143,18 @@ fun PlaylistDetailsScreen(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //Artwork Placeholder
-                    Surface(
-                        modifier = Modifier.size(80.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color.LightGray
-                    ) { Icon(Icons.Default.LibraryMusic, contentDescription = "Artwork Image") }
+                    //Artwork
+                    SurfacedImage(
+                        model = playlist?.coverImage,
+                        contentDescription = "Cover Image",
+                        fallbackIcon = Icons.Default.LibraryMusic,
+                        sizeInDp = 80.dp
+                    )
 
                     //Playlist Details
                     Column(
                         modifier = Modifier.padding(start = 8.dp),
-                        horizontalAlignment = Alignment.Start, //Maybe Arrangement.Center - I can't decide
+                        horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)

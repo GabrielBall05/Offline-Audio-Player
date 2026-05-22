@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun EditImageRow(
+fun ImagePickerRow(
     model: String?,
     contentDescription: String,
     showRemoveButton: Boolean,

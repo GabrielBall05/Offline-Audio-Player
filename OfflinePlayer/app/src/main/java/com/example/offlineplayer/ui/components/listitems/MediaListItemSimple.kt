@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.SelectionIcon
+import com.example.offlineplayer.ui.components.common.SurfacedImage
 
 @Composable
 fun MediaListItemSimple(
@@ -40,12 +41,11 @@ fun MediaListItemSimple(
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        //Artwork Placeholder
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = RoundedCornerShape(8.dp),
-            color = Color.LightGray
-        ) { Icon(Icons.Default.MusicNote, contentDescription = "Artwork Image") }
+        //Artwork
+        SurfacedImage(
+            model = media.artworkUri,
+            contentDescription = "Artwork Image"
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 

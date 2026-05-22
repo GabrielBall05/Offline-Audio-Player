@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -160,10 +161,9 @@ fun BottomNavigationBar(navController: NavController) {
         items.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    //TODO: Customize
                     val icon = when(screen) {
                         Screen.Home -> Icons.Default.Home
-                        Screen.Playlists -> Icons.AutoMirrored.Filled.List
+                        Screen.Playlists -> Icons.Default.LibraryMusic
                         Screen.Settings -> Icons.Default.Settings
                         else -> Icons.Default.Favorite
                     }

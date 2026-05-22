@@ -18,7 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.MediaEntity
-import com.example.offlineplayer.ui.components.common.EditImageRow
+import com.example.offlineplayer.ui.components.common.ImagePickerRow
 
 @Composable
 fun EditMediaDialog(
@@ -72,7 +72,7 @@ fun EditMediaDialog(
                 )
 
                 //Artwork Image (Shows the SurfacedImage as well as info + remove option)
-                EditImageRow(
+                ImagePickerRow(
                     model = artworkUri,
                     contentDescription = "Artwork Image",
                     showRemoveButton = (artworkUri != null),

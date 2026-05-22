@@ -134,6 +134,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun updateMediaItem(item: MediaEntity) {
+        //TODO: This gets repeated in PlaylistDetailsVM, centralize this logic.
         viewModelScope.launch(Dispatchers.IO) {
             var updatedItem = item
             item.artworkUri?.let { uri ->
@@ -154,6 +155,7 @@ class HomeViewModel @Inject constructor(
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
+            //TODO: This gets repeated in PlaylistDetailsVM, centralize this logic.
             var permanentPath = artworkUri
             artworkUri?.let { uri ->
                 permanentPath = copyUriToInternalStorage(context, uri.toUri())

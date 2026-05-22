@@ -61,12 +61,12 @@ fun MiniPlayerBar(
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            //Artwork Placeholder
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(4.dp),
-                color = Color.Gray
-            ) { /*PUT IMAGE HERE OR REPLACE SURFACE WITH IMAGE*/ }
+            //Artwork
+            SurfacedImage(
+                model = currentMedia?.mediaMetadata?.artworkUri?.toString(),
+                contentDescription = "Artwork Image",
+                sizeInDp = 50.dp
+            )
 
             //Title & Creator
             Column(

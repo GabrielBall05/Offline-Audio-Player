@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.ui.components.common.SelectionIcon
+import com.example.offlineplayer.ui.components.common.SurfacedImage
 
 @Composable
 fun PlaylistListItemSimple(
@@ -35,12 +36,12 @@ fun PlaylistListItemSimple(
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        //Artwork Placeholder
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = RoundedCornerShape(8.dp),
-            color = Color.LightGray
-        ) { Icon(Icons.Default.LibraryMusic, contentDescription = "Artwork Image") }
+        //Artwork
+        SurfacedImage(
+            model = playlist.coverImage,
+            contentDescription = "Cover Image",
+            fallbackIcon = Icons.Default.LibraryMusic,
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 
