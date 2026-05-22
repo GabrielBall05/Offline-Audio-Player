@@ -70,6 +70,7 @@ fun PlaylistFormDialog(
                 ImagePickerRow(
                     model = coverUri,
                     contentDescription = "Cover Image",
+                    mainText = "Cover Image",
                     showRemoveButton = (coverUri != null),
                     onImageClick = { pickImageLauncher.launch("image/*") },
                     onRemoveClick = { coverUri = null }

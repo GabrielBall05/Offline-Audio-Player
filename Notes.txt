@@ -1,26 +1,32 @@
 TODO:
-fix click error
-do coil for every image
-Remove image option
 Fix "play" button (doesn't skip to it)
 in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
-Handle images
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
+Loading popup for things that take time (ex: uploading media)
 Use exoplayer/media3 methods to implement queue its manipulation
 	Shuffle/repeat on expanded player screen
+default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
 default sort order setting
 keep screen on in expanded player setting
-
-
-Notes + Ideas:
-
-default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
-remove artwork option
+default playlist play order (shuffle vs inorder)
 change db + table names to vars in a DatabaseVars file
-use getEmbeddedPicture() in MediaMetadatRetriever for artwork image from metadata
-	keep option to upload own image file for artwork image
-Make ExpandedPlayer a BottomSheetScaffold (harder but has good gesture/animation options)
+when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
+try to combine editing image + creator at the same time again for media items now that images are done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

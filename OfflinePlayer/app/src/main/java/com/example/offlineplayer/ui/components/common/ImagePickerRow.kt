@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 fun ImagePickerRow(
     model: String?,
     contentDescription: String,
+    mainText: String = "Artwork",
     showRemoveButton: Boolean,
     onImageClick: () -> Unit,
     onRemoveClick: () -> Unit
@@ -46,7 +47,7 @@ fun ImagePickerRow(
         //Info
         Column(modifier = Modifier.padding(start = 16.dp)) {
             Text(
-                text = "Artwork",
+                text = mainText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
