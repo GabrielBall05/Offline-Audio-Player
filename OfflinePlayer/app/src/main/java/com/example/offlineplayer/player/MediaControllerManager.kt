@@ -25,73 +25,78 @@ class MediaControllerManager @Inject constructor(
     var controller: MediaController? = null
         private set
 
-
+    //Current item for UI
     private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
     val currentMediaItem = _currentMediaItem.asStateFlow()
 
+    //Playing state for UI
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
 
+    //Current position state for UI
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition = _currentPosition.asStateFlow()
 
+    //Duration state for UI
     private val _duration = MutableStateFlow(0L)
     val duration = _duration.asStateFlow()
+
+    //Shuffle state for UI
+    private val _isShuffleModeEnabled = MutableStateFlow(false)
+    val isShuffleModeEnabled = _isShuffleModeEnabled.asStateFlow()
+
+    //Source of truth - Original playlist in order
+    private var sourcePlaylist: List<MediaItem> = emptyList()
+
+    //Stable shuffled playlist
+    private var shuffledPlaylist: List<MediaItem> = emptyList()
+
+    //User's manual FIFO queue
+    private val manualQueue = ArrayDeque<MediaItem>()
+
+    //To give ExoPlayer
+    private var activeTimeline: List<MediaItem> = emptyList()
+
+    //Tracks position in base playlist
+    private var lastKnownBaseItem: MediaItem? = null
 
 
     init {
         setupController()
     }
 
-    //TODO: Make work with shuffle
-    fun playNow(mediaEntity: MediaEntity) {
+    fun playNow(mediaItem: MediaItem) {
         controller?.let { player ->
-            val mediaItem = mediaEntity.toMediaItem()
-
             //If something is already playing, insert at next spot and go to it. Otherwise, set it and play
             if (player.mediaItemCount > 0) {
                 val nextIndex = player.currentMediaItemIndex + 1
                 player.addMediaItem(nextIndex, mediaItem)
-                player.seekToNextMediaItem()
+                //player.seekToNextMediaItem()
+                player.seekToNext()
             } else {
                 player.setMediaItem(mediaItem)
                 player.prepare()
             }
-
-            //Ensure its playing (unpause if needed)
-            player.play()
+            player.play() //Ensure its playing (unpause if needed)
         }
     }
 
-    //TODO: Make work with shuffle
-    fun addToQueue(mediaEntity: MediaEntity) {
-        controller?.let { player ->
-            val mediaItem = mediaEntity.toMediaItem()
+    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
+        sourcePlaylist = mediaItems
+        manualQueue.clear()
 
-            //If something is already playing, insert at next spot. Otherwise, fresh start
-            if (player.mediaItemCount > 0) {
-                val nextIndex = player.currentMediaItemIndex + 1
-                player.addMediaItem(nextIndex, mediaItem)
-            } else {
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                player.play()
-            }
-        }
+        val startingItem = sourcePlaylist.getOrNull(startItemIndex)
+        lastKnownBaseItem = startingItem
+
+        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != startItemIndex }.shuffled()
+        shuffledPlaylist = listOfNotNull(startingItem) + remaining
+
+        rebuildTimeline(startingItem, isStartingNew = true)
     }
 
-    fun playPlaylist(mediaList: List<MediaEntity>, startIndex: Int = 0) {
-        if (mediaList.isEmpty()) {
-            Log.d("OfflineAudioSuite", "MediaControllerManager: Cannot play empty playlist")
-            return
-        }
-        controller?.let { player ->
-            val mediaItems = mediaList.map { it.toMediaItem() }
-            //Replace current queue with the new playlist
-            player.setMediaItems(mediaItems, startIndex, 0)
-            player.prepare()
-            player.play()
-        }
+    fun addToQueue(mediaItem: MediaItem) {
+        manualQueue.addLast(mediaItem)
+        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }
 
     fun play() = controller?.play()
@@ -122,6 +127,72 @@ class MediaControllerManager @Inject constructor(
         }
     }
 
+    fun toggleShuffle() {
+        _isShuffleModeEnabled.value = !_isShuffleModeEnabled.value
+        val current = controller?.currentMediaItem
+
+        if (_isShuffleModeEnabled.value) {
+            val anchorItem = lastKnownBaseItem ?: current ?: sourcePlaylist.firstOrNull()
+            val remaining = sourcePlaylist.filter { it.mediaId != anchorItem?.mediaId }.shuffled()
+            shuffledPlaylist = listOfNotNull(anchorItem) + remaining
+        }
+
+        rebuildTimeline(current, isStartingNew = false)
+    }
+
+    fun updateCurrentPosition() {
+        controller?.let {
+            _currentPosition.value = it.currentPosition
+            _duration.value = it.duration.coerceAtLeast(0L)
+        }
+    }
+
+    private fun rebuildTimeline(currentPlayingItem: MediaItem?, isStartingNew: Boolean) {
+        val player = controller ?: return
+        if (sourcePlaylist.isEmpty()) return
+
+        val current = currentPlayingItem ?: sourcePlaylist.first()
+
+        //Determine which timeline we're following
+        val basePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+
+        //Find where we are in the timeline
+        var baseIndex = basePlaylist.indexOfFirst { it.mediaId == current.mediaId }
+
+        if (baseIndex != -1) { //We are in base playlist - update tracker
+            lastKnownBaseItem = current
+        } else  { //Playing manual queue item - resume from last known base item
+            baseIndex = basePlaylist.indexOfFirst { it.mediaId == lastKnownBaseItem?.mediaId }
+        }
+
+        //Get everything after current position
+        val remainingBaseItems = if (baseIndex != -1 && baseIndex + 1 < basePlaylist.size) {
+            basePlaylist.subList(baseIndex + 1, basePlaylist.size)
+        } else {
+            emptyList()
+        }
+
+        //Construct final active timeline
+        activeTimeline = listOfNotNull(current) + manualQueue + remainingBaseItems
+
+        //Give to ExoPlayer
+        if (isStartingNew) { //Hard reset for new playlist
+            player.setMediaItems(activeTimeline)
+            player.prepare()
+            player.play()
+        } else { //Seamless update - replace upcoming tracks without stopping currently playing media item
+            val nextIndex = player.currentMediaItemIndex + 1
+            val itemsToAdd = manualQueue.toList() + remainingBaseItems
+
+            //Clear everything after currently playing song
+            if (player.mediaItemCount > nextIndex) {
+                player.removeMediaItems(nextIndex, player.mediaItemCount)
+            }
+
+            //Inject newly calculated future
+            player.addMediaItems(nextIndex, itemsToAdd)
+        }
+    }
 
     fun setupController() {
         if (controllerFuture != null) return
@@ -146,6 +217,13 @@ class MediaControllerManager @Inject constructor(
                         super.onMediaItemTransition(mediaItem, reason)
                         _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
+
+                        //Check if the media item we just transitioned to was the next item in the manual queue
+                        if (manualQueue.isNotEmpty() && mediaItem?.mediaId == manualQueue.first().mediaId) {
+                            manualQueue.removeFirst() //Pop
+                        } else { //Update tracker
+                            lastKnownBaseItem = mediaItem
+                        }
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -165,13 +243,6 @@ class MediaControllerManager @Inject constructor(
                 controllerFuture = null
             }
         }, MoreExecutors.directExecutor())
-    }
-
-    fun updateCurrentPosition() {
-        controller?.let {
-            _currentPosition.value = it.currentPosition
-            _duration.value = it.duration.coerceAtLeast(0L)
-        }
     }
 
     fun releaseController() {

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import com.example.offlineplayer.data.local.MediaEntity
+import com.example.offlineplayer.data.local.toMediaItem
 import com.example.offlineplayer.data.repository.MediaRepository
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.copyUriToInternalStorage
@@ -24,8 +25,8 @@ class MediaInteractor @Inject constructor(
     val allMedia = repository.allMedia
 
     //Player Actions
-    fun playMedia(media: MediaEntity) = controllerManager.playNow(media)
-    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media)
+    fun playMedia(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
+    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media.toMediaItem())
 
     //DB Actions
     suspend fun updateMedia(media: MediaEntity) {

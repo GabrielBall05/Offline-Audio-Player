@@ -29,11 +29,13 @@ import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.ShuffleOn
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -73,6 +75,7 @@ fun ExpandedPlayerScreen(
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val duration by viewModel.duration.collectAsStateWithLifecycle()
+    val isShuffleModeEnabled by viewModel.isShuffleModeEnabled.collectAsStateWithLifecycle()
 
     //Slider states
     var sliderPosition by remember { mutableFloatStateOf(0F) }
@@ -146,8 +149,7 @@ fun ExpandedPlayerScreen(
                     .padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f)) {
                     //Title
                     Text(
                         text = currentMediaItem?.mediaMetadata?.title?.toString() ?: "Unknown Title",
@@ -256,11 +258,12 @@ fun ExpandedPlayerScreen(
                 //Play Mode (Shuffle vs Order)
                 IconButton(
                     modifier = Modifier.size(32.dp),
-                    onClick = { viewModel.onPlayModeClicked() }
+                    onClick = { viewModel.toggleShuffle() }
                 ) {
                     Icon(
                         modifier = Modifier.fillMaxSize(),
-                        imageVector = Icons.Default.Shuffle,
+                        imageVector = if(isShuffleModeEnabled) Icons.Default.ShuffleOn else Icons.Default.Shuffle,
+                        tint = if(isShuffleModeEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                         contentDescription = "Play Mode"
                     )
                 }

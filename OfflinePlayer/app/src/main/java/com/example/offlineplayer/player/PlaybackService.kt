@@ -9,6 +9,7 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.example.offlineplayer.data.local.SettingsDao
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,15 +18,10 @@ class PlaybackService : MediaSessionService() {
     @Inject lateinit var settingsDao: SettingsDao //Automatically provided by Hilt
     private var mediaSession: MediaSession? = null
     private lateinit var exoPlayer: ExoPlayer //Engine that plays the audio
-    private var crossFadeMs: Int = 0 //For user's crossfade setting
 
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
-            //If crossfade is enabled, do fade logic
-            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && crossFadeMs > 0) {
-                applyCrossfade()
-            }
         }
     }
 
@@ -53,11 +49,9 @@ class PlaybackService : MediaSessionService() {
 
     private fun loadSettings() {
         //Use Coroutine to collect the Flow from Room db
-        kotlinx.coroutines.MainScope().launch {
+        MainScope().launch {
             settingsDao.getSettings().collect { settings ->
-                settings?.let {
-                    crossFadeMs = it.crossfadeSeconds * 1000
-                }
+
             }
         }
     }
@@ -74,11 +68,5 @@ class PlaybackService : MediaSessionService() {
             mediaSession = null
         }
         super.onDestroy()
-    }
-
-    private fun applyCrossfade() {
-        //TO IMPLEMENT
-        Log.d("OfflineAudioSuite", "PlaybackService: Crossfading audio items (to be implemented) for $crossFadeMs ms")
-        //TO IMPLEMENT
     }
 }

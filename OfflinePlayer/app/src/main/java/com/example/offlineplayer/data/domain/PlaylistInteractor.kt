@@ -5,6 +5,7 @@ import androidx.core.net.toUri
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.local.PlaylistMediaItem
+import com.example.offlineplayer.data.local.toMediaItem
 import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.copyUriToInternalStorage
@@ -29,7 +30,9 @@ class PlaylistInteractor @Inject constructor(
     suspend fun playPlaylistById(id: Int) {
         //Perform DB operation on IO thread
         val mediaList = withContext(Dispatchers.IO) {
-            repository.getAllMediaInPlaylist(id).first()
+            repository.getAllMediaInPlaylist(id)
+                .first()
+                .map { it.toMediaItem() }
         }
         //MediaController methods must be called on the main thread
         controllerManager.playPlaylist(mediaList)

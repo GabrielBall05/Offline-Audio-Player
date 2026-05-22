@@ -47,7 +47,6 @@ fun MiniPlayerBar(
 
     val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
 
-    //This Box allows me to layer the Progress Bar at the very bottom
     Box(
         modifier = Modifier
             .fillMaxWidth()

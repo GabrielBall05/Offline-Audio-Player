@@ -3,6 +3,8 @@ package com.example.offlineplayer.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.offlineplayer.data.domain.MediaInteractor
+import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -13,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val controllerManager: MediaControllerManager
+    private val controllerManager: MediaControllerManager,
+    private val mediaInteractor: MediaInteractor,
+    private val playlistInteractor: PlaylistInteractor
 ): ViewModel() {
 
     private var playbackJob: Job? = null
@@ -23,12 +27,7 @@ class MainViewModel @Inject constructor(
     val isPlaying = controllerManager.isPlaying
     val currentPosition = controllerManager.currentPosition
     val duration = controllerManager.duration
-
-    //UI actions
-    fun togglePlayPause() = controllerManager.togglePlayPause()
-    fun seekToNext() = controllerManager.seekToNext()
-    fun seekToPrevious() = controllerManager.seekToPrevious()
-    fun seekTo(positionMs: Long) = controllerManager.seekTo(positionMs)
+    val isShuffleModeEnabled = controllerManager.isShuffleModeEnabled
 
     init {
         // Ensure the controller is connected when the app starts or reopens
@@ -43,6 +42,23 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    //Player actions
+    fun togglePlayPause() = controllerManager.togglePlayPause()
+    fun seekToNext() = controllerManager.seekToNext()
+    fun seekToPrevious() = controllerManager.seekToPrevious()
+    fun seekTo(positionMs: Long) = controllerManager.seekTo(positionMs)
+    fun toggleShuffle() = controllerManager.toggleShuffle()
+    fun onRepeatModeClicked() {
+        //TODO: Implement
+        Log.d("OfflineAudioSuite", "MainVM: User requesting to change repeat mode")
+    }
+    fun playPlaylist(playlistId: Int) {
+        viewModelScope.launch {
+            playlistInteractor.playPlaylistById(playlistId)
+        }
+    }
+
+
     fun onAddToPlaylistClicked(id: Int) {
         viewModelScope.launch {
             //TODO: Open playlist picker
@@ -50,15 +66,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onRepeatModeClicked() {
-        //TODO: Implement
-        Log.d("OfflineAudioSuite", "MainVM: User requesting to change repeat mode")
-    }
-
-    fun onPlayModeClicked() {
-        //TODO: Implement
-        Log.d("OfflineAudioSuite", "MainVM: User requesting to change play mode (shuffle/order)")
-    }
 
     private fun startPlaybackTicker() {
         playbackJob?.cancel() //Clear any existing job
