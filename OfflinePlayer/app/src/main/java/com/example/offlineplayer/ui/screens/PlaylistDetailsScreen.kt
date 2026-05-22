@@ -67,8 +67,11 @@ import com.example.offlineplayer.ui.viewmodels.PlaylistDetailsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistDetailsScreen(
+    viewModel: PlaylistDetailsViewModel = hiltViewModel(), //Let Hilt inject ViewModel
     onBack: () -> Unit,
-    viewModel: PlaylistDetailsViewModel = hiltViewModel()
+    onPlayMediaClick: (MediaEntity) -> Unit,
+    onAddToQueueClick: (MediaEntity) -> Unit,
+    onPlayPlaylistClick: (Int) -> Unit
 ) {
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
@@ -256,7 +259,7 @@ fun PlaylistDetailsScreen(
                         showPlaylistOptionsSheet = false
                         when (option) {
                             PlaylistOption.EDIT -> editingPlaylist = true
-                            PlaylistOption.PLAY_NOW -> viewModel.playPlaylistById(currentPlaylist.playlistId)
+                            PlaylistOption.PLAY_NOW -> onPlayPlaylistClick(currentPlaylist.playlistId)
                             PlaylistOption.ADD_MEDIA -> showMediaPicker = true
                             PlaylistOption.DELETE -> showDeletePlaylistConfirmation = true
                         }
@@ -325,8 +328,8 @@ fun PlaylistDetailsScreen(
                     selectedMediaItemForMenu = null
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
-                        MediaOption.PLAY_NOW -> viewModel.playMedia(media)
-                        MediaOption.ADD_TO_QUEUE -> viewModel.addMediaToQueue(media)
+                        MediaOption.PLAY_NOW -> onPlayMediaClick(media)
+                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(media)
                         MediaOption.ADD_TO_PLAYLIST -> idsToAddToAnotherPlaylist = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> idsToRemove = listOf(media.mediaId)
                         MediaOption.DELETE -> { /* Not used in playlist details screen */ }

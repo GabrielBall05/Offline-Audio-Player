@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -49,7 +48,7 @@ import com.example.offlineplayer.ui.components.common.MiniPlayerBar
 import com.example.offlineplayer.ui.screens.ExpandedPlayerScreen
 import com.example.offlineplayer.ui.screens.HomeScreen
 import com.example.offlineplayer.ui.screens.PlaylistDetailsScreen
-import com.example.offlineplayer.ui.screens.PlaylistScreen
+import com.example.offlineplayer.ui.screens.PlaylistsScreen
 import com.example.offlineplayer.ui.screens.SettingsScreen
 import com.example.offlineplayer.ui.theme.OfflinePlayerTheme
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
@@ -108,27 +107,37 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(if (hideBottomBars) PaddingValues(0.dp) else innerPadding)
         ) {
-            composable(
-                route = Screen.Home.route,
-                content = { HomeScreen() }
-            )
-            composable(
-                route = Screen.Playlists.route,
-                content = { PlaylistScreen(navController) }
-            )
-            composable(
-                route = Screen.Settings.route,
-                content = { SettingsScreen() }
-            )
+            composable(route = Screen.Home.route) {
+                HomeScreen(
+                    onPlayMediaClick = { mainViewModel.playMediaNow(it) },
+                    onAddToQueueClick = { mainViewModel.addMediaToQueue(it) }
+                )
+            }
+
+            composable(route = Screen.Playlists.route) {
+                PlaylistsScreen(
+                    navController = navController,
+                    onPlayPlaylistClick = { mainViewModel.playPlaylist(it) }
+                )
+            }
+
+            composable(route = Screen.Settings.route) {
+                SettingsScreen(
+
+                )
+            }
+
             composable(
                 route = Screen.PlaylistDetails.route,
-                arguments = listOf(navArgument("id") { type = NavType.IntType }),
-                content = {
-                    PlaylistDetailsScreen(
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-            )
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) {
+                PlaylistDetailsScreen(
+                    onBack = { navController.popBackStack() },
+                    onPlayMediaClick = { mainViewModel.playMediaNow(it) },
+                    onAddToQueueClick = { mainViewModel.addMediaToQueue(it) },
+                    onPlayPlaylistClick = { mainViewModel.playPlaylist(it) }
+                )
+            }
         }
 
         if (showExpandedPlayerSheet) {

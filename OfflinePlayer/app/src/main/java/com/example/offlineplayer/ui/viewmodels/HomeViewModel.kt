@@ -156,8 +156,4 @@ class HomeViewModel @Inject constructor(
             playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
         }
     }
-
-    fun playMedia(media: MediaEntity) = mediaInteractor.playMedia(media)
-
-    fun addMediaToQueue(media: MediaEntity) = mediaInteractor.addMediaToQueue(media)
 }

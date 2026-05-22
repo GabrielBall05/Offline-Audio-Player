@@ -97,10 +97,4 @@ class PlaylistsViewModel @Inject constructor(
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> {
         return playlistInteractor.getMediaNotInPlaylist(playlistId)
     }
-
-    fun playPlaylistById(id: Int) {
-        viewModelScope.launch {
-            playlistInteractor.playPlaylistById(id)
-        }
-    }
 }

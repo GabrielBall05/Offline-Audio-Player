@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.domain.MediaInteractor
 import com.example.offlineplayer.data.domain.PlaylistInteractor
+import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -57,6 +58,8 @@ class MainViewModel @Inject constructor(
             playlistInteractor.playPlaylistById(playlistId)
         }
     }
+    fun playMediaNow(media: MediaEntity) = mediaInteractor.playMedia(media)
+    fun addMediaToQueue(media: MediaEntity) = mediaInteractor.addMediaToQueue(media) //TODO: Allow bulk
 
 
     fun onAddToPlaylistClicked(id: Int) {
@@ -65,7 +68,6 @@ class MainViewModel @Inject constructor(
             Log.d("OfflineAudioSuite", "MainVM: User requesting to open playlist picker to add item $id to a playlist")
         }
     }
-
 
     private fun startPlaybackTicker() {
         playbackJob?.cancel() //Clear any existing job

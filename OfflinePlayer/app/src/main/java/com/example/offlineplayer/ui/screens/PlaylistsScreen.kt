@@ -52,10 +52,11 @@ import com.example.offlineplayer.util.PlaylistSortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaylistScreen(
+fun PlaylistsScreen(
     navController: NavController,
-    viewModel: PlaylistsViewModel = hiltViewModel()
-) { //Let Hilt inject the ViewModel
+    viewModel: PlaylistsViewModel = hiltViewModel(), //Let Hilt inject the ViewModel
+    onPlayPlaylistClick: (Int) -> Unit
+) {
     //Collect states from ViewModel
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlistList by viewModel.filteredPlaylists.collectAsStateWithLifecycle()
@@ -194,7 +195,7 @@ fun PlaylistScreen(
                     selectedPlaylistForMenu = null
                     when (option) {
                         PlaylistOption.EDIT -> { playlistToEdit = playlist }
-                        PlaylistOption.PLAY_NOW -> { viewModel.playPlaylistById(playlist.playlistId) }
+                        PlaylistOption.PLAY_NOW -> { onPlayPlaylistClick(playlist.playlistId) }
                         PlaylistOption.ADD_MEDIA -> { playlistToAddMedia = playlist }
                         PlaylistOption.DELETE -> { playlistToDelete = playlist }
                     }

@@ -57,7 +57,11 @@ import com.example.offlineplayer.util.MediaSortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject the ViewModel
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel(), //Let Hilt inject the ViewModel
+    onPlayMediaClick: (MediaEntity) -> Unit,
+    onAddToQueueClick: (MediaEntity) -> Unit
+) {
     //Collect states from ViewModel
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -211,8 +215,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { //Let Hilt inject t
                     selectedMediaItemForMenu = null
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
-                        MediaOption.PLAY_NOW -> viewModel.playMedia(media)
-                        MediaOption.ADD_TO_QUEUE -> viewModel.addMediaToQueue(media)
+                        MediaOption.PLAY_NOW -> onPlayMediaClick(media)
+                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(media)
                         MediaOption.ADD_TO_PLAYLIST -> idsToAddToPlaylists = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> { /* Not used in home screen */ }
                         MediaOption.DELETE -> idsToDelete = listOf(media.mediaId)
