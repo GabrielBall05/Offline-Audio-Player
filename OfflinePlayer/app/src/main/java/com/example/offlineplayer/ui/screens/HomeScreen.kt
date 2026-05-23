@@ -68,7 +68,7 @@ fun HomeScreen(
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
-    val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
+    val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
@@ -106,6 +106,12 @@ fun HomeScreen(
             listState.scrollToItem(0)
         }
     }
+
+    //Refresh available playlists when the selection for playlist addition is set
+    LaunchedEffect(idsToAddToPlaylists) {
+        if (idsToAddToPlaylists.isNotEmpty()) viewModel.refreshAvailablePlaylists(idsToAddToPlaylists)
+    }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -254,7 +260,7 @@ fun HomeScreen(
     //Show PlaylistPicker if user clicks Add to Playlist (bulk or single)
     if (idsToAddToPlaylists.isNotEmpty()) {
         PlaylistPicker(
-            playlists = playlists,
+            playlists = availablePlaylists,
             onDismiss = { idsToAddToPlaylists = emptyList() },
             onConfirm = { selectedPlaylistIds ->
                 viewModel.addMediaToPlaylists(idsToAddToPlaylists, selectedPlaylistIds)

@@ -77,7 +77,7 @@ fun PlaylistDetailsScreen(
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val itemCount by viewModel.itemCount.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
-    val allPlaylists by viewModel.allPlaylists.collectAsStateWithLifecycle()
+    val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
@@ -86,7 +86,7 @@ fun PlaylistDetailsScreen(
     val listState = rememberLazyListState()
 
     var idsToRemove by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var idsToAddToAnotherPlaylist by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
+    var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
@@ -122,6 +122,11 @@ fun PlaylistDetailsScreen(
             mediaNotInPlaylist = viewModel.getMediaNotInPlaylist()
             isFetchingMedia = false
         }
+    }
+
+    //Refresh available playlists when the selection for playlist addition is set
+    LaunchedEffect(idsToAddToPlaylists) {
+        if (idsToAddToPlaylists.isNotEmpty()) viewModel.refreshAvailablePlaylists(idsToAddToPlaylists)
     }
 
 
@@ -206,7 +211,7 @@ fun PlaylistDetailsScreen(
                 }) {
                     Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
                 }
-                IconButton(onClick = { idsToAddToAnotherPlaylist = selectedIds.toList() }) {
+                IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
                 }
                 IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
@@ -330,7 +335,7 @@ fun PlaylistDetailsScreen(
                         MediaOption.EDIT -> mediaToEdit = media
                         MediaOption.PLAY_NOW -> onPlayMediaClick(media)
                         MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(media)
-                        MediaOption.ADD_TO_PLAYLIST -> idsToAddToAnotherPlaylist = listOf(media.mediaId)
+                        MediaOption.ADD_TO_PLAYLIST -> idsToAddToPlaylists = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> idsToRemove = listOf(media.mediaId)
                         MediaOption.DELETE -> { /* Not used in playlist details screen */ }
                     }
@@ -379,13 +384,13 @@ fun PlaylistDetailsScreen(
     }
 
     //Show PlaylistPicker if user wants to add items to another playlist from here
-    if (idsToAddToAnotherPlaylist.isNotEmpty()) {
+    if (idsToAddToPlaylists.isNotEmpty()) {
         PlaylistPicker(
-            playlists = allPlaylists,
-            onDismiss = { idsToAddToAnotherPlaylist = emptyList() },
+            playlists = availablePlaylists,
+            onDismiss = { idsToAddToPlaylists = emptyList() },
             onConfirm = { playlistIds ->
-                viewModel.addMediaToPlaylists(idsToAddToAnotherPlaylist, playlistIds)
-                idsToAddToAnotherPlaylist = emptyList()
+                viewModel.addMediaToPlaylists(idsToAddToPlaylists, playlistIds)
+                idsToAddToPlaylists = emptyList()
             }
         )
     }

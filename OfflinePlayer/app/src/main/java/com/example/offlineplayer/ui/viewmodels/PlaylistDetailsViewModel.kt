@@ -70,9 +70,16 @@ class PlaylistDetailsViewModel @Inject constructor(
         all.isNotEmpty() && all.size == selected.size
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    //All playlists for PlaylistPicker
-    val allPlaylists = playlistInteractor.allPlaylists
-        .stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
+    //Available playlists for PlaylistPicker
+    private val _availablePlaylists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
+    val availablePlaylists = _availablePlaylists.asStateFlow()
+
+    fun refreshAvailablePlaylists(mediaIds: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlists = playlistInteractor.getPlaylistsNotHavingMediaList(mediaIds)
+            _availablePlaylists.value = playlists
+        }
+    }
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery

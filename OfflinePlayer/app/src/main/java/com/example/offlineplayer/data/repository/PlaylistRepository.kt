@@ -28,6 +28,8 @@ class PlaylistRepository @Inject constructor(
 
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = playlistDao.getMediaNotInPlaylist(playlistId)
 
+    suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>) = playlistDao.getPlaylistsNotHavingMediaList(mediaIds.distinct())
+
     fun getPlaylistItemCount(playlistId: Int): Flow<Int> = playlistDao.getPlaylistItemCount(playlistId)
 
     suspend fun updateMediaPosition(item: PlaylistMediaItem) = playlistDao.updateMediaPosition(item)

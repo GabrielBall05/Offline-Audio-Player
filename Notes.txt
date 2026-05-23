@@ -1,6 +1,9 @@
 TODO:
 Bulk add to queue
+save player state (timeline, current item, current duration, all the queues, etc)
 in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
+	better yet, remove them from the option list
+reorder playlists
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
 Loading popup for things that take time (ex: uploading media)
@@ -13,6 +16,7 @@ default playlist play order (shuffle vs inorder)
 change db + table names to vars in a DatabaseVars file
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
 try to combine editing image + creator at the same time again for media items now that images are done
+thoroughly comment code and just make it look better
 
 
 

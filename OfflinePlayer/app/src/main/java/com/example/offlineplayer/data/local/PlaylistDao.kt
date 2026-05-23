@@ -58,6 +58,17 @@ interface PlaylistDao {
     """)
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity>
 
+    @Query("""
+        SELECT P.* 
+        FROM playlists P
+        LEFT JOIN playlist_media_items PMI
+            ON P.playlistId = PMI.playlistId
+            AND PMI.mediaId IN (:mediaIds)
+        GROUP BY P.playlistId
+        HAVING COUNT(DISTINCT PMI.mediaId) < (:size)
+    """)
+    suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>, size: Int = mediaIds.size): List<PlaylistEntity>
+
     //Get playlist item count
     @Query("SELECT COUNT(*) FROM playlist_media_items WHERE playlistId = :playlistId")
     fun getPlaylistItemCount(playlistId: Int): Flow<Int>
