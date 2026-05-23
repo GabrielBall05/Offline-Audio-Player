@@ -44,7 +44,6 @@ fun MiniPlayerBar(
 
     val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
 
-    //
 
     Box(
         modifier = Modifier
