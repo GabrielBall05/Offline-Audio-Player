@@ -186,7 +186,8 @@ fun PlaylistsScreen(
     selectedPlaylistForMenu?.let { playlist ->
         ModalBottomSheet(
             onDismissRequest = { selectedPlaylistForMenu = null },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             PlaylistOptionsSheet(
                 playlist = playlist,

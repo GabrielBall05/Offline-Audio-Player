@@ -318,7 +318,8 @@ fun PlaylistDetailsScreen(
     selectedMediaItemForMenu?.let { media ->
         ModalBottomSheet(
             onDismissRequest = { selectedMediaItemForMenu = null },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             MediaOptionsSheetContent(
                 media = media,

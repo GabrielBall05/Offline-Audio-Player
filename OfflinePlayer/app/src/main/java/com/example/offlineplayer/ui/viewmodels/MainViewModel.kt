@@ -28,6 +28,8 @@ class MainViewModel @Inject constructor(
     val currentPosition = controllerManager.currentPosition
     val duration = controllerManager.duration
     val isShuffleModeEnabled = controllerManager.isShuffleModeEnabled
+    val manualQueue = controllerManager.manualQueueState
+    val upNextBase = controllerManager.upNextBaseState
 
     init {
         // Ensure the controller is connected when the app starts or reopens

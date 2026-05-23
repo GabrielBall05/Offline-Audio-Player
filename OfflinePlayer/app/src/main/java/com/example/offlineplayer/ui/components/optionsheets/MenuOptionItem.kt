@@ -1,8 +1,10 @@
 package com.example.offlineplayer.ui.components.optionsheets
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,7 +29,7 @@ fun MenuOptionItem(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isDestructive) Color.Red else Color.Gray
+                tint = if (isDestructive) Color.Red else MaterialTheme.colorScheme.primary
             )
         },
         modifier = Modifier.clickable { onClick() }

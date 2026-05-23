@@ -72,6 +72,8 @@ fun ExpandedPlayerScreen(
     val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val duration by viewModel.duration.collectAsStateWithLifecycle()
     val isShuffleModeEnabled by viewModel.isShuffleModeEnabled.collectAsStateWithLifecycle()
+    val manualQueue by viewModel.manualQueue.collectAsStateWithLifecycle()
+    val upNextBase by viewModel.upNextBase.collectAsStateWithLifecycle()
 
     var showQueueScreen by remember { mutableStateOf(false) }
 
@@ -321,7 +323,6 @@ fun ExpandedPlayerScreen(
                         Icon(
                             modifier = Modifier.fillMaxSize(),
                             imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-                            //imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                             contentDescription = "Open Queue"
                         )
                     }
@@ -334,10 +335,13 @@ fun ExpandedPlayerScreen(
             ModalBottomSheet(
                 onDismissRequest = { showQueueScreen = false },
                 sheetState = queueSheetState,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.75f)) {
                     QueueScreen(
+                        currentlyPlaying = currentMediaItem,
+                        manualQueue = manualQueue,
+                        upNextBase = upNextBase,
                         onDismiss = { showQueueScreen = false }
                     )
                 }

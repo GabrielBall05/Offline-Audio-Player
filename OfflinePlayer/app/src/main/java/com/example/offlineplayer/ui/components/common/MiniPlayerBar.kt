@@ -31,8 +31,8 @@ import com.example.offlineplayer.ui.viewmodels.MainViewModel
 
 @Composable
 fun MiniPlayerBar(
-    viewModel: MainViewModel,
-    onExpand: () -> Unit //To open full-screen player
+    viewModel: MainViewModel, //TODO: Pass individual items from MainActivity instead of the whole viewmodel
+    onExpand: () -> Unit
 ) {
     val currentMedia by viewModel.currentMediaItem.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
@@ -43,6 +43,8 @@ fun MiniPlayerBar(
     if (currentMedia == null) return
 
     val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
+
+    //
 
     Box(
         modifier = Modifier

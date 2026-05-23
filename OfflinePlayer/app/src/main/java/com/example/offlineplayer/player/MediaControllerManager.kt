@@ -43,6 +43,12 @@ class MediaControllerManager @Inject constructor(
     private val _isShuffleModeEnabled = MutableStateFlow(false)
     val isShuffleModeEnabled = _isShuffleModeEnabled.asStateFlow()
 
+    //Queue states for UI
+    private val _manualQueueState = MutableStateFlow<List<MediaItem>>(emptyList())
+    val manualQueueState = _manualQueueState.asStateFlow()
+    private val _upNextBaseState = MutableStateFlow<List<MediaItem>>(emptyList())
+    val upNextBaseState = _upNextBaseState.asStateFlow()
+
     //Source of truth - Original playlist in order
     private var sourcePlaylist: List<MediaItem> = emptyList()
 
@@ -69,6 +75,7 @@ class MediaControllerManager @Inject constructor(
 
         //Insert media item at the from of manualQueue and rebuild the timeline
         manualQueue.addFirst(mediaItem)
+        _manualQueueState.value = manualQueue.toList() //Update UI
         rebuildTimeline(player.currentMediaItem, isStartingNew = false)
 
         //If something was already playing, force a jump to the new item
@@ -81,6 +88,7 @@ class MediaControllerManager @Inject constructor(
     fun addToQueue(mediaItem: MediaItem) {
         //Insert media item to the end of manualQueue and rebuild the timeline
         manualQueue.addLast(mediaItem)
+        _manualQueueState.value = manualQueue.toList() //Update UI
         rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }
 
@@ -167,6 +175,10 @@ class MediaControllerManager @Inject constructor(
             emptyList() //No base playlist active, or we reached the end of it
         }
 
+        //Push to UI
+        _manualQueueState.value = manualQueue.toList()
+        _upNextBaseState.value = remainingBaseItems
+
         //Construct the active timeline
         activeTimeline = listOfNotNull(currentPlayingItem) + manualQueue + remainingBaseItems
         //Return if there is still nothing to play
@@ -217,8 +229,11 @@ class MediaControllerManager @Inject constructor(
                         if (manualQueue.isNotEmpty() && mediaItem.mediaId == manualQueue.first().mediaId) {
                             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
                                 || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
-                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+                            ) {
+                                //Pop and update UI
                                 manualQueue.removeFirst()
+                                _manualQueueState.value = manualQueue.toList()
                             }
                         }
                         //Update tracker

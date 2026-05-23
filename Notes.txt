@@ -1,4 +1,7 @@
 TODO:
+queue screen
+decrement positionInPlaylist for later items on media item removal from playlist
+shuffle on then off, continue where left off before shuffle, not at next one after last played shuffled song
 Bulk add to queue
 save player state (timeline, current item, current duration, all the queues, etc)
 reorder item positions in playlists
