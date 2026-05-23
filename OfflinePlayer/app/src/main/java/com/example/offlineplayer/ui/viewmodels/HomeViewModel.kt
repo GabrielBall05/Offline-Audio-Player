@@ -2,16 +2,13 @@ package com.example.offlineplayer.ui.viewmodels
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil3.toUri
 import com.example.offlineplayer.data.domain.MediaInteractor
 import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.util.MediaSortOrder
-import com.example.offlineplayer.util.copyUriToInternalStorage
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel

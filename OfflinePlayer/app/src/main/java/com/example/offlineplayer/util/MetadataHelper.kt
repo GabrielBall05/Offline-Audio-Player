@@ -5,9 +5,6 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import com.example.offlineplayer.data.local.MediaEntity
-import java.io.File
-import java.io.FileOutputStream
-import java.util.UUID
 
 fun getMediaMetadata(context: Context, uri: Uri): MediaEntity {
     val retriever = MediaMetadataRetriever()

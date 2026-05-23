@@ -1,18 +1,14 @@
 TODO:
 Bulk add to queue
 save player state (timeline, current item, current duration, all the queues, etc)
-in playlistpicker, have "already in" playlists already selected, and don't allow deselection.
-	better yet, remove them from the option list
-reorder playlists
+reorder item positions in playlists
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
 Loading popup for things that take time (ex: uploading media)
-Use exoplayer/media3 methods to implement queue its manipulation
-	Shuffle/repeat on expanded player screen
 default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
 default sort order setting
 keep screen on in expanded player setting
-default playlist play order (shuffle vs inorder)
+default playlist play mode setting (shuffle vs ordered)
 change db + table names to vars in a DatabaseVars file
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
 try to combine editing image + creator at the same time again for media items now that images are done

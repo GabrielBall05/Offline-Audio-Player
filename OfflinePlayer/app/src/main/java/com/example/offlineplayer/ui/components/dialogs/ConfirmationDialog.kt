@@ -15,7 +15,7 @@ fun ConfirmationDialog(
     onConfirm: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = { onDismiss },
+        onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(text) },
         confirmButton = {

@@ -1,16 +1,13 @@
 package com.example.offlineplayer.ui.screens
 
-import androidx.activity.result.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.gestures.snapTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,49 +16,47 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ShuffleOn
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
 import com.example.offlineplayer.util.KeepScreenOn
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,11 +66,17 @@ fun ExpandedPlayerScreen(
 ) {
     KeepScreenOn() //Call helper composable to ensure the screen stays on while this screen/composable is active
 
+    //Collect states from viewmodel
     val currentMediaItem by viewModel.currentMediaItem.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val duration by viewModel.duration.collectAsStateWithLifecycle()
     val isShuffleModeEnabled by viewModel.isShuffleModeEnabled.collectAsStateWithLifecycle()
+
+    var showQueueScreen by remember { mutableStateOf(false) }
+
+    //Sheet state
+    val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     //Slider states
     var sliderPosition by remember { mutableFloatStateOf(0F) }
@@ -84,242 +85,260 @@ fun ExpandedPlayerScreen(
     //Sync slider with actual position unless user is dragging it
     LaunchedEffect(currentPosition) { if (!isDragging) sliderPosition = currentPosition.toFloat() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(bottom = 100.dp)
-            .background(MaterialTheme.colorScheme.surface),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        //Back button, Title, Options menu
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            //Back button
-            IconButton(onClick = onCollapse) {
-                Icon(
-                    modifier = Modifier.size(32.dp),
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Collapse"
-                )
-            }
 
-            //Title
-            Text(
-                text = "Playing", //TODO: Show a good title for this, ex: playlist name if playing from a playlist
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            //Options Menu
-            IconButton(onClick = { /* TODO: Set some var to open a menu sheet for something idk */ }) {
-                Icon(
-                    modifier = Modifier.size(32.dp),
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Options"
-                )
-            }
-        }
-
-        //Artwork
-        SurfacedImage(
-            model = currentMediaItem?.mediaMetadata?.artworkUri?.toString(),
-            contentDescription = "Artwork Image",
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .aspectRatio(1f),
-        )
-
-        //Information + Slider + Controls
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(bottom = 100.dp)
+                .background(MaterialTheme.colorScheme.surface),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            //Title + Creator + Repeat Mode + Add To Playlist Button
+            //Back button, Title, Options menu
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    //Title
-                    Text(
-                        text = currentMediaItem?.mediaMetadata?.title?.toString() ?: "Unknown Title",
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-                    )
-                    //Creator
-                    Text(
-                        text = currentMediaItem?.mediaMetadata?.artist?.toString() ?: "Unknown Creator",
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-                    )
-                }
-
-                //Repeat Button
-                IconButton(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .padding(horizontal = 8.dp)
-                        .aspectRatio(1f),
-                    onClick = { viewModel.onRepeatModeClicked() }
-                ) {
-                    Icon(
-                        modifier = Modifier.fillMaxSize(),
-                        imageVector = Icons.Default.Repeat,
-                        contentDescription = "Repeat Mode"
-                    )
-                }
-
-                //Add to Playlist Button
-                IconButton(
-                    modifier = Modifier.size(32.dp),
-                    onClick = {
-                        currentMediaItem?.mediaId?.toIntOrNull()?.let { id ->
-                            viewModel.onAddToPlaylistClicked(id)
-                        }
-                    }
-                ) {
-                    Icon(
-                        modifier = Modifier.fillMaxSize(),
-                        imageVector = Icons.Default.AddCircleOutline,
-                        contentDescription = "Add to Playlist"
-                    )
-                }
-            }
-
-            //Slider + Times
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    //Seek Slider
-                    Slider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 0.dp),
-                        value = sliderPosition,
-                        onValueChange = {
-                            isDragging = true
-                            sliderPosition = it
-                        },
-                        onValueChangeFinished = {
-                            isDragging = false
-                            viewModel.seekTo(sliderPosition.toLong())
-                        },
-                        valueRange = 0f..(duration.toFloat().coerceAtLeast(1f)),
-                        colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary),
-                        thumb = {
-                            Box(modifier = Modifier
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                            )
-                        },
-                        track = { sliderState ->
-                            SliderDefaults.Track(
-                                sliderState = sliderState,
-                                modifier = Modifier.height(4.dp),
-                                thumbTrackGapSize = 0.dp,
-                                drawStopIndicator = null
-                            )
-                        }
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .offset(y = (-10).dp)
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        //Duration Texts
-                        Text(text = formatTime(sliderPosition.toLong()), style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                        Text(text = formatTime(duration), style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                    }
-                }
-            }
-
-            //Controls
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 6.dp),
+                    .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //Play Mode (Shuffle vs Order)
-                IconButton(
-                    modifier = Modifier.size(32.dp),
-                    onClick = { viewModel.toggleShuffle() }
-                ) {
+                //Back button
+                IconButton(onClick = onCollapse) {
                     Icon(
-                        modifier = Modifier.fillMaxSize(),
-                        imageVector = if(isShuffleModeEnabled) Icons.Default.ShuffleOn else Icons.Default.Shuffle,
-                        tint = if(isShuffleModeEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                        contentDescription = "Play Mode"
+                        modifier = Modifier.size(32.dp),
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Collapse"
                     )
                 }
 
-                //Grouped Playback Controls (Prev, Toggle, Next)
+                //Title
+                Text(
+                    text = "Playing", //TODO: Show a good title for this, ex: playlist name if playing from a playlist
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                //Options Menu
+                IconButton(onClick = { /* TODO: Set some var to open a menu sheet for something idk */ }) {
+                    Icon(
+                        modifier = Modifier.size(32.dp),
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Options"
+                    )
+                }
+            }
+
+            //Artwork
+            SurfacedImage(
+                model = currentMediaItem?.mediaMetadata?.artworkUri?.toString(),
+                contentDescription = "Artwork Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .aspectRatio(1f),
+            )
+
+            //Information + Slider + Controls
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp)
+            ) {
+                //Title + Creator + Repeat Mode + Add To Playlist Button
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //Previous Button
-                    IconButton(
-                        modifier = Modifier.size(48.dp),
-                        onClick = { viewModel.seekToPrevious() }
-                    ) {
-                        Icon(
-                            modifier = Modifier.fillMaxSize(),
-                            imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "Previous"
+                    Column(modifier = Modifier.weight(1f)) {
+                        //Title
+                        Text(
+                            text = currentMediaItem?.mediaMetadata?.title?.toString() ?: "Unknown Title",
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                        )
+                        //Creator
+                        Text(
+                            text = currentMediaItem?.mediaMetadata?.artist?.toString() ?: "Unknown Creator",
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
                         )
                     }
 
-                    //Play/Pause Toggle
+                    //Repeat Button
                     IconButton(
-                        modifier = Modifier.size(80.dp),
-                        onClick = { viewModel.togglePlayPause() }
+                        modifier = Modifier
+                            .size(46.dp)
+                            .padding(horizontal = 8.dp)
+                            .aspectRatio(1f),
+                        onClick = { viewModel.onRepeatModeClicked() }
                     ) {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
-                            contentDescription = "Play/Pause Toggle"
+                            imageVector = Icons.Default.Repeat,
+                            contentDescription = "Repeat Mode"
                         )
                     }
 
-                    //Next Button
+                    //Add to Playlist Button
                     IconButton(
-                        modifier = Modifier.size(48.dp),
-                        onClick = { viewModel.seekToNext() }
+                        modifier = Modifier.size(32.dp),
+                        onClick = {
+                            currentMediaItem?.mediaId?.toIntOrNull()?.let { id ->
+                                viewModel.onAddToPlaylistClicked(id)
+                            }
+                        }
                     ) {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "Next"
+                            imageVector = Icons.Default.AddCircleOutline,
+                            contentDescription = "Add to Playlist"
                         )
                     }
                 }
 
-                //Queue
-                IconButton(
-                    modifier = Modifier.size(32.dp),
-                    onClick = { /* TODO: Show Queue */ }
+                //Slider + Times
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        //Seek Slider
+                        Slider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 0.dp),
+                            value = sliderPosition,
+                            onValueChange = {
+                                isDragging = true
+                                sliderPosition = it
+                            },
+                            onValueChangeFinished = {
+                                isDragging = false
+                                viewModel.seekTo(sliderPosition.toLong())
+                            },
+                            valueRange = 0f..(duration.toFloat().coerceAtLeast(1f)),
+                            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary),
+                            thumb = {
+                                Box(modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                )
+                            },
+                            track = { sliderState ->
+                                SliderDefaults.Track(
+                                    sliderState = sliderState,
+                                    modifier = Modifier.height(4.dp),
+                                    thumbTrackGapSize = 0.dp,
+                                    drawStopIndicator = null
+                                )
+                            }
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = (-10).dp)
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            //Duration Texts
+                            Text(text = formatTime(sliderPosition.toLong()), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                            Text(text = formatTime(duration), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                        }
+                    }
+                }
+
+                //Controls
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        modifier = Modifier.fillMaxSize(),
-                        imageVector = Icons.AutoMirrored.Outlined.PlaylistPlay,
-                        //imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
-                        contentDescription = "Queue"
+                    //Play Mode (Shuffle vs Order)
+                    IconButton(
+                        modifier = Modifier.size(32.dp),
+                        onClick = { viewModel.toggleShuffle() }
+                    ) {
+                        Icon(
+                            modifier = Modifier.fillMaxSize(),
+                            imageVector = if(isShuffleModeEnabled) Icons.Default.ShuffleOn else Icons.Default.Shuffle,
+                            tint = if(isShuffleModeEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            contentDescription = "Play Mode"
+                        )
+                    }
+
+                    //Grouped Playback Controls (Prev, Toggle, Next)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        //Previous Button
+                        IconButton(
+                            modifier = Modifier.size(48.dp),
+                            onClick = { viewModel.seekToPrevious() }
+                        ) {
+                            Icon(
+                                modifier = Modifier.fillMaxSize(),
+                                imageVector = Icons.Default.SkipPrevious,
+                                contentDescription = "Previous"
+                            )
+                        }
+
+                        //Play/Pause Toggle
+                        IconButton(
+                            modifier = Modifier.size(80.dp),
+                            onClick = { viewModel.togglePlayPause() }
+                        ) {
+                            Icon(
+                                modifier = Modifier.fillMaxSize(),
+                                imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
+                                contentDescription = "Play/Pause Toggle"
+                            )
+                        }
+
+                        //Next Button
+                        IconButton(
+                            modifier = Modifier.size(48.dp),
+                            onClick = { viewModel.seekToNext() }
+                        ) {
+                            Icon(
+                                modifier = Modifier.fillMaxSize(),
+                                imageVector = Icons.Default.SkipNext,
+                                contentDescription = "Next"
+                            )
+                        }
+                    }
+
+                    //Queue
+                    IconButton(
+                        modifier = Modifier.size(32.dp),
+                        onClick = { showQueueScreen = true }
+                    ) {
+                        Icon(
+                            modifier = Modifier.fillMaxSize(),
+                            imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                            //imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
+                            contentDescription = "Open Queue"
+                        )
+                    }
+                }
+            }
+        }
+
+        //Show Queue screen if user hits the queue button
+        if (showQueueScreen) {
+            ModalBottomSheet(
+                onDismissRequest = { showQueueScreen = false },
+                sheetState = queueSheetState,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.75f)) {
+                    QueueScreen(
+                        onDismiss = { showQueueScreen = false }
                     )
                 }
             }

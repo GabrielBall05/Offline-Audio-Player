@@ -1,6 +1,5 @@
 package com.example.offlineplayer.player
 
-import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
