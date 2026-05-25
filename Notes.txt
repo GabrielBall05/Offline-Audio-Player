@@ -4,6 +4,7 @@ decrement positionInPlaylist for later items on media item removal from playlist
 	playlist reordering
 shuffle on then off, continue where left off before shuffle, not at next one after last played shuffled song
 Bulk add to queue
+wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 save player state (timeline, current item, current duration, all the queues, etc)
 reorder item positions in playlists
 centralize all the bottomsheet/dialog popups in each major screen
@@ -18,43 +19,4 @@ when copying/storing images, maybe try to make sure there are no duplicated or o
 try to combine editing image + creator at the same time again for media items now that images are done
 thoroughly comment code and just make it look better
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-To insert metadata:
-PS C:\WINDOWS\system32> cd c:/users/gabe/downloads
-PS C:\users\gabe\downloads> ffmpeg -i broken_clocks_test_with_ffmpeg.ogg -metadata artist="Amos Roddy" -c copy broken_clocks_new.ogg
-
-For multiple at once:
-Inside C:\users\gabe\downloads directory:
-PowerShell
-Get-ChildItem *.ogg | ForEach-Object { 
-    ffmpeg -i $_.Name -metadata artist="Kumi Tanioka" -c copy ("fixed_" + $_.Name) 
-}
-
-
-For Title Case file name and title metadata:
-$TextInfo = (Get-Culture).TextInfo
-Get-ChildItem *.ogg | ForEach-Object {
-    $CleanName = $_.BaseName -replace '_', ' '
-    
-    $FinalName = $TextInfo.ToTitleCase($CleanName)
-    
-    ffmpeg -i $_.Name -metadata title="$FinalName" -c copy "$FinalName.ogg"
-}
 
