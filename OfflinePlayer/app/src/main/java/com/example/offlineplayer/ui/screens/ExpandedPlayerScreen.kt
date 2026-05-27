@@ -342,7 +342,8 @@ fun ExpandedPlayerScreen(
                         currentlyPlaying = currentMediaItem,
                         manualQueue = manualQueue,
                         upNextBase = upNextBase,
-                        onDismiss = { showQueueScreen = false }
+                        onDismiss = { showQueueScreen = false },
+                        onClearQueue = { viewModel.clearQueue() }
                     )
                 }
             }

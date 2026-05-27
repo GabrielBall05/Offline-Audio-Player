@@ -1,5 +1,5 @@
 TODO:
-queue screen - clear queue, reorder queue
+queue screen - reorder queue
 decrement positionInPlaylist for later items on media item removal from playlist
 	playlist reordering
 shuffle on then off, continue where left off before shuffle, not at next one after last played shuffled song

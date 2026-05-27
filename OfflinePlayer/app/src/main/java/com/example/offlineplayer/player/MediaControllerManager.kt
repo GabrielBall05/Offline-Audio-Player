@@ -92,6 +92,13 @@ class MediaControllerManager @Inject constructor(
         rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }
 
+    fun clearQueue() {
+        //Clear queue and rebuild timeline
+        manualQueue.clear()
+        _manualQueueState.value = manualQueue.toList() //Update UI
+        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
+    }
+
     fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
         sourcePlaylist = mediaItems
         manualQueue.clear()
