@@ -63,7 +63,8 @@ class MainViewModel @Inject constructor(
     fun playMediaNow(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
     fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media.toMediaItem()) //TODO: Allow bulk
     fun clearQueue() = controllerManager.clearQueue()
-
+    fun moveManualQueueItem(fromIndex: Int, toIndex: Int) = controllerManager.moveManualQueueItem(fromIndex, toIndex)
+    fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) = controllerManager.moveBasePlaylistItem(fromIndex, toIndex)
 
     fun onAddToPlaylistClicked(id: Int) {
         viewModelScope.launch {

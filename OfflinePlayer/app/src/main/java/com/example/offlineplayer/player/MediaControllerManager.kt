@@ -63,6 +63,8 @@ class MediaControllerManager @Inject constructor(
 
     //Tracks position in base playlist
     private var lastKnownBaseItem: MediaItem? = null
+    //Tracks next unplayed index of active base playlist
+    private var currentBasePlaylistIndex = 0
 
 
     init {
@@ -85,6 +87,19 @@ class MediaControllerManager @Inject constructor(
         player.play()
     }
 
+    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
+        sourcePlaylist = mediaItems
+        manualQueue.clear()
+
+        val startingItem = sourcePlaylist.getOrNull(startItemIndex)
+        lastKnownBaseItem = startingItem
+
+        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != startItemIndex }.shuffled()
+        shuffledPlaylist = listOfNotNull(startingItem) + remaining
+
+        rebuildTimeline(startingItem, isStartingNew = true)
+    }
+
     fun addToQueue(mediaItem: MediaItem) {
         //Insert media item to the end of manualQueue and rebuild the timeline
         manualQueue.addLast(mediaItem)
@@ -99,17 +114,58 @@ class MediaControllerManager @Inject constructor(
         rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }
 
-    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
-        sourcePlaylist = mediaItems
-        manualQueue.clear()
+    fun moveManualQueueItem(fromIndex: Int, toIndex: Int) {
+        Log.d("OfflineAudioSuite", "swapping manualQueue indices: $fromIndex and $toIndex")
+        val player = controller ?: return
 
-        val startingItem = sourcePlaylist.getOrNull(startItemIndex)
-        lastKnownBaseItem = startingItem
+        // 1. Safety Check: Bound guards
+        if (fromIndex !in manualQueue.indices || toIndex !in manualQueue.indices) return
 
-        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != startItemIndex }.shuffled()
-        shuffledPlaylist = listOfNotNull(startingItem) + remaining
+        // 2. Perform the simple 1-to-1 swap in memory
+        val temp = manualQueue[fromIndex]
+        manualQueue[fromIndex] = manualQueue[toIndex]
+        manualQueue[toIndex] = temp
 
-        rebuildTimeline(startingItem, isStartingNew = true)
+        // 3. Immediately publish the freshly updated list to the Compose UI
+        _manualQueueState.value = manualQueue.toList()
+
+        // 4. Force the underlying state machine/ExoPlayer to mirror this new reality
+        rebuildTimeline(player.currentMediaItem, isStartingNew = false)
+    }
+
+    fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) {
+        Log.d("OfflineAudioSuite", "swapping base playlist indices: $fromIndex and $toIndex")
+        val player = controller ?: return
+        val currentItem = player.currentMediaItem ?: return
+
+        // Determine which master playlist layout we are actively using
+        val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+        if (activePlaylist.isEmpty()) return
+
+        // Map the relative UI "Up Next" index into the absolute master index space
+        // (Everything in "Up Next" starts at currentPlayingMasterIndex + 1)
+        val actualFromIndex = currentBasePlaylistIndex + 1 + fromIndex
+        val actualToIndex = currentBasePlaylistIndex + 1 + toIndex
+
+        // Safety Check: Make sure we aren't escaping the array bounds
+        if (actualFromIndex !in activePlaylist.indices || actualToIndex !in activePlaylist.indices) return
+
+        // 1-to-1 Swap logic inside a mutable replica
+        val mutableList = activePlaylist.toMutableList()
+        val temp = mutableList[actualFromIndex]
+        mutableList[actualFromIndex] = mutableList[actualToIndex]
+        mutableList[actualToIndex] = temp
+
+        // Save the modification back into your class state
+        if (_isShuffleModeEnabled.value) shuffledPlaylist = mutableList else sourcePlaylist = mutableList
+
+        // Explicitly update the "_upNextBaseState" flow before calling rebuildTimeline
+        // so Compose draws the swap instantly
+        val remainingBaseItems = mutableList.subList(currentBasePlaylistIndex + 1, mutableList.size)
+        _upNextBaseState.value = remainingBaseItems.toList()
+
+        // Update ExoPlayer's buffer timeline to keep it perfectly identical to our setup
+        rebuildTimeline(currentItem, isStartingNew = false)
     }
 
     fun seekToNext() {
@@ -173,6 +229,9 @@ class MediaControllerManager @Inject constructor(
             }
         }
 
+        if (baseIndex != -1) currentBasePlaylistIndex = baseIndex
+        else if (basePlaylist.isNotEmpty() && currentPlayingItem == null) currentBasePlaylistIndex = -1
+
         //Get everything after current position
         val remainingBaseItems = if (baseIndex != -1 && baseIndex + 1 < basePlaylist.size) {
             basePlaylist.subList(baseIndex + 1, basePlaylist.size)
@@ -184,7 +243,7 @@ class MediaControllerManager @Inject constructor(
 
         //Push to UI
         _manualQueueState.value = manualQueue.toList()
-        _upNextBaseState.value = remainingBaseItems
+        _upNextBaseState.value = remainingBaseItems.toList()
 
         //Construct the active timeline
         activeTimeline = listOfNotNull(currentPlayingItem) + manualQueue + remainingBaseItems
@@ -248,6 +307,8 @@ class MediaControllerManager @Inject constructor(
                         if (isInBasePlaylist) {
                             lastKnownBaseItem = mediaItem
                         }
+
+                        rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {

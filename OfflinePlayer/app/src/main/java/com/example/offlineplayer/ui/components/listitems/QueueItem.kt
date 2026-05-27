@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +23,11 @@ import com.example.offlineplayer.ui.components.common.SurfacedImage
 @Composable
 fun QueueItem(
     item: MediaItem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -60,10 +66,14 @@ fun QueueItem(
             )
         }
 
-        //Drag button to reorder
-        Icon(
-            imageVector = Icons.Default.DragHandle,
-            contentDescription = "Reorder Dragger"
-        )
+        //Reordering Buttons
+        if (!(isFirst && isLast)) {
+            IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", tint = MaterialTheme.colorScheme.primary)
+            }
+            IconButton(onClick = onMoveDown, enabled = !isLast) {
+                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = "Move Down", tint = MaterialTheme.colorScheme.primary)
+            }
+        }
     }
 }

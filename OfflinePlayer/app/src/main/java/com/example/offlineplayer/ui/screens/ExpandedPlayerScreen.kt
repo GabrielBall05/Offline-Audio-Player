@@ -343,7 +343,13 @@ fun ExpandedPlayerScreen(
                         manualQueue = manualQueue,
                         upNextBase = upNextBase,
                         onDismiss = { showQueueScreen = false },
-                        onClearQueue = { viewModel.clearQueue() }
+                        onClearQueue = { viewModel.clearQueue() },
+                        onMoveManualItem = { from, to ->
+                            viewModel.moveManualQueueItem(from, to)
+                        },
+                        onMoveBaseItem = { from, to ->
+                            viewModel.moveBasePlaylistItem(from, to)
+                        }
                     )
                 }
             }

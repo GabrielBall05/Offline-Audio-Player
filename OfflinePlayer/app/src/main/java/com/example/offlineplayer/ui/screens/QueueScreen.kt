@@ -1,7 +1,6 @@
 package com.example.offlineplayer.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,7 +27,9 @@ fun QueueScreen(
     upNextBase: List<MediaItem>,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
-    onClearQueue: () -> Unit
+    onClearQueue: () -> Unit,
+    onMoveManualItem: (Int, Int) -> Unit,
+    onMoveBaseItem: (Int, Int) -> Unit
 ) {
     BackHandler(onBack = onDismiss)
 
@@ -47,7 +47,13 @@ fun QueueScreen(
                     fontWeight = FontWeight.Bold
                 )
                 //Row Item Content
-                QueueItem(item = current)
+                QueueItem(
+                    item = current,
+                    isFirst = true,
+                    isLast = true,
+                    onMoveUp = {  },
+                    onMoveDown = {  }
+                )
             }
         }
 
@@ -75,10 +81,22 @@ fun QueueScreen(
                     }
                 }
             }
-            items(manualQueue) { item ->
-                //Row Item Content
-                QueueItem(item = item)
+            itemsIndexed(manualQueue) { index, item ->
+                QueueItem(
+                    item = item,
+                    isFirst = (index == 0),
+                    isLast = (index == manualQueue.size - 1),
+                    onMoveUp = { onMoveManualItem(index, index - 1) },
+                    onMoveDown = { onMoveManualItem(index, index + 1) }
+                )
             }
+//            items(manualQueue) { item ->
+//                //Row Item Content
+//                QueueItem(
+//                    item = item,
+//
+//                )
+//            }
         }
 
         //Up Next
@@ -92,10 +110,19 @@ fun QueueScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            items(upNextBase) { item ->
-                //Row Item Content
-                QueueItem(item = item)
+            itemsIndexed(upNextBase) { index, item ->
+                QueueItem(
+                    item = item,
+                    isFirst = (index == 0),
+                    isLast = (index == upNextBase.size - 1),
+                    onMoveUp = { onMoveBaseItem(index, index - 1) },
+                    onMoveDown = { onMoveBaseItem(index, index + 1) }
+                )
             }
+//            items(upNextBase) { item ->
+//                //Row Item Content
+//                QueueItem(item = item)
+//            }
         }
     }
 }
