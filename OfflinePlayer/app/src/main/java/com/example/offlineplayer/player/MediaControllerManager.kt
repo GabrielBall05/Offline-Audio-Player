@@ -277,23 +277,28 @@ class MediaControllerManager @Inject constructor(
                         _duration.value = player.duration.coerceAtLeast(0L)
 
                         if (mediaItem == null) return
+                        var isManualQueueItem = false
                         //Check if we just transitioned into the next manualQueue item - pop if so
                         if (manualQueue.isNotEmpty() && mediaItem.mediaId == manualQueue.first().mediaId) {
                             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
                                 || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
                                 || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
                             ) {
+                                isManualQueueItem = true
+
                                 //Pop and update UI
                                 manualQueue.removeFirst()
                                 _manualQueueState.value = manualQueue.toList()
                             }
                         }
-                        //Update tracker
-                        val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
-                        val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
 
-                        if (newIndex != -1) {
-                            if (_isShuffleModeEnabled.value) shuffledIndex = newIndex else linearIndex = newIndex
+                        //Only update tracker if it wasn't a manualQueue item
+                        if (!isManualQueueItem) {
+                            val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+                            val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
+                            if (newIndex != -1) {
+                                if (_isShuffleModeEnabled.value) shuffledIndex = newIndex else linearIndex = newIndex
+                            }
                         }
 
                         rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
