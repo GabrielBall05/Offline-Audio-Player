@@ -73,9 +73,15 @@ interface PlaylistDao {
     @Query("SELECT COUNT(*) FROM ${PlaylistMediaItem.TABLE_NAME} WHERE playlistId = :playlistId")
     fun getPlaylistItemCount(playlistId: Int): Flow<Int>
 
-    //UPDATE - Change position in playlist
-    @Update
-    suspend fun updateMediaPosition(item: PlaylistMediaItem)
+    @Query("""
+    UPDATE ${PlaylistMediaItem.TABLE_NAME} 
+    SET positionInPlaylist = CASE mediaId
+        WHEN :fromMediaId THEN :toPos
+        WHEN :toMediaId THEN :fromPos
+    END
+    WHERE playlistId = :playlistId AND mediaId IN (:fromMediaId, :toMediaId)
+""")
+    suspend fun moveMediaItemPositionInPlaylist(playlistId: Int, fromMediaId: Int, toMediaId: Int, fromPos: Int, toPos: Int)
 
     //DELETE - Remove media from playlist
     @Query("""

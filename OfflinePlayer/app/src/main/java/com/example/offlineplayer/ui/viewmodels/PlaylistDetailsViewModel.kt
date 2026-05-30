@@ -136,6 +136,18 @@ class PlaylistDetailsViewModel @Inject constructor(
         }
     }
 
+    fun moveMediaItemPosition(fromMediaId: Int, toMediaId: Int) {
+        //Get indices from full media list
+        val fromPos = playlistMedia.value.indexOfFirst { it.mediaId == fromMediaId }
+        val toPos = playlistMedia.value.indexOfFirst { it.mediaId == toMediaId }
+        if (fromPos == -1 || toPos == -1) return
+
+        //Perform db update
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistInteractor.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos, toPos)
+        }
+    }
+
     fun updateCreatorBulk(creator: String, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
             mediaInteractor.updateCreatorBulk(creator, ids)

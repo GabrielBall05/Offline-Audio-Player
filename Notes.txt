@@ -1,7 +1,4 @@
 TODO:
-playlist reordering - reorder button in modal bottom sheet after clicking top right ellipsis. 
-	replace MediaListItem with MediaListItemReorderable while reordering = true
-	replace bulk actions bar with "done" button to set reordering = false
 wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 save player state (timeline, current item, current duration, all the queues, etc)
 centralize all the bottomsheet/dialog popups in each major screen
@@ -11,8 +8,9 @@ default "all" playlist (newly uploaded songs automatically added to it - maybe u
 default sort order setting
 keep screen on in expanded player setting
 default playlist play mode setting (shuffle vs ordered)
+default playlist details mode (reordering vs viewing)
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
 try to combine editing image + creator at the same time again for media items now that images are done
 thoroughly comment code and just make it look better
-
+app icon
 

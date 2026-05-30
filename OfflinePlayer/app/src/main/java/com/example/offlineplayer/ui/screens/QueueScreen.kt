@@ -90,13 +90,6 @@ fun QueueScreen(
                     onMoveDown = { onMoveManualItem(index, index + 1) }
                 )
             }
-//            items(manualQueue) { item ->
-//                //Row Item Content
-//                QueueItem(
-//                    item = item,
-//
-//                )
-//            }
         }
 
         //Up Next
@@ -119,10 +112,6 @@ fun QueueScreen(
                     onMoveDown = { onMoveBaseItem(index, index + 1) }
                 )
             }
-//            items(upNextBase) { item ->
-//                //Row Item Content
-//                QueueItem(item = item)
-//            }
         }
     }
 }

@@ -63,6 +63,9 @@ class PlaylistInteractor @Inject constructor(
     suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>) = repository.getPlaylistsNotHavingMediaList(mediaIds)
     fun getPlaylistItemCount(playlistId: Int): Flow<Int> = repository.getPlaylistItemCount(playlistId)
     suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = repository.removeMediaFromPlaylist(mediaIds, playlistId)
+    suspend fun moveMediaItemPositionInPlaylist(playlistId: Int, fromMediaId: Int, toMediaId: Int, fromPos: Int, toPos: Int) {
+        if (fromMediaId != toMediaId) repository.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos, toPos)
+    }
 
     //Shared Business Logic
     suspend fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {

@@ -32,7 +32,9 @@ class PlaylistRepository @Inject constructor(
 
     fun getPlaylistItemCount(playlistId: Int): Flow<Int> = playlistDao.getPlaylistItemCount(playlistId)
 
-    suspend fun updateMediaPosition(item: PlaylistMediaItem) = playlistDao.updateMediaPosition(item)
+    suspend fun moveMediaItemPositionInPlaylist(playlistId: Int, fromMediaId: Int, toMediaId: Int, fromPos: Int, toPos: Int)
+        = playlistDao.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos + 1, toPos + 1)
+        // + 1 because positionInPlaylist column is 1-based not 0-based
 
     suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = playlistDao.removeMediaFromPlaylist(mediaIds, playlistId)
 

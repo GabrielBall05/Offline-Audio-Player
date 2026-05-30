@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
+import com.example.offlineplayer.ui.components.common.InfoColumnMarquee
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 
 @Composable
@@ -42,29 +43,13 @@ fun QueueItem(
             sizeInDp = 50.dp
         )
 
-        //Title + Creator
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            //Title
-            Text(
-                text = item.mediaMetadata.title.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-            )
-
-            //Creator
-            Text(
-                text = item.mediaMetadata.artist.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-            )
-        }
+        //Queue (Media) Item Info
+        InfoColumnMarquee(
+            mainText = item.mediaMetadata.title.toString(),
+            mainTextStyle = MaterialTheme.typography.titleMedium,
+            subText = item.mediaMetadata.artist.toString(),
+            subTextStyle = MaterialTheme.typography.bodyMedium
+        )
 
         //Reordering Buttons
         if (!(isFirst && isLast)) {

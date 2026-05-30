@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.ui.components.common.InfoColumnMarquee
 import com.example.offlineplayer.ui.components.common.SelectionIcon
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 
@@ -38,17 +39,11 @@ fun PlaylistListItemSimple(
             fallbackIcon = Icons.Default.LibraryMusic,
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
-
-        //Title
-        Text(
-            text = playlist.name,
-            style = MaterialTheme.typography.titleLarge,
-            maxLines = 1,
-            modifier = Modifier.weight(1f)
+        //Playlist Name
+        InfoColumnMarquee(
+            mainText = playlist.name,
+            mainTextStyle = MaterialTheme.typography.titleLarge
         )
-
-        Spacer(modifier = Modifier.width(12.dp))
 
         //Checkbox
         SelectionIcon(isSelected = isSelected)

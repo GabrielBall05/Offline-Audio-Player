@@ -1,8 +1,6 @@
 package com.example.offlineplayer.ui.components.listitems
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,14 +8,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.MediaEntity
+import com.example.offlineplayer.ui.components.common.InfoColumnMarquee
 import com.example.offlineplayer.ui.components.common.SelectionIcon
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 
@@ -47,26 +44,10 @@ fun MediaListItem(
         )
 
         //Media Item Info
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp)
-        ) {
-            //Title
-            Text(
-                text = media.title,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-            )
-            //Creator
-            Text(
-                text = media.creator,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-            )
-        }
+        InfoColumnMarquee(
+            mainText = media.title,
+            subText = media.creator
+        )
 
         //More Button (ellipsis) - brings up menu for edit, play, add to queue, add to playlist, delete, etc.
         IconButton(onClick = { onMoreClick(media) }) {

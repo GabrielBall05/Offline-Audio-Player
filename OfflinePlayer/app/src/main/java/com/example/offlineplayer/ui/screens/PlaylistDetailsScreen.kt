@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.PlaylistRemove
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +62,7 @@ import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.listitems.MediaListItem
+import com.example.offlineplayer.ui.components.listitems.MediaListItemReorderable
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
@@ -183,48 +187,59 @@ fun PlaylistDetailsScreen(
                 }
             }
 
-            //Search Bar + Play Button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-                    .height(IntrinsicSize.Min),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                //Search Bar
-                SearchBar(
-                    value = searchQuery,
-                    placeHolderText = "Search in playlist",
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    onClear = { viewModel.onSearchQueryChange("") },
-                    onValueChange = { viewModel.onSearchQueryChange(it) }
-                )
-
-                //Play Button
-                IconButton(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f),
-                    onClick = {
-                        playlist?.let { currentPlaylist ->
-                            onPlayPlaylistClick(currentPlaylist.playlistId)
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayCircle,
-                        contentDescription = "Play Playlist",
-                        modifier = Modifier.fillMaxSize(),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
             if (isReordering) {
                 //Done Button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(onClick = { isReordering = false }) {
+                        Text("Done")
+                    }
+                }
             } else {
+                //Search Bar + Play Button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp)
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    //Search Bar
+                    SearchBar(
+                        value = searchQuery,
+                        placeHolderText = "Search in playlist",
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        onClear = { viewModel.onSearchQueryChange("") },
+                        onValueChange = { viewModel.onSearchQueryChange(it) }
+                    )
+
+                    //Play Button
+                    IconButton(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f),
+                        onClick = {
+                            playlist?.let { currentPlaylist ->
+                                onPlayPlaylistClick(currentPlaylist.playlistId)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircle,
+                            contentDescription = "Play Playlist",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
                 //Bulk Actions
                 BulkActionsBar(
                     isAnySelected = isAnySelected,
@@ -263,11 +278,25 @@ fun PlaylistDetailsScreen(
             ) {
                 if (isReordering) {
                     //Use reorderable list item
-                    items(
+                    itemsIndexed(
                         items = fullMediaList,
-                        key = { it.mediaId }
-                    ) { media ->
-                        //MediaListItemReorderable
+                        key = { _, media -> media.mediaId }
+                    ) { index, media ->
+                        MediaListItemReorderable(
+                            media = media,
+                            isFirst = index == 0,
+                            isLast = index == fullMediaList.size - 1,
+                            onMoveUp = {
+                                if (index > 0) {
+                                    viewModel.moveMediaItemPosition(media.mediaId, fullMediaList[index - 1].mediaId)
+                                }
+                            },
+                            onMoveDown = {
+                                if (index < fullMediaList.size - 1) {
+                                    viewModel.moveMediaItemPosition(media.mediaId, fullMediaList[index + 1].mediaId)
+                                }
+                            }
+                        )
                     }
                 } else {
                     //Use regular list item
