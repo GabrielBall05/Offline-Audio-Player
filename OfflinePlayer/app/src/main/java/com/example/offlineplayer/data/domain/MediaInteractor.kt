@@ -24,10 +24,6 @@ class MediaInteractor @Inject constructor(
     //Shared Flow
     val allMedia = repository.allMedia
 
-    //Player Actions
-    fun playMedia(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
-    fun addMediaToQueue(media: MediaEntity) = controllerManager.addToQueue(media.toMediaItem())
-
     //DB Actions
     suspend fun updateMedia(media: MediaEntity) {
         var updatedItem = media

@@ -104,9 +104,9 @@ class MediaControllerManager @Inject constructor(
         rebuildTimeline(startingItem, isStartingNew = true)
     }
 
-    fun addToQueue(mediaItem: MediaItem) {
-        //Insert media item to the end of manualQueue and rebuild the timeline
-        manualQueue.addLast(mediaItem)
+    fun addToQueue(mediaItems: List<MediaItem>) {
+        //Insert media items(s) to the end of manualQueue and rebuild the timeline
+        manualQueue.addAll(manualQueue.size, mediaItems)
         _manualQueueState.value = manualQueue.toList() //Update UI
         rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
     }

@@ -44,7 +44,7 @@ fun BulkActionsBar(
                 //Clear selection button
                 Row {
                     TextButton(onClick = onClearSelectionClick) {
-                        Text("Clear Selection")
+                        Text("Clear")
                     }
                 }
             }

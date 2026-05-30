@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,7 +60,7 @@ import com.example.offlineplayer.util.MediaSortOrder
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(), //Let Hilt inject the ViewModel
     onPlayMediaClick: (MediaEntity) -> Unit,
-    onAddToQueueClick: (MediaEntity) -> Unit
+    onAddToQueueClick: (List<MediaEntity>) -> Unit
 ) {
     //Collect states from ViewModel
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
@@ -168,6 +169,9 @@ fun HomeScreen(
                 IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                 }
+                IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                    Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
+                }
                 IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
                     Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
                 }
@@ -222,7 +226,7 @@ fun HomeScreen(
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
                         MediaOption.PLAY_NOW -> onPlayMediaClick(media)
-                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(media)
+                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(listOf(media))
                         MediaOption.ADD_TO_PLAYLIST -> idsToAddToPlaylists = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> { /* Not used in home screen */ }
                         MediaOption.DELETE -> idsToDelete = listOf(media.mediaId)

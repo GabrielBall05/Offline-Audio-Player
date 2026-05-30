@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -70,7 +71,7 @@ fun PlaylistDetailsScreen(
     viewModel: PlaylistDetailsViewModel = hiltViewModel(), //Let Hilt inject ViewModel
     onBack: () -> Unit,
     onPlayMediaClick: (MediaEntity) -> Unit,
-    onAddToQueueClick: (MediaEntity) -> Unit,
+    onAddToQueueClick: (List<MediaEntity>) -> Unit,
     onPlayPlaylistClick: (Int) -> Unit
 ) {
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -237,6 +238,9 @@ fun PlaylistDetailsScreen(
                 IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
                 }
+                IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                    Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
+                }
                 IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
                     Icon(Icons.Default.PlaylistRemove, contentDescription = "Remove From Playlist")
                 }
@@ -358,7 +362,7 @@ fun PlaylistDetailsScreen(
                     when (option) {
                         MediaOption.EDIT -> mediaToEdit = media
                         MediaOption.PLAY_NOW -> onPlayMediaClick(media)
-                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(media)
+                        MediaOption.ADD_TO_QUEUE -> onAddToQueueClick(listOf(media))
                         MediaOption.ADD_TO_PLAYLIST -> idsToAddToPlaylists = listOf(media.mediaId)
                         MediaOption.REMOVE_FROM_PLAYLIST -> idsToRemove = listOf(media.mediaId)
                         MediaOption.DELETE -> { /* Not used in playlist details screen */ }
