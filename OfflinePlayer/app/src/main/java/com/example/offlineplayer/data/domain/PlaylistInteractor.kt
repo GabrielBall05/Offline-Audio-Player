@@ -38,6 +38,15 @@ class PlaylistInteractor @Inject constructor(
         controllerManager.playPlaylist(mediaList)
     }
 
+    suspend fun addPlaylistToQueue(id: Int) {
+        val mediaList = withContext(Dispatchers.IO) {
+            repository.getAllMediaInPlaylist(id)
+                .first()
+                .map { it.toMediaItem() }
+        }
+        controllerManager.addToQueue(mediaList)
+    }
+
     //DB Actions
     fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = repository.getPlaylistById(id)
     suspend fun createPlaylist(playlist: PlaylistEntity): Long {

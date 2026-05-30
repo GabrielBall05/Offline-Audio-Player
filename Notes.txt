@@ -1,6 +1,7 @@
 TODO:
-playlist reordering
-Bulk add to queue
+playlist reordering - reorder button in modal bottom sheet after clicking top right ellipsis. 
+	replace MediaListItem with MediaListItemReorderable while reordering = true
+	replace bulk actions bar with "done" button to set reordering = false
 wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 save player state (timeline, current item, current duration, all the queues, etc)
 centralize all the bottomsheet/dialog popups in each major screen

@@ -78,6 +78,7 @@ fun PlaylistDetailsScreen(
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val itemCount by viewModel.itemCount.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
+    val fullMediaList by viewModel.playlistMedia.collectAsStateWithLifecycle()
     val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
@@ -86,6 +87,7 @@ fun PlaylistDetailsScreen(
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
 
+    var isReordering by rememberSaveable { mutableStateOf(false) }
     var idsToRemove by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
@@ -156,6 +158,7 @@ fun PlaylistDetailsScreen(
                     SurfacedImage(
                         model = playlist?.coverUri,
                         contentDescription = "Cover Image",
+                        modifier = Modifier.clickable(onClick = { editingPlaylist = true }),
                         fallbackIcon = Icons.Default.LibraryMusic,
                         sizeInDp = 80.dp
                     )
@@ -219,30 +222,34 @@ fun PlaylistDetailsScreen(
                 }
             }
 
-            //Bulk Actions
-            BulkActionsBar(
-                isAnySelected = isAnySelected,
-                isAllSelected = isAllSelected,
-                onToggleAllClick = { viewModel.toggleSelectAll() },
-                onClearSelectionClick = { viewModel.clearSelection() }
-            ) {
-                IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
-                }
-                IconButton(onClick = {
-                    idsToUpdateArtwork = selectedIds.toList()
-                    pickImageLauncher.launch("image/*")
-                }) {
-                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
-                }
-                IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
-                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
-                }
-                IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
-                    Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
-                }
-                IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
-                    Icon(Icons.Default.PlaylistRemove, contentDescription = "Remove From Playlist")
+            if (isReordering) {
+                //Done Button
+            } else {
+                //Bulk Actions
+                BulkActionsBar(
+                    isAnySelected = isAnySelected,
+                    isAllSelected = isAllSelected,
+                    onToggleAllClick = { viewModel.toggleSelectAll() },
+                    onClearSelectionClick = { viewModel.clearSelection() }
+                ) {
+                    IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                    IconButton(onClick = {
+                        idsToUpdateArtwork = selectedIds.toList()
+                        pickImageLauncher.launch("image/*")
+                    }) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
+                    }
+                    IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
+                        Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
+                    }
+                    IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                        Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
+                    }
+                    IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
+                        Icon(Icons.Default.PlaylistRemove, contentDescription = "Remove From Playlist")
+                    }
                 }
             }
 
@@ -254,16 +261,27 @@ fun PlaylistDetailsScreen(
                     .padding(top = 6.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                items(
-                    items = mediaList,
-                    key = { it.mediaId }
-                ) { media ->
-                    MediaListItem(
-                        media = media,
-                        isSelected = selectedIds.contains(media.mediaId),
-                        onCheckBoxClick = { viewModel.toggleSelection(media.mediaId) },
-                        onMoreClick = { selectedMediaItemForMenu = media }
-                    )
+                if (isReordering) {
+                    //Use reorderable list item
+                    items(
+                        items = fullMediaList,
+                        key = { it.mediaId }
+                    ) { media ->
+                        //MediaListItemReorderable
+                    }
+                } else {
+                    //Use regular list item
+                    items(
+                        items = mediaList,
+                        key = { it.mediaId }
+                    ) { media ->
+                        MediaListItem(
+                            media = media,
+                            isSelected = selectedIds.contains(media.mediaId),
+                            onCheckBoxClick = { viewModel.toggleSelection(media.mediaId) },
+                            onMoreClick = { selectedMediaItemForMenu = media }
+                        )
+                    }
                 }
             }
         }
@@ -283,16 +301,20 @@ fun PlaylistDetailsScreen(
         playlist?.let { currentPlaylist ->
             ModalBottomSheet(
                 onDismissRequest = { showPlaylistOptionsSheet = false },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.surface
             ) {
                 PlaylistOptionsSheet(
                     playlist = currentPlaylist,
+                    showReorderOption = true,
                     onOptionClick = { option ->
                         showPlaylistOptionsSheet = false
                         when (option) {
                             PlaylistOption.EDIT -> editingPlaylist = true
                             PlaylistOption.PLAY_NOW -> onPlayPlaylistClick(currentPlaylist.playlistId)
+                            PlaylistOption.ADD_TO_QUEUE -> onAddToQueueClick(fullMediaList)
                             PlaylistOption.ADD_MEDIA -> showMediaPicker = true
+                            PlaylistOption.REORDER -> isReordering = true
                             PlaylistOption.DELETE -> showDeletePlaylistConfirmation = true
                         }
                     }

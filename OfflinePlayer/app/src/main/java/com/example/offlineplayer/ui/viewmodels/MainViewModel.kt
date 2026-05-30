@@ -60,6 +60,11 @@ class MainViewModel @Inject constructor(
             playlistInteractor.playPlaylistById(playlistId)
         }
     }
+    fun addPlaylistToQueue(playlistId: Int) {
+        viewModelScope.launch {
+            playlistInteractor.addPlaylistToQueue(playlistId)
+        }
+    }
     fun playMediaNow(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
     fun addMediaToQueue(mediaList: List<MediaEntity>) = controllerManager.addToQueue(mediaList.map { it.toMediaItem() })
     fun clearQueue() = controllerManager.clearQueue()

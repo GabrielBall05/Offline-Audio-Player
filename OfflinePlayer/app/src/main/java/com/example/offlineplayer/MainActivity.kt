@@ -117,7 +117,8 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             composable(route = Screen.Playlists.route) {
                 PlaylistsScreen(
                     navController = navController,
-                    onPlayPlaylistClick = { mainViewModel.playPlaylist(it) }
+                    onPlayPlaylistClick = { mainViewModel.playPlaylist(it) },
+                    onAddPlaylistToQueueClick = { mainViewModel.addPlaylistToQueue(it) }
                 )
             }
 

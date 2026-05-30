@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -38,17 +39,19 @@ class PlaylistDetailsViewModel @Inject constructor(
     val playlist = playlistInteractor.getPlaylistById(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    //Get the number of media items in this playlist
     val itemCount = playlistInteractor.getPlaylistItemCount(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     //Get all media items in this playlist
-    private val _playlistMedia = playlistInteractor.getMediaInPlaylist(playlistId)
+    val playlistMedia = playlistInteractor.getMediaInPlaylist(playlistId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     //For searching
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    var filteredMedia = combine(_playlistMedia, _searchQuery) { media, query ->
+    var filteredMedia = combine(playlistMedia, _searchQuery) { media, query ->
         if (query.isBlank()) //Search field empty, show whole list
             media
         else { //Only show list where title or creator contains query (case insensitive)

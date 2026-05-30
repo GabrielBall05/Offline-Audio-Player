@@ -54,7 +54,8 @@ import com.example.offlineplayer.util.PlaylistSortOrder
 fun PlaylistsScreen(
     navController: NavController,
     viewModel: PlaylistsViewModel = hiltViewModel(), //Let Hilt inject the ViewModel
-    onPlayPlaylistClick: (Int) -> Unit
+    onPlayPlaylistClick: (Int) -> Unit,
+    onAddPlaylistToQueueClick: (Int) -> Unit
 ) {
     //Collect states from ViewModel
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -194,10 +195,12 @@ fun PlaylistsScreen(
                 onOptionClick = { option ->
                     selectedPlaylistForMenu = null
                     when (option) {
-                        PlaylistOption.EDIT -> { playlistToEdit = playlist }
-                        PlaylistOption.PLAY_NOW -> { onPlayPlaylistClick(playlist.playlistId) }
-                        PlaylistOption.ADD_MEDIA -> { playlistToAddMedia = playlist }
-                        PlaylistOption.DELETE -> { playlistToDelete = playlist }
+                        PlaylistOption.EDIT -> playlistToEdit = playlist
+                        PlaylistOption.PLAY_NOW -> onPlayPlaylistClick(playlist.playlistId)
+                        PlaylistOption.ADD_TO_QUEUE -> onAddPlaylistToQueueClick(playlist.playlistId)
+                        PlaylistOption.REORDER -> { /* Reorder option not used here */ }
+                        PlaylistOption.ADD_MEDIA -> playlistToAddMedia = playlist
+                        PlaylistOption.DELETE -> playlistToDelete = playlist
                     }
                 }
             )
