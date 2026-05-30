@@ -3,7 +3,7 @@ package com.example.offlineplayer.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "media_items")
+@Entity(tableName = MediaEntity.TABLE_NAME)
 data class MediaEntity(
     @PrimaryKey(autoGenerate = true)
     val mediaId: Int = 0,   //Auto-incremented and auto-generated primary key.
@@ -17,5 +17,7 @@ data class MediaEntity(
     val mimeType: String?,  //File type (ex: mp3, wav)
     val artworkUri: String? //Local path to associated image
 ) {
-
+    companion object {
+        const val TABLE_NAME = "media_items"
+    }
 }

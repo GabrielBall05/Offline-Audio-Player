@@ -1,10 +1,8 @@
 TODO:
-decrement positionInPlaylist for later items on media item removal from playlist
-	playlist reordering
+playlist reordering
 Bulk add to queue
 wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 save player state (timeline, current item, current duration, all the queues, etc)
-reorder item positions in playlists
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
 Loading popup for things that take time (ex: uploading media)
@@ -12,7 +10,6 @@ default "all" playlist (newly uploaded songs automatically added to it - maybe u
 default sort order setting
 keep screen on in expanded player setting
 default playlist play mode setting (shuffle vs ordered)
-change db + table names to vars in a DatabaseVars file
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
 try to combine editing image + creator at the same time again for media items now that images are done
 thoroughly comment code and just make it look better

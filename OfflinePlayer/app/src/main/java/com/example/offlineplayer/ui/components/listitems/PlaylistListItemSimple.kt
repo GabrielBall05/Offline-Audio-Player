@@ -33,7 +33,7 @@ fun PlaylistListItemSimple(
     ) {
         //Artwork
         SurfacedImage(
-            model = playlist.coverImage,
+            model = playlist.coverUri,
             contentDescription = "Cover Image",
             fallbackIcon = Icons.Default.LibraryMusic,
         )

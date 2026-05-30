@@ -28,7 +28,7 @@ fun PlaylistFormDialog(
 ) {
     var name by remember { mutableStateOf(playlistToEdit?.name ?: "") }
     var description by remember { mutableStateOf(playlistToEdit?.description ?: "") }
-    var coverUri by remember { mutableStateOf(playlistToEdit?.coverImage) }
+    var coverUri by remember { mutableStateOf(playlistToEdit?.coverUri) }
 
     var nameTouched by remember { mutableStateOf(false) }
 
@@ -84,9 +84,9 @@ fun PlaylistFormDialog(
                     //val finalCoverUri = coverUri.takeIf { it.isNotBlank() }
 
                     playlistToEdit?.let {
-                        onConfirm(it.copy(name = name, description = finalDescription, coverImage = coverUri))
+                        onConfirm(it.copy(name = name, description = finalDescription, coverUri = coverUri))
                     } ?: run {
-                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverImage = coverUri, dateCreated = System.currentTimeMillis())
+                        val newPlaylist = PlaylistEntity(playlistId = 0, name = name, description = finalDescription, coverUri = coverUri, dateCreated = System.currentTimeMillis())
                         onConfirm(newPlaylist)
                     }
                 },

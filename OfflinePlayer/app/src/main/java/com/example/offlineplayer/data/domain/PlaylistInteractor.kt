@@ -83,10 +83,10 @@ class PlaylistInteractor @Inject constructor(
 
     private fun processPlaylistCover(playlist: PlaylistEntity): PlaylistEntity {
         var updatedPlaylist = playlist
-        playlist.coverImage?.let { uri ->
+        playlist.coverUri?.let { uri ->
             val permanentPath = copyUriToInternalStorage(context, uri.toUri())
             permanentPath?.let {
-                updatedPlaylist = playlist.copy(coverImage = it)
+                updatedPlaylist = playlist.copy(coverUri = it)
             }
         }
         return updatedPlaylist

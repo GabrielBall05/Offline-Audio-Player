@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 
 @Entity(
-    tableName = "playlist_media_items",
+    tableName = PlaylistMediaItem.TABLE_NAME,
     primaryKeys = ["playlistId", "mediaId"], //Composite primary key
     foreignKeys = [
         ForeignKey(
@@ -26,5 +26,7 @@ data class PlaylistMediaItem(
     val mediaId: Int,           //Id for media
     val positionInPlaylist: Int //For custom ordering within playlist
 ) {
-
+    companion object {
+        const val TABLE_NAME = "playlist_media_items"
+    }
 }

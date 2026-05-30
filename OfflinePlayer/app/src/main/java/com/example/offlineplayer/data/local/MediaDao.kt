@@ -21,7 +21,7 @@ interface MediaDao {
 
     //----------READ----------
     //Get all media items
-    @Query("SELECT * FROM media_items ORDER BY title ASC")
+    @Query("SELECT * FROM ${MediaEntity.TABLE_NAME} ORDER BY title ASC")
     fun getAllMedia(): Flow<List<MediaEntity>>
 
     //----------UPDATE----------
@@ -31,7 +31,7 @@ interface MediaDao {
 
     //Update creator bulk
     @Query("""
-        UPDATE media_items
+        UPDATE ${MediaEntity.TABLE_NAME}
         SET creator = :creator
         WHERE mediaId IN (:ids)
     """)
@@ -39,7 +39,7 @@ interface MediaDao {
 
     //Update artwork bulk
     @Query("""
-        UPDATE media_items
+        UPDATE ${MediaEntity.TABLE_NAME}
         SET artworkUri = :artworkUri
         WHERE mediaId IN (:ids)
     """)
@@ -52,6 +52,6 @@ interface MediaDao {
     suspend fun deleteMedia(media: MediaEntity)
 
     //Delete list of media items (by mediaId)
-    @Query("DELETE FROM media_items WHERE mediaId IN (:mediaIds)")
+    @Query("DELETE FROM ${MediaEntity.TABLE_NAME} WHERE mediaId IN (:mediaIds)")
     suspend fun deleteMediaList(mediaIds: List<Int>)
 }

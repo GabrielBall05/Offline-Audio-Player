@@ -15,11 +15,11 @@ interface PlaylistDao {
     suspend fun insertPlaylist(playlist: PlaylistEntity): Long
 
     //READ - Get playlist by id
-    @Query("SELECT * FROM playlists WHERE playlistId = :id")
+    @Query("SELECT * FROM ${PlaylistEntity.TABLE_NAME} WHERE playlistId = :id")
     fun getPlaylistById(id: Int): Flow<PlaylistEntity?>
 
     //READ - Get all playlists
-    @Query("SELECT * FROM playlists ORDER BY dateCreated DESC")
+    @Query("SELECT * FROM ${PlaylistEntity.TABLE_NAME} ORDER BY dateCreated DESC")
     fun getAllPlaylists(): Flow<List<PlaylistEntity>>
 
     //UPDATE playlist
@@ -38,8 +38,8 @@ interface PlaylistDao {
 
     //READ - Get all media in playlist
     @Query("""
-        SELECT MI.* FROM media_items AS MI
-        INNER JOIN playlist_media_items AS PMI
+        SELECT MI.* FROM ${MediaEntity.TABLE_NAME} AS MI
+        INNER JOIN ${PlaylistMediaItem.TABLE_NAME} AS PMI
             ON MI.mediaId = PMI.mediaId
         WHERE PMI.playlistId = :playlistId
         ORDER BY PMI.positionInPlaylist ASC
@@ -48,9 +48,9 @@ interface PlaylistDao {
 
     //Get all media not in given playlist
     @Query("""
-        SELECT * FROM media_items AS M
+        SELECT * FROM ${MediaEntity.TABLE_NAME} AS M
         WHERE NOT EXISTS (
-            SELECT 1 FROM playlist_media_items AS P
+            SELECT 1 FROM ${PlaylistMediaItem.TABLE_NAME} AS P
             WHERE P.mediaId = M.mediaId 
             AND P.playlistId = :playlistId
         )
@@ -60,8 +60,8 @@ interface PlaylistDao {
 
     @Query("""
         SELECT P.* 
-        FROM playlists P
-        LEFT JOIN playlist_media_items PMI
+        FROM ${PlaylistEntity.TABLE_NAME} P
+        LEFT JOIN ${PlaylistMediaItem.TABLE_NAME} PMI
             ON P.playlistId = PMI.playlistId
             AND PMI.mediaId IN (:mediaIds)
         GROUP BY P.playlistId
@@ -70,7 +70,7 @@ interface PlaylistDao {
     suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>, size: Int = mediaIds.size): List<PlaylistEntity>
 
     //Get playlist item count
-    @Query("SELECT COUNT(*) FROM playlist_media_items WHERE playlistId = :playlistId")
+    @Query("SELECT COUNT(*) FROM ${PlaylistMediaItem.TABLE_NAME} WHERE playlistId = :playlistId")
     fun getPlaylistItemCount(playlistId: Int): Flow<Int>
 
     //UPDATE - Change position in playlist
@@ -79,7 +79,7 @@ interface PlaylistDao {
 
     //DELETE - Remove media from playlist
     @Query("""
-        DELETE FROM playlist_media_items
+        DELETE FROM ${PlaylistMediaItem.TABLE_NAME}
         WHERE mediaId IN (:mediaIds)
         AND playlistId = :playlistId
     """)
@@ -88,7 +88,7 @@ interface PlaylistDao {
     //Get the max position in a given playlist for ordering new media items
     @Query("""
         SELECT MAX(positionInPlaylist)
-        FROM playlist_media_items
+        FROM ${PlaylistMediaItem.TABLE_NAME}
         WHERE playlistId = :playlistId
     """)
     suspend fun getMaxPositionInPlaylist(playlistId: Int): Int?

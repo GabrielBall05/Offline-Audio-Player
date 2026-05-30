@@ -12,6 +12,6 @@ interface SettingsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveSettings(settings: SettingsEntity)
 
-    @Query("SELECT * FROM app_settings WHERE id = 0")
+    @Query("SELECT * FROM ${SettingsEntity.TABLE_NAME} WHERE id = 0")
     fun getSettings(): Flow<SettingsEntity?>
 }

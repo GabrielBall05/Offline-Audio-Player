@@ -3,6 +3,7 @@ package com.example.offlineplayer.di
 import android.content.Context
 import androidx.room.Room
 import com.example.offlineplayer.data.local.AppDatabase
+import com.example.offlineplayer.data.local.DatabaseTriggerCallback
 import com.example.offlineplayer.data.local.MediaDao
 import com.example.offlineplayer.data.local.PlaylistDao
 import com.example.offlineplayer.data.local.SettingsDao
@@ -23,9 +24,10 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "offline_player_db" //Name of database
+            AppDatabase.DATABASE_NAME
         )
             .fallbackToDestructiveMigration(true)
+            .addCallback(DatabaseTriggerCallback)
             .build()
     }
 
