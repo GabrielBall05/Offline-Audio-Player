@@ -43,7 +43,7 @@ import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
-import com.example.offlineplayer.ui.components.listitems.PlaylistListItem
+import com.example.offlineplayer.ui.components.listitems.PlaylistListItemStandard
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistsViewModel
@@ -138,7 +138,7 @@ fun PlaylistsScreen(
                     items = playlistList,
                     key = { it.playlistId }
                 ) { playlist ->
-                    PlaylistListItem(
+                    PlaylistListItemStandard(
                         playlist = playlist,
                         modifier = Modifier.clickable {
                             navController.navigate(Screen.PlaylistDetails.createRoute(playlist.playlistId))

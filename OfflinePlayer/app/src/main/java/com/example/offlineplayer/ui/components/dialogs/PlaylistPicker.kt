@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.PlaylistEntity
-import com.example.offlineplayer.ui.components.listitems.PlaylistListItemSimple
+import com.example.offlineplayer.ui.components.listitems.PlaylistPickerListItem
 
 @Composable
 fun PlaylistPicker(
@@ -28,7 +28,7 @@ fun PlaylistPicker(
         onDismissRequest = onDismiss,
         title = { Text("Choose Playlist(s)") },
         text = {
-            if (playlists.isEmpty()) Text("No playlists found. Create one here") //TODO: Provide shortcut to PlaylistFormDialog
+            if (playlists.isEmpty()) Text("No playlists found. Create one here") //TODO: Provide shortcut to PlaylistFormDialog and show msg about not full list
             else {
                 LazyColumn(
                     modifier = Modifier
@@ -39,7 +39,7 @@ fun PlaylistPicker(
                         items = playlists,
                         key = { it.playlistId }
                     ) { playlist ->
-                        PlaylistListItemSimple(
+                        PlaylistPickerListItem(
                             playlist = playlist,
                             isSelected = selectedPlaylistIds.contains(playlist.playlistId),
                             onClick = {

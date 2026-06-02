@@ -2,6 +2,12 @@ package com.example.offlineplayer.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +44,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,13 +66,18 @@ import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
-import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.listitems.MediaListItemReorderable
+import com.example.offlineplayer.ui.components.listitems.MediaListItemSelectable
+import com.example.offlineplayer.ui.components.listitems.MediaListItemStandard
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistDetailsViewModel
+
+private enum class TopBarState {
+    Reordering, Selecting, Standard
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -187,83 +197,108 @@ fun PlaylistDetailsScreen(
                 }
             }
 
-            if (isReordering) {
-                //Done Button
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(onClick = { isReordering = false }) {
-                        Text("Done")
-                    }
-                }
-            } else {
-                //Search Bar + Play Button
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp)
-                        .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    //Search Bar
-                    SearchBar(
-                        value = searchQuery,
-                        placeHolderText = "Search in playlist",
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        onClear = { viewModel.onSearchQueryChange("") },
-                        onValueChange = { viewModel.onSearchQueryChange(it) }
-                    )
+            //Calculate state for top bar
+            val topBarState = when {
+                isReordering -> TopBarState.Reordering
+                isAnySelected -> TopBarState.Selecting
+                else -> TopBarState.Standard
+            }
 
-                    //Play Button
-                    IconButton(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(1f),
-                        onClick = {
-                            playlist?.let { currentPlaylist ->
-                                onPlayPlaylistClick(currentPlaylist.playlistId)
+            //Top Bar
+            AnimatedContent(
+                targetState = topBarState,
+                label = "TopBarStateTransition",
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.95f))
+                        .togetherWith(fadeOut(animationSpec = tween(180)))
+                }
+            ) { targetState ->
+                when (targetState) {
+                    //Reordering = Show Done Button
+                    TopBarState.Reordering -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(all = 12.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Button(
+                                onClick = { isReordering = false },
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                            ) { Text("Done") }
+                        }
+                    }
+
+                    //Selecting = Show Bulk Actions Bar
+                    TopBarState.Selecting -> {
+                        BulkActionsBar(
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            isAnySelected = isAnySelected,
+                            isAllSelected = isAllSelected,
+                            onToggleAllClick = { viewModel.toggleSelectAll() },
+                            onClearSelectionClick = { viewModel.clearSelection() }
+                        ) {
+                            IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                            }
+                            IconButton(onClick = {
+                                idsToUpdateArtwork = selectedIds.toList()
+                                pickImageLauncher.launch("image/*")
+                            }) {
+                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
+                            }
+                            IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
+                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
+                            }
+                            IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                                Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
+                            }
+                            IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
+                                Icon(Icons.Default.PlaylistRemove, tint = MaterialTheme.colorScheme.error, contentDescription = "Remove From Playlist")
                             }
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayCircle,
-                            contentDescription = "Play Playlist",
-                            modifier = Modifier.fillMaxSize(),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
                     }
-                }
 
-                //Bulk Actions
-                BulkActionsBar(
-                    isAnySelected = isAnySelected,
-                    isAllSelected = isAllSelected,
-                    onToggleAllClick = { viewModel.toggleSelectAll() },
-                    onClearSelectionClick = { viewModel.clearSelection() }
-                ) {
-                    IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
-                    }
-                    IconButton(onClick = {
-                        idsToUpdateArtwork = selectedIds.toList()
-                        pickImageLauncher.launch("image/*")
-                    }) {
-                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
-                    }
-                    IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
-                        Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
-                    }
-                    IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
-                        Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
-                    }
-                    IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
-                        Icon(Icons.Default.PlaylistRemove, contentDescription = "Remove From Playlist")
+                    //Nothing = Show Search Bar + Play Button
+                    TopBarState.Standard -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp, vertical = 8.dp)
+                                .height(IntrinsicSize.Min),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            //Search Bar
+                            SearchBar(
+                                value = searchQuery,
+                                placeHolderText = "Search in playlist",
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(),
+                                onClear = { viewModel.onSearchQueryChange("") },
+                                onValueChange = { viewModel.onSearchQueryChange(it) }
+                            )
+
+                            //Play Button
+                            IconButton(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f),
+                                onClick = {
+                                    playlist?.let { currentPlaylist ->
+                                        onPlayPlaylistClick(currentPlaylist.playlistId)
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayCircle,
+                                    contentDescription = "Play Playlist",
+                                    modifier = Modifier.fillMaxSize(),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -271,13 +306,11 @@ fun PlaylistDetailsScreen(
             //Media List
             LazyColumn(
                 state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 6.dp),
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 if (isReordering) {
-                    //Use reorderable list item
+                    //Use reorderable list item with the full media list
                     itemsIndexed(
                         items = fullMediaList,
                         key = { _, media -> media.mediaId }
@@ -288,40 +321,63 @@ fun PlaylistDetailsScreen(
                             isLast = index == fullMediaList.size - 1,
                             onMoveUp = {
                                 if (index > 0) {
-                                    viewModel.moveMediaItemPosition(media.mediaId, fullMediaList[index - 1].mediaId)
+                                    viewModel.moveMediaItemPosition(
+                                        media.mediaId,
+                                        fullMediaList[index - 1].mediaId
+                                    )
                                 }
                             },
                             onMoveDown = {
                                 if (index < fullMediaList.size - 1) {
-                                    viewModel.moveMediaItemPosition(media.mediaId, fullMediaList[index + 1].mediaId)
+                                    viewModel.moveMediaItemPosition(
+                                        media.mediaId,
+                                        fullMediaList[index + 1].mediaId
+                                    )
                                 }
                             }
                         )
                     }
                 } else {
-                    //Use regular list item
+                    //Use regular or selectable list item with the filtered list
                     items(
                         items = mediaList,
                         key = { it.mediaId }
                     ) { media ->
-                        MediaListItem(
-                            media = media,
-                            isSelected = selectedIds.contains(media.mediaId),
-                            onCheckBoxClick = { viewModel.toggleSelection(media.mediaId) },
-                            onMoreClick = { selectedMediaItemForMenu = media }
-                        )
+                        //Animate transition between viewing/selectable list items
+                        AnimatedContent(
+                            targetState = isAnySelected,
+                            label = "MediaListItemTransition"
+                        ) { animatingSelectionMode ->
+                            if (animatingSelectionMode) { //Use selectable list item is selecting
+                                MediaListItemSelectable(
+                                    media = media,
+                                    isSelected = selectedIds.contains(media.mediaId),
+                                    onSelect = { viewModel.toggleSelection(media.mediaId) },
+                                    constrainSelectToCheckbox = false,
+                                    onMoreClick = { selectedMediaItemForMenu = it }
+                                )
+                            } else {
+                                MediaListItemStandard( //Use standard viewing list item if not selecting
+                                    media = media,
+                                    onLongClick = { viewModel.toggleSelection(it.mediaId) },
+                                    onMoreClick = { selectedMediaItemForMenu = it }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        //Add Media To Playlist Button
-        FloatingActionButton(
-            onClick = { showMediaPicker = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 4.dp, bottom = 16.dp)
-        ) { Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist") }
+        if (!isAnySelected && !isReordering) {
+            //Add Media To Playlist Button
+            FloatingActionButton(
+                onClick = { showMediaPicker = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 4.dp, bottom = 16.dp)
+            ) { Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist") }
+        }
     }
 
 

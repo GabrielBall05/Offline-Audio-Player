@@ -20,15 +20,17 @@ import com.example.offlineplayer.ui.components.common.SurfacedImage
 @Composable
 fun MediaListItemReorderable(
     media: MediaEntity,
+    modifier: Modifier = Modifier,
     isFirst: Boolean,
     isLast: Boolean,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .padding(start = 12.dp, top = 2.dp, end = 8.dp, bottom = 2.dp),
+//            .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         //Artwork

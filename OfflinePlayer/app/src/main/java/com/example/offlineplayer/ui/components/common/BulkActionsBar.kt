@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BulkActionsBar(
+    modifier: Modifier = Modifier,
     isAnySelected: Boolean = false,
     isAllSelected: Boolean = false,
     onToggleAllClick: () -> Unit,
@@ -24,7 +25,7 @@ fun BulkActionsBar(
     actionButtons: @Composable (RowScope.() -> Unit)
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 8.dp),

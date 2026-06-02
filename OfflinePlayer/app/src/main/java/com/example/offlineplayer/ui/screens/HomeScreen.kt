@@ -44,12 +44,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.SearchBar
-import com.example.offlineplayer.ui.components.listitems.MediaListItem
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
+import com.example.offlineplayer.ui.components.listitems.MediaListItemSelectable
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.viewmodels.HomeViewModel
@@ -189,10 +189,10 @@ fun HomeScreen(
                     items = mediaList,
                     key = { it.mediaId }
                 ) { media ->
-                    MediaListItem(
+                    MediaListItemSelectable(
                         media = media,
                         isSelected = selectedIds.contains(media.mediaId),
-                        onCheckBoxClick = { viewModel.toggleSelection(media.mediaId) },
+                        onSelect = { viewModel.toggleSelection(media.mediaId) },
                         onMoreClick = { selectedMediaItemForMenu = media }
                     )
                 }

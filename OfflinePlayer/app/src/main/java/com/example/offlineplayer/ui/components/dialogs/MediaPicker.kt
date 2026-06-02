@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.MediaEntity
-import com.example.offlineplayer.ui.components.listitems.MediaListItemSimple
+import com.example.offlineplayer.ui.components.listitems.MediaPickerListItem
 
 @Composable
 fun MediaPicker(
@@ -39,7 +39,7 @@ fun MediaPicker(
                         items = media,
                         key = { it.mediaId }
                     ) { item ->
-                        MediaListItemSimple(
+                        MediaPickerListItem(
                             media = item,
                             isSelected = selectedMediaIds.contains(item.mediaId),
                             onClick = {

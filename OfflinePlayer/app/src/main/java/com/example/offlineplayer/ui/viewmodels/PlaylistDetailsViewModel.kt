@@ -84,6 +84,7 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
+        _selectedMediaIds.value = emptySet()
     }
 
     fun toggleSelection(mediaId: Int) {

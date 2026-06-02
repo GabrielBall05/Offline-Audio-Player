@@ -1,6 +1,9 @@
 TODO:
-wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 save player state (timeline, current item, current duration, all the queues, etc)
+tap to start playing playlist at tapped item in playlist details
+tap to skip to in queue screen
+swipe image for next/prev in expanded player screen
+put edit creator/image at LEAST in the same dialog (separate save buttons if needed)
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
 Loading popup for things that take time (ex: uploading media)
@@ -10,7 +13,7 @@ keep screen on in expanded player setting
 default playlist play mode setting (shuffle vs ordered)
 default playlist details mode (reordering vs viewing)
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
-try to combine editing image + creator at the same time again for media items now that images are done
 thoroughly comment code and just make it look better
+maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 app icon
 

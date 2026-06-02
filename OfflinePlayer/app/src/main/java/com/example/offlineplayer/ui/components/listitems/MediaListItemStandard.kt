@@ -1,6 +1,7 @@
 package com.example.offlineplayer.ui.components.listitems
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,28 +16,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.InfoColumnMarquee
-import com.example.offlineplayer.ui.components.common.SelectionIcon
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MediaListItem(
+fun MediaListItemStandard(
     media: MediaEntity,
-    isSelected: Boolean,
-    onCheckBoxClick: () -> Unit,
+    onLongClick: (MediaEntity) -> Unit,
     onMoreClick: (MediaEntity) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .combinedClickable(
+                onClick = { /* TODO: handle regular click of play playlist from here (probably just going to put the clickable on artwork instead actually) */ },
+                onLongClick = { onLongClick(media) }
+            )
+            .padding(start = 12.dp, top = 2.dp, end = 8.dp, bottom = 2.dp),
+            //.padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        //Selection Checkbox
-        IconButton(onClick = onCheckBoxClick) {
-            SelectionIcon(isSelected)
-        }
-
         //Artwork
         SurfacedImage(
             model = media.artworkUri,
