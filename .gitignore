@@ -33,6 +33,8 @@ google-services.json
 # Android Profiling
 *.hprof
 
+# Local live preview / session tracking files
+*.salive
 
 # Test mp3 files
 Test Audio Files
