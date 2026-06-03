@@ -71,7 +71,7 @@ class HomeViewModel @Inject constructor(
     )
 
     //Selection variables
-    private val _selectedMediaIds = MutableStateFlow<Set<Int>>(emptySet())
+    private val _selectedMediaIds = MutableStateFlow<List<Int>>(emptyList())
     val selectedMediaIds = _selectedMediaIds.asStateFlow()
     val isAnySelected = selectedMediaIds.map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -92,7 +92,7 @@ class HomeViewModel @Inject constructor(
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
-        _selectedMediaIds.value = emptySet() //Clear selections
+        _selectedMediaIds.value = emptyList() //Clear selections
     }
 
     fun onSortOrderChange(newOrder: MediaSortOrder) {
@@ -100,21 +100,20 @@ class HomeViewModel @Inject constructor(
     }
 
     fun toggleSelection(mediaId: Int) {
-        val currentSet = _selectedMediaIds.value
-        _selectedMediaIds.update {
-            if (currentSet.contains(mediaId)) currentSet - mediaId //Remove from selection set
-            else currentSet + mediaId //Add to selection set
+        _selectedMediaIds.update { currentList ->
+            if (currentList.contains(mediaId)) currentList - mediaId  //Remove from selection list
+            else currentList + mediaId  //Add to selection list
         }
     }
 
     fun toggleSelectAll() {
         _selectedMediaIds.value =
-            if (_selectedMediaIds.value.size == filteredMedia.value.size) emptySet() //Deselect all
-            else filteredMedia.value.map { it.mediaId }.toSet() //Select all
+            if (_selectedMediaIds.value.size == filteredMedia.value.size) emptyList() //Deselect all
+            else filteredMedia.value.map { it.mediaId }.toList() //Select all
     }
 
     fun clearSelection() {
-        _selectedMediaIds.value = emptySet()
+        _selectedMediaIds.value = emptyList()
     }
 
     fun getCommonCreator(ids: List<Int>): String {

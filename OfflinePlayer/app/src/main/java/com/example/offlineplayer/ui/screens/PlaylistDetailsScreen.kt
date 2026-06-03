@@ -49,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -114,6 +115,7 @@ fun PlaylistDetailsScreen(
     var showPlaylistOptionsSheet by rememberSaveable { mutableStateOf(false) }
     var editingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
+    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     //Launcher for picking artwork image
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -251,7 +253,7 @@ fun PlaylistDetailsScreen(
                             IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                                 Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
                             }
-                            IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                            IconButton(onClick = { onAddToQueueClick(selectedIds.mapNotNull { id -> mediaMap[id] }) }) {
                                 Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
                             }
                             IconButton(onClick = { idsToRemove = selectedIds.toList() }) {

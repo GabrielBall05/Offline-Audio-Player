@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -81,6 +82,7 @@ fun HomeScreen(
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
+    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
@@ -169,7 +171,7 @@ fun HomeScreen(
                 IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                 }
-                IconButton(onClick = { onAddToQueueClick(mediaList.filter { it.mediaId in selectedIds }) }) {
+                IconButton(onClick = { onAddToQueueClick(selectedIds.mapNotNull { id -> mediaMap[id] }) }) {
                     Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
                 }
                 IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
