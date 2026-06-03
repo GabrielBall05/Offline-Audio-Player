@@ -28,11 +28,10 @@ fun MediaListItemStandard(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { /* TODO: handle regular click of play playlist from here (probably just going to put the clickable on artwork instead actually) */ },
+                onClick = {  }, //Nothing
                 onLongClick = { onLongClick(media) }
             )
             .padding(start = 12.dp, top = 2.dp, end = 8.dp, bottom = 2.dp),
-            //.padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         //Artwork

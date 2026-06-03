@@ -164,6 +164,34 @@ class MediaControllerManager @Inject constructor(
         rebuildTimeline(currentItem, isStartingNew = false)
     }
 
+    fun manualQueueSkipToIndex(index: Int) {
+        val player = controller ?: return
+        if (index !in manualQueue.indices) return
+
+        val targetPlayerIndex = player.currentMediaItemIndex + 1 + index
+
+        for (i in 0 until index) {
+            manualQueue.removeFirst()
+        }
+        _manualQueueState.value = manualQueue.toList()
+
+        if (targetPlayerIndex < player.mediaItemCount) {
+            player.seekTo(targetPlayerIndex, 0L)
+            player.play()
+        }
+    }
+
+    fun baseSkipToIndex(index: Int) {
+        val player = controller ?: return
+        if (index !in _upNextBaseState.value.indices) return
+
+        val targetPlayerIndex = player.currentMediaItemIndex + 1 + manualQueue.size + index
+        if (targetPlayerIndex < player.mediaItemCount) {
+            player.seekTo(targetPlayerIndex, 0L)
+            player.play()
+        }
+    }
+
     fun seekToNext() {
         controller?.let {
             it.seekToNext()
@@ -278,16 +306,19 @@ class MediaControllerManager @Inject constructor(
 
                         if (mediaItem == null) return
                         var isManualQueueItem = false
-                        //Check if we just transitioned into the next manualQueue item - pop if so
-                        if (manualQueue.isNotEmpty() && mediaItem.mediaId == manualQueue.first().mediaId) {
+
+                        var manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
+
+                        if (manualQueueIndex != -1) {
+                            isManualQueueItem = true
+
                             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
                                 || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
                                 || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
                             ) {
-                                isManualQueueItem = true
-
-                                //Pop and update UI
-                                manualQueue.removeFirst()
+                                for (i in 0..manualQueueIndex) {
+                                    manualQueue.removeFirst()
+                                }
                                 _manualQueueState.value = manualQueue.toList()
                             }
                         }

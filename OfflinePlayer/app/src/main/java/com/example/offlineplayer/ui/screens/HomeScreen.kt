@@ -193,6 +193,7 @@ fun HomeScreen(
                         media = media,
                         isSelected = selectedIds.contains(media.mediaId),
                         onSelect = { viewModel.toggleSelection(media.mediaId) },
+                        constrainSelectToCheckbox = false,
                         onMoreClick = { selectedMediaItemForMenu = media }
                     )
                 }

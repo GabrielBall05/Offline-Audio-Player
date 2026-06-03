@@ -2,6 +2,7 @@ package com.example.offlineplayer.data.domain
 
 import android.content.Context
 import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.local.PlaylistMediaItem
@@ -28,23 +29,25 @@ class PlaylistInteractor @Inject constructor(
 
     //Player Actions
     suspend fun playPlaylistById(id: Int) {
-        //Perform DB operation on IO thread
-        val mediaList = withContext(Dispatchers.IO) {
-            repository.getAllMediaInPlaylist(id)
-                .first()
-                .map { it.toMediaItem() }
+        val mediaList = fetchPlaylistMediaList(id)
+        withContext(Dispatchers.Main) { //MediaController methods must be called on the main thread
+            controllerManager.playPlaylist(mediaList)
         }
-        //MediaController methods must be called on the main thread
-        controllerManager.playPlaylist(mediaList)
     }
 
     suspend fun addPlaylistToQueue(id: Int) {
-        val mediaList = withContext(Dispatchers.IO) {
+        val mediaList = fetchPlaylistMediaList(id)
+        withContext(Dispatchers.Main) { //MediaController methods must be called on the main thread
+            controllerManager.addToQueue(mediaList)
+        }
+    }
+
+    private suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> {
+        return withContext(Dispatchers.IO) {
             repository.getAllMediaInPlaylist(id)
                 .first()
                 .map { it.toMediaItem() }
         }
-        controllerManager.addToQueue(mediaList)
     }
 
     //DB Actions

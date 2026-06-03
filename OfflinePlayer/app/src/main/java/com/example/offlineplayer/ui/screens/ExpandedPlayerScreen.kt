@@ -349,7 +349,9 @@ fun ExpandedPlayerScreen(
                         },
                         onMoveBaseItem = { from, to ->
                             viewModel.moveBasePlaylistItem(from, to)
-                        }
+                        },
+                        onManualQueueSkipTo = { viewModel.manualQueueSkipToIndex(it) },
+                        onBaseSkipTo = { viewModel.baseSkipToIndex(it) }
                     )
                 }
             }

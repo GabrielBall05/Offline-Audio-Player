@@ -70,6 +70,8 @@ class MainViewModel @Inject constructor(
     fun clearQueue() = controllerManager.clearQueue()
     fun moveManualQueueItem(fromIndex: Int, toIndex: Int) = controllerManager.moveManualQueueItem(fromIndex, toIndex)
     fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) = controllerManager.moveBasePlaylistItem(fromIndex, toIndex)
+    fun manualQueueSkipToIndex(index: Int) = controllerManager.manualQueueSkipToIndex(index)
+    fun baseSkipToIndex(index: Int) = controllerManager.baseSkipToIndex(index)
 
     fun onAddToPlaylistClicked(id: Int) {
         viewModelScope.launch {

@@ -1,8 +1,7 @@
 TODO:
 save player state (timeline, current item, current duration, all the queues, etc)
-tap to start playing playlist at tapped item in playlist details
-tap to skip to in queue screen
 swipe image for next/prev in expanded player screen
+add to queue in order of selection, not media id
 put edit creator/image at LEAST in the same dialog (separate save buttons if needed)
 centralize all the bottomsheet/dialog popups in each major screen
 Log statements and toasts/snackbars
@@ -16,4 +15,4 @@ when copying/storing images, maybe try to make sure there are no duplicated or o
 thoroughly comment code and just make it look better
 maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 app icon
-
+horizontal orientation layouts - or just only allow vertical

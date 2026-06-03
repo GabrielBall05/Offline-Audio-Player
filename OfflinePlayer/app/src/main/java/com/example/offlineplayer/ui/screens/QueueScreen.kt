@@ -29,7 +29,9 @@ fun QueueScreen(
     onDismiss: () -> Unit,
     onClearQueue: () -> Unit,
     onMoveManualItem: (Int, Int) -> Unit,
-    onMoveBaseItem: (Int, Int) -> Unit
+    onMoveBaseItem: (Int, Int) -> Unit,
+    onManualQueueSkipTo: (Int) -> Unit,
+    onBaseSkipTo: (Int) -> Unit
 ) {
     BackHandler(onBack = onDismiss)
 
@@ -86,6 +88,7 @@ fun QueueScreen(
                     item = item,
                     isFirst = (index == 0),
                     isLast = (index == manualQueue.size - 1),
+                    onClick = { onManualQueueSkipTo(index) },
                     onMoveUp = { onMoveManualItem(index, index - 1) },
                     onMoveDown = { onMoveManualItem(index, index + 1) }
                 )
@@ -108,6 +111,7 @@ fun QueueScreen(
                     item = item,
                     isFirst = (index == 0),
                     isLast = (index == upNextBase.size - 1),
+                    onClick = { onBaseSkipTo(index) },
                     onMoveUp = { onMoveBaseItem(index, index - 1) },
                     onMoveDown = { onMoveBaseItem(index, index + 1) }
                 )

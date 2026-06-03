@@ -1,6 +1,7 @@
 package com.example.offlineplayer.ui.components.listitems
 
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ fun QueueItem(
     modifier: Modifier = Modifier,
     isFirst: Boolean,
     isLast: Boolean,
+    onClick: () -> Unit = {  },
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
 ) {
@@ -38,6 +40,7 @@ fun QueueItem(
     ) {
         //Artwork
         SurfacedImage(
+            modifier = Modifier.clickable(enabled = !(isFirst && isLast), onClick = onClick),
             model = item.mediaMetadata.artworkUri.toString(),
             contentDescription = "Queue Item Artwork",
             sizeInDp = 50.dp
