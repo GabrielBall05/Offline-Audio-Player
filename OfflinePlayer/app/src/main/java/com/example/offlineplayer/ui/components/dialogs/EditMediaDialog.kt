@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -74,8 +75,8 @@ fun EditMediaDialog(
                 //Artwork Image (Shows the SurfacedImage as well as info + remove option)
                 ImagePickerRow(
                     model = artworkUri,
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp),
                     contentDescription = "Artwork Image",
-                    showRemoveButton = (artworkUri != null),
                     onImageClick = { pickImageLauncher.launch("image/*") },
                     onRemoveClick = { artworkUri = null }
                 )

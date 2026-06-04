@@ -162,12 +162,6 @@ fun HomeScreen(
                 IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit")
                 }
-                IconButton(onClick = { 
-                    idsToUpdateArtwork = selectedIds.toList()
-                    pickImageLauncher.launch("image/*")
-                }) {
-                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
-                }
                 IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Playlist")
                 }
@@ -175,7 +169,7 @@ fun HomeScreen(
                     Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
                 }
                 IconButton(onClick = { idsToDelete = selectedIds.toList() }) {
-                    Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
+                    Icon(Icons.Default.DeleteForever, tint = MaterialTheme.colorScheme.error, contentDescription = "Delete")
                 }
             }
 
@@ -253,15 +247,19 @@ fun HomeScreen(
 
     //Show edit dialog if user hit edit (bulk)
     if (idsToEdit.isNotEmpty()) {
-        EditMediaBulkDialog(
-            itemCount = idsToEdit.size,
-            commonCreator = viewModel.getCommonCreator(idsToEdit),
-            onDismiss = { idsToEdit = emptyList() },
-            onConfirm = { newCreator ->
-                viewModel.updateCreatorBulk(newCreator, idsToEdit)
-                idsToEdit = emptyList()
-            }
-        )
+        if (idsToEdit.size == 1) {
+            mediaToEdit = mediaList.first { it.mediaId == idsToEdit[0] }
+            idsToEdit = emptyList()
+        } else {
+            EditMediaBulkDialog(
+                itemCount = idsToEdit.size,
+                commonCreator = viewModel.getCommonCreator(idsToEdit),
+                commonArtwork = viewModel.getCommonArtwork(idsToEdit),
+                onDismiss = { idsToEdit = emptyList() },
+                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) }, //TODO: snack bar (creator and artwork)
+                onConfirmArtwork = { viewModel.updateArtworkBulk(it, idsToEdit) }
+            )
+        }
     }
 
     //Show PlaylistPicker if user clicks Add to Playlist (bulk or single)
@@ -291,9 +289,13 @@ fun HomeScreen(
     }
 
     //Show delete confirmation dialog if user hit delete
-    if (idsToDelete.isNotEmpty()) { //TODO: Maybe be more descriptive (show title) when deleting 1 item
+    if (idsToDelete.isNotEmpty()) {
+        val text = when {
+            idsToDelete.size == 1 -> "\"${mediaList.first { it.mediaId == idsToDelete[0] }.title}\""
+            else -> "these ${idsToDelete.size} items"
+        }
         ConfirmationDialog(
-            title = "Are you sure you want to delete ${if (idsToDelete.size > 1) "these ${idsToDelete.size} items" else "this item"} from your library?",
+            title = "Are you sure you want to delete $text from your library?",
             text = "This action cannot be undone",
             onDismiss = { idsToDelete = emptyList() },
             onConfirm = {

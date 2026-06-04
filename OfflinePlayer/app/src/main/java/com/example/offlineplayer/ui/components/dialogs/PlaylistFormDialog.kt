@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -69,9 +70,9 @@ fun PlaylistFormDialog(
                 //Cover Image
                 ImagePickerRow(
                     model = coverUri,
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp),
                     contentDescription = "Cover Image",
                     mainText = "Cover Image",
-                    showRemoveButton = (coverUri != null),
                     onImageClick = { pickImageLauncher.launch("image/*") },
                     onRemoveClick = { coverUri = null }
                 )

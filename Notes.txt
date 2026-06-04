@@ -1,9 +1,8 @@
 TODO:
 save player state (timeline, current item, current duration, all the queues, etc)
+Log statements and snackbars
 swipe image for next/prev in expanded player screen
-put edit creator/image at LEAST in the same dialog (separate save buttons if needed)
 centralize all the bottomsheet/dialog popups in each major screen
-Log statements and toasts/snackbars
 Loading popup for things that take time (ex: uploading media)
 default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
 default sort order setting

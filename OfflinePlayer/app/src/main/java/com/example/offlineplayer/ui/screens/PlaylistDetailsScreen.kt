@@ -1,5 +1,6 @@
 package com.example.offlineplayer.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -244,12 +245,6 @@ fun PlaylistDetailsScreen(
                             IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Edit")
                             }
-                            IconButton(onClick = {
-                                idsToUpdateArtwork = selectedIds.toList()
-                                pickImageLauncher.launch("image/*")
-                            }) {
-                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Update Image")
-                            }
                             IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
                                 Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
                             }
@@ -442,8 +437,12 @@ fun PlaylistDetailsScreen(
     //Show ConfirmationDialog if user wants to remove media items from this playlist
     if (idsToRemove.isNotEmpty()) {
         playlist?.let { currentPlaylist ->
+            val text = when {
+                idsToRemove.size == 1 -> "\"${mediaList.first { it.mediaId == idsToRemove[0] }.title}\""
+                else -> "these ${idsToRemove.size} items"
+            }
             ConfirmationDialog(
-                title = "Are you sure you want to remove ${if (idsToRemove.size > 1) "these ${idsToRemove.size} items" else "this item"} from \"${currentPlaylist.name}\"?",
+                title = "Are you sure you want to remove $text from \"${currentPlaylist.name}\"?",
                 text = "You can always re-add ${if (idsToRemove.size > 1) "them" else "it"}.",
                 confirmText = "Remove",
                 onDismiss = { idsToRemove = emptyList() },
@@ -495,15 +494,19 @@ fun PlaylistDetailsScreen(
 
     //Show edit dialog if user hit edit (bulk)
     if (idsToEdit.isNotEmpty()) {
-        EditMediaBulkDialog(
-            itemCount = idsToEdit.size,
-            commonCreator = viewModel.getCommonCreator(idsToEdit),
-            onDismiss = { idsToEdit = emptyList() },
-            onConfirm = { newCreator ->
-                viewModel.updateCreatorBulk(newCreator, idsToEdit)
-                idsToEdit = emptyList()
-            }
-        )
+        if (idsToEdit.size == 1) {
+            mediaToEdit = mediaList.first { it.mediaId == idsToEdit[0] }
+            idsToEdit = emptyList()
+        } else {
+            EditMediaBulkDialog(
+                itemCount = idsToEdit.size,
+                commonCreator = viewModel.getCommonCreator(idsToEdit),
+                commonArtwork = viewModel.getCommonArtwork(idsToEdit),
+                onDismiss = { idsToEdit = emptyList() },
+                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) }, //TODO: snack bar (creator and artwork)
+                onConfirmArtwork = { viewModel.updateArtworkBulk(it, idsToEdit) }
+            )
+        }
     }
 
     //Show MediaPicker if user wants to add media to this playlist from here

@@ -24,17 +24,15 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ImagePickerRow(
     model: String?,
+    modifier: Modifier = Modifier,
     contentDescription: String,
     mainText: String = "Artwork",
-    showRemoveButton: Boolean,
     onImageClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+        modifier = modifier.fillMaxWidth()
     ) {
         //Image
         SurfacedImage(
@@ -62,7 +60,7 @@ fun ImagePickerRow(
         Spacer(modifier = Modifier.weight(1f))
 
         //Show remove button if artworkUri is not null
-        if (showRemoveButton) {
+        model?.let {
             IconButton(
                 onClick = onRemoveClick,
                 modifier = Modifier
