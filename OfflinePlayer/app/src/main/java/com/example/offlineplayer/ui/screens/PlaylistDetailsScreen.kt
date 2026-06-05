@@ -55,11 +55,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
+import com.example.offlineplayer.ui.components.common.EmptyMessage
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.common.SurfacedImage
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
@@ -115,6 +117,7 @@ fun PlaylistDetailsScreen(
     var isFetchingMedia by rememberSaveable { mutableStateOf(false) }
     var showPlaylistOptionsSheet by rememberSaveable { mutableStateOf(false) }
     var editingPlaylist by rememberSaveable { mutableStateOf(false) }
+    var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
     val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
@@ -145,7 +148,7 @@ fun PlaylistDetailsScreen(
     }
 
     //Refresh available playlists when the selection for playlist addition is set
-    LaunchedEffect(idsToAddToPlaylists) {
+    LaunchedEffect(idsToAddToPlaylists, availablePlaylists.size) {
         if (idsToAddToPlaylists.isNotEmpty()) viewModel.refreshAvailablePlaylists(idsToAddToPlaylists)
     }
 
@@ -306,7 +309,15 @@ fun PlaylistDetailsScreen(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                if (isReordering) {
+                if (fullMediaList.isEmpty()) {
+                    item {
+                        EmptyMessage(text = "You have no items in this playlist. Add some using the \"+\" button at the bottom-right of your screen.")
+                    }
+                } else if (mediaList.isEmpty()) {
+                    item {
+                        EmptyMessage(text = "No matches found.")
+                    }
+                } else if (isReordering) {
                     //Use reorderable list item with the full media list
                     itemsIndexed(
                         items = fullMediaList,
@@ -345,7 +356,7 @@ fun PlaylistDetailsScreen(
                             targetState = isAnySelected,
                             label = "MediaListItemTransition"
                         ) { animatingSelectionMode ->
-                            if (animatingSelectionMode) { //Use selectable list item is selecting
+                            if (animatingSelectionMode) { //Use selectable list item if selecting
                                 MediaListItemSelectable(
                                     media = media,
                                     isSelected = selectedIds.contains(media.mediaId),
@@ -527,10 +538,22 @@ fun PlaylistDetailsScreen(
     if (idsToAddToPlaylists.isNotEmpty()) {
         PlaylistPicker(
             playlists = availablePlaylists,
+            onCreateClick = { creatingPlaylist = true },
             onDismiss = { idsToAddToPlaylists = emptyList() },
             onConfirm = { playlistIds ->
                 viewModel.addMediaToPlaylists(idsToAddToPlaylists, playlistIds)
                 idsToAddToPlaylists = emptyList()
+            }
+        )
+    }
+
+    //Show PlaylistFormDialog if user clicked the Create Playlist shortcut in PlaylistPicker
+    if (creatingPlaylist) {
+        PlaylistFormDialog(
+            onDismiss = { creatingPlaylist = false },
+            onConfirm = { playlist ->
+                viewModel.createPlaylist(playlist, idsToAddToPlaylists.ifEmpty { emptyList() })
+                creatingPlaylist = false
             }
         )
     }

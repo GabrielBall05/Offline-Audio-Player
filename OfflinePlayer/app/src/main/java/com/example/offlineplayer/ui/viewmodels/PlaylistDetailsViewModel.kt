@@ -166,6 +166,13 @@ class PlaylistDetailsViewModel @Inject constructor(
         }
     }
 
+    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistInteractor.createPlaylist(playlist) //Perform db insert
+            if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
+        }
+    }
+
     suspend fun getMediaNotInPlaylist(): List<MediaEntity> {
         return playlistInteractor.getMediaNotInPlaylist(playlistId)
     }

@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +39,7 @@ import androidx.navigation.NavController
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.ui.Screen
+import com.example.offlineplayer.ui.components.common.EmptyMessage
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
@@ -134,17 +136,23 @@ fun PlaylistsScreen(
                     .padding(top = 6.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                items(
-                    items = playlistList,
-                    key = { it.playlistId }
-                ) { playlist ->
-                    PlaylistListItemStandard(
-                        playlist = playlist,
-                        modifier = Modifier.clickable {
-                            navController.navigate(Screen.PlaylistDetails.createRoute(playlist.playlistId))
-                        },
-                        onMoreClick = { selectedPlaylistForMenu = playlist }
-                    )
+                if (playlistList.isNotEmpty()) {
+                    items(
+                        items = playlistList,
+                        key = { it.playlistId }
+                    ) { playlist ->
+                        PlaylistListItemStandard(
+                            playlist = playlist,
+                            modifier = Modifier.clickable {
+                                navController.navigate(Screen.PlaylistDetails.createRoute(playlist.playlistId))
+                            },
+                            onMoreClick = { selectedPlaylistForMenu = playlist }
+                        )
+                    }
+                } else {
+                    item {
+                        EmptyMessage(text = "You have no playlists made. Create one using the \"+\" button at the bottom-right of your screen.")
+                    }
                 }
             }
         }

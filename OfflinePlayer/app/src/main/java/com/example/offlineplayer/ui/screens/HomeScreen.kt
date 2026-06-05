@@ -44,10 +44,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
+import com.example.offlineplayer.ui.components.common.EmptyMessage
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
 import com.example.offlineplayer.ui.components.listitems.MediaListItemSelectable
@@ -64,6 +66,7 @@ fun HomeScreen(
     onAddToQueueClick: (List<MediaEntity>) -> Unit
 ) {
     //Collect states from ViewModel
+    val hasMedia by viewModel.hasMedia.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
@@ -82,6 +85,7 @@ fun HomeScreen(
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
+    var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     //File Picker launcher
@@ -110,7 +114,7 @@ fun HomeScreen(
     }
 
     //Refresh available playlists when the selection for playlist addition is set
-    LaunchedEffect(idsToAddToPlaylists) {
+    LaunchedEffect(idsToAddToPlaylists, availablePlaylists.size) {
         if (idsToAddToPlaylists.isNotEmpty()) viewModel.refreshAvailablePlaylists(idsToAddToPlaylists)
     }
 
@@ -181,17 +185,27 @@ fun HomeScreen(
                     .padding(top = 6.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                items(
-                    items = mediaList,
-                    key = { it.mediaId }
-                ) { media ->
-                    MediaListItemSelectable(
-                        media = media,
-                        isSelected = selectedIds.contains(media.mediaId),
-                        onSelect = { viewModel.toggleSelection(media.mediaId) },
-                        constrainSelectToCheckbox = false,
-                        onMoreClick = { selectedMediaItemForMenu = media }
-                    )
+                if (!hasMedia) {
+                    item {
+                        EmptyMessage(text = "You have no items uploaded. Add some using the \"+\" button at the bottom-right of your screen.")
+                    }
+                } else if (mediaList.isEmpty()) {
+                    item {
+                        EmptyMessage(text = "No matches found.")
+                    }
+                } else {
+                    items(
+                        items = mediaList,
+                        key = { it.mediaId }
+                    ) { media ->
+                        MediaListItemSelectable(
+                            media = media,
+                            isSelected = selectedIds.contains(media.mediaId),
+                            onSelect = { viewModel.toggleSelection(media.mediaId) },
+                            constrainSelectToCheckbox = false,
+                            onMoreClick = { selectedMediaItemForMenu = media }
+                        )
+                    }
                 }
             }
         }
@@ -266,10 +280,22 @@ fun HomeScreen(
     if (idsToAddToPlaylists.isNotEmpty()) {
         PlaylistPicker(
             playlists = availablePlaylists,
+            onCreateClick = { creatingPlaylist = true },
             onDismiss = { idsToAddToPlaylists = emptyList() },
-            onConfirm = { selectedPlaylistIds ->
-                viewModel.addMediaToPlaylists(idsToAddToPlaylists, selectedPlaylistIds)
+            onConfirm = { playlistIds ->
+                viewModel.addMediaToPlaylists(idsToAddToPlaylists, playlistIds)
                 idsToAddToPlaylists = emptyList()
+            }
+        )
+    }
+
+    //Show PlaylistFormDialog if user clicked the Create Playlist shortcut in PlaylistPicker
+    if (creatingPlaylist) {
+        PlaylistFormDialog(
+            onDismiss = { creatingPlaylist = false },
+            onConfirm = { playlist ->
+                viewModel.createPlaylist(playlist, idsToAddToPlaylists.ifEmpty { emptyList() })
+                creatingPlaylist = false
             }
         )
     }

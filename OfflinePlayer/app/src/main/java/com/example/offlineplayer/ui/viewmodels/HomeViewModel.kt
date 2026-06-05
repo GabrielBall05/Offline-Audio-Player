@@ -16,8 +16,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -82,6 +84,14 @@ class HomeViewModel @Inject constructor(
     //Available playlists for PlaylistPicker
     private val _availablePlaylists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
     val availablePlaylists = _availablePlaylists.asStateFlow()
+
+    val hasMedia: StateFlow<Boolean> = _allMedia
+        .map { list -> list.isNotEmpty() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 
     fun refreshAvailablePlaylists(mediaIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -158,6 +168,13 @@ class HomeViewModel @Inject constructor(
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
             playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
+        }
+    }
+
+    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistInteractor.createPlaylist(playlist) //Perform db insert
+            if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
         }
     }
 }

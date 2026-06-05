@@ -61,7 +61,7 @@ fun EditMediaBulkDialog(
         title = { Text("Editing $itemCount items") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Fields are prefilled only if the selected items have it in common." +
+                Text(text = "Fields are prefilled only if the selected items have it in common. " +
                         "Tapping Save WILL update that field for all items with what is shown.",
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -141,7 +141,7 @@ fun EditMediaBulkDialog(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         ImagePickerRow(
                             model = artworkUri,
