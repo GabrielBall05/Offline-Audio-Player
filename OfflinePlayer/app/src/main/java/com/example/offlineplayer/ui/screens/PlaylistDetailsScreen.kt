@@ -1,8 +1,5 @@
 package com.example.offlineplayer.ui.screens
 
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -104,6 +101,7 @@ fun PlaylistDetailsScreen(
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
+    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     var isReordering by rememberSaveable { mutableStateOf(false) }
     var idsToRemove by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
@@ -111,7 +109,6 @@ fun PlaylistDetailsScreen(
     var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showMediaPicker by rememberSaveable { mutableStateOf(false) }
     var mediaNotInPlaylist by rememberSaveable { mutableStateOf<List<MediaEntity>>(emptyList()) }
     var isFetchingMedia by rememberSaveable { mutableStateOf(false) }
@@ -119,17 +116,7 @@ fun PlaylistDetailsScreen(
     var editingPlaylist by rememberSaveable { mutableStateOf(false) }
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
-    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
-    //Launcher for picking artwork image
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            viewModel.updateArtworkBulk(it.toString(), idsToUpdateArtwork)
-        }
-        idsToUpdateArtwork = emptyList()
-    }
 
     //Jump to top of list when list size changes
     LaunchedEffect(mediaList.size) {
@@ -153,6 +140,7 @@ fun PlaylistDetailsScreen(
     }
 
 
+    //Screen UI
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             //Header (Back button, playlist details, menu button)
@@ -311,7 +299,8 @@ fun PlaylistDetailsScreen(
             ) {
                 if (fullMediaList.isEmpty()) {
                     item {
-                        EmptyMessage(text = "You have no items in this playlist. Add some using the \"+\" button at the bottom-right of your screen.")
+                        EmptyMessage(text = "You have no items in this playlist. Add some using the \"+\" button at the bottom-right of your screen, " +
+                                "or utilize the Home Screen's selecting options.")
                     }
                 } else if (mediaList.isEmpty()) {
                     item {

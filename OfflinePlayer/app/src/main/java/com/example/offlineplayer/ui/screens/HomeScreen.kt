@@ -77,16 +77,15 @@ fun HomeScreen(
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
+    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     var idsToDelete by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var idsToAddToPlaylists by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var selectedMediaItemForMenu by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var mediaToEdit by rememberSaveable { mutableStateOf<MediaEntity?>(null) }
     var idsToEdit by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
-    var idsToUpdateArtwork by rememberSaveable { mutableStateOf<List<Int>>(emptyList()) }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
-    val mediaMap = remember(mediaList) { mediaList.associateBy { it.mediaId } }
 
     //File Picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) {
@@ -94,16 +93,6 @@ fun HomeScreen(
         if (uris.isNotEmpty()) {
             viewModel.importMedia(uris)
         }
-    }
-
-    //Launcher for picking artwork image
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let { 
-            viewModel.updateArtworkBulk(it.toString(), idsToUpdateArtwork)
-        }
-        idsToUpdateArtwork = emptyList()
     }
 
     //Jump to top of list when list size changes or sort order is changed
@@ -119,6 +108,7 @@ fun HomeScreen(
     }
 
 
+    //Screen UI
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             //Page Title

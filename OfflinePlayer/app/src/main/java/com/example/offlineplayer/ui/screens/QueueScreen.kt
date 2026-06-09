@@ -13,11 +13,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
+import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.listitems.QueueItem
 
 @Composable
@@ -35,6 +40,9 @@ fun QueueScreen(
 ) {
     BackHandler(onBack = onDismiss)
 
+    var showClearQueueConfirmation by rememberSaveable { mutableStateOf(false) }
+
+    //Screen UI
     LazyColumn(
         modifier = modifier.fillMaxSize()
     ) {
@@ -78,7 +86,7 @@ fun QueueScreen(
                     )
 
                     //Clear Queue Option
-                    OutlinedButton(onClick = onClearQueue) {
+                    OutlinedButton(onClick = { showClearQueueConfirmation = true }) {
                         Text("Clear Queue")
                     }
                 }
@@ -117,5 +125,20 @@ fun QueueScreen(
                 )
             }
         }
+    }
+
+
+    //Show confirmation dialog if user hits Clear Queue button
+    if (showClearQueueConfirmation) {
+        ConfirmationDialog(
+            title = "Clear Queue?",
+            text = "Are you sure you want to clear the queue?",
+            confirmText = "Clear",
+            onDismiss = { showClearQueueConfirmation = false },
+            onConfirm = {
+                onClearQueue()
+                showClearQueueConfirmation = false
+            }
+        )
     }
 }

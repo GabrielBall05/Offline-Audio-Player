@@ -237,8 +237,18 @@ class MediaControllerManager @Inject constructor(
 
     private fun rebuildTimeline(currentPlayingItem: MediaItem?, isStartingNew: Boolean) {
         val player = controller ?: return
-        //Return if there is nothing to play at all
-        if (sourcePlaylist.isEmpty() && manualQueue.isEmpty()) return
+
+        //Return if there is nothing to play at all - also clear timeline except for the current item
+        if (sourcePlaylist.isEmpty() && manualQueue.isEmpty()) {
+            _manualQueueState.value = emptyList()
+            _upNextBaseState.value = emptyList()
+            activeTimeline = listOfNotNull(currentPlayingItem)
+
+            val nextIndex = player.currentMediaItemIndex + 1
+            if (player.mediaItemCount > nextIndex) player.removeMediaItems(nextIndex, player.mediaItemCount)
+
+            return
+        }
 
         //Identify the active base playlist (can be empty)
         val basePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist

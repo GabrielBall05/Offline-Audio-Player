@@ -1,4 +1,5 @@
 TODO:
+queue remove item
 save player state (timeline, current item, current duration, all the queues, etc)
 Log statements and snackbars
 swipe image for next/prev in expanded player screen
