@@ -61,6 +61,9 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    //DataStore (Settings)
+    implementation(libs.androidx.datastore.preferences)
+
     //Media3 (Playback)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)

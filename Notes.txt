@@ -1,17 +1,31 @@
 TODO:
-queue remove item
-save player state (timeline, current item, current duration, all the queues, etc)
+
+Settings:
+1. default playlist details mode (reordering vs viewing)
+2. default sort order (home screen and playlists screen)
+3. keep screen on in expanded player toggle
+4. default playlist play mode setting (shuffle vs ordered)
+5. 
+
+
+Other:
 Log statements and snackbars
-swipe image for next/prev in expanded player screen
-centralize all the bottomsheet/dialog popups in each major screen
 Loading popup for things that take time (ex: uploading media)
-default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
-default sort order setting
-keep screen on in expanded player setting
-default playlist play mode setting (shuffle vs ordered)
-default playlist details mode (reordering vs viewing)
-when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
-thoroughly comment code and just make it look better
-maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
-app icon
 horizontal orientation layouts - or just only allow vertical
+thoroughly comment code and just make it look better
+app icon
+when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
+default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
+maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
+
+Queue:
+completely redo the queue logic
+known issues:
+ 1. next button in notification panel doesn't work the same as next button in expanded player screen
+	- this seems to mostly be the case for if manual queue contains several of the same items
+ 2. hitting previous to go back to an item from the manual queue will change the "up next" to start after that backed
+    into item's position in the original playlist, rather than where the playlist was actually left off at before hitting previous
+also implement:
+1. removing items from queue
+2. save player state (timeline, current item, current duration, all the queues, etc)
+3. swipe image for next/prev in expanded player screen

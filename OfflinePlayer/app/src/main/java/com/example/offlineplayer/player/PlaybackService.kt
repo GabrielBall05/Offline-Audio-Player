@@ -6,15 +6,12 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.example.offlineplayer.data.local.SettingsDao
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
-    @Inject lateinit var settingsDao: SettingsDao //Automatically provided by Hilt
     private var mediaSession: MediaSession? = null
     private lateinit var exoPlayer: ExoPlayer //Engine that plays the audio
 
@@ -26,10 +23,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        //Initialize ExoPlayer
         initializePlayer()
-        //Load settings from Room db
-        loadSettings()
     }
 
     private fun initializePlayer() {
@@ -44,15 +38,6 @@ class PlaybackService : MediaSessionService() {
 
         //Initialize MediaSession and link it to the player
         mediaSession = MediaSession.Builder(this, exoPlayer).build()
-    }
-
-    private fun loadSettings() {
-        //Use Coroutine to collect the Flow from Room db
-        MainScope().launch {
-            settingsDao.getSettings().collect { settings ->
-
-            }
-        }
     }
 
     //Gets called when a UI wants to connect to the player

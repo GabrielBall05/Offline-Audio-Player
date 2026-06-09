@@ -101,7 +101,6 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
             }
         }
     ) { innerPadding ->
-        //The NavHost is the "Window" that swaps screens
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,

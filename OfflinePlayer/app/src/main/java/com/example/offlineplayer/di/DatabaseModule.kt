@@ -6,7 +6,6 @@ import com.example.offlineplayer.data.local.AppDatabase
 import com.example.offlineplayer.data.local.DatabaseTriggerCallback
 import com.example.offlineplayer.data.local.MediaDao
 import com.example.offlineplayer.data.local.PlaylistDao
-import com.example.offlineplayer.data.local.SettingsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,10 +38,5 @@ object DatabaseModule {
     @Provides
     fun providePlaylistDao(database: AppDatabase): PlaylistDao {
         return database.playlistDao()
-    }
-
-    @Provides
-    fun provideSettingsDao(database: AppDatabase): SettingsDao {
-        return database.settingsDao()
     }
 }
