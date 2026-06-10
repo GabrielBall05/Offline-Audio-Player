@@ -88,17 +88,20 @@ class MediaControllerManager @Inject constructor(
         player.play()
     }
 
-    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0) {
+    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0, startShuffled: Boolean) {
+        if (mediaItems.isEmpty()) return
         sourcePlaylist = mediaItems
         manualQueue.clear()
 
-        val startingItem = sourcePlaylist.getOrNull(startItemIndex)
+        _isShuffleModeEnabled.value = startShuffled
 
-        //Generate shuffledPlaylist variant
-        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != startItemIndex }.shuffled()
+        val finalStartIndex = if (startShuffled) mediaItems.indices.random() else startItemIndex
+        val startingItem = sourcePlaylist.getOrNull(finalStartIndex)
+
+        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != finalStartIndex }.shuffled()
         shuffledPlaylist = listOfNotNull(startingItem) + remaining
 
-        linearIndex = startItemIndex
+        linearIndex = finalStartIndex
         shuffledIndex = if (startingItem != null) 0 else -1
 
         rebuildTimeline(startingItem, isStartingNew = true)

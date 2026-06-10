@@ -27,10 +27,10 @@ class PlaylistRepository @Inject constructor(
     val allPlaylists: Flow<List<PlaylistEntity>> = playlistDao.getAllPlaylists()
 
     //Player Actions
-    suspend fun playPlaylistById(id: Int) {
+    suspend fun playPlaylistById(id: Int, startShuffled: Boolean) {
         val mediaList = fetchPlaylistMediaList(id)
         withContext(Dispatchers.Main) { //MediaController methods must be called on the main thread
-            controllerManager.playPlaylist(mediaList)
+            controllerManager.playPlaylist(mediaItems = mediaList, startShuffled = startShuffled)
         }
     }
 

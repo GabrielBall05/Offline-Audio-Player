@@ -13,6 +13,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,7 +23,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val controllerManager: MediaControllerManager,
     private val playlistRepository: PlaylistRepository,
-    settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository
 ): ViewModel() {
 
     private var playbackJob: Job? = null
@@ -67,7 +69,8 @@ class MainViewModel @Inject constructor(
     }
     fun playPlaylist(playlistId: Int) {
         viewModelScope.launch {
-            playlistRepository.playPlaylistById(playlistId)
+            val isShuffleEnabled = settingsRepository.defaultShuffleFlow.first()
+            playlistRepository.playPlaylistById(playlistId, startShuffled = isShuffleEnabled)
         }
     }
     fun addPlaylistToQueue(playlistId: Int) {
