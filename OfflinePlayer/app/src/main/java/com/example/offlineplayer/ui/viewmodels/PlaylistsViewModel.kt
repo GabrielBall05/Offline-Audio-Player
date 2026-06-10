@@ -3,9 +3,9 @@ package com.example.offlineplayer.ui.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.util.PlaylistSortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,8 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
-    private val playlistInteractor: PlaylistInteractor,
-    @param:ApplicationContext private val context: Context
+    private val playlistRepository: PlaylistRepository,
 ) : ViewModel() {
 
     //For searching
@@ -33,7 +32,7 @@ class PlaylistsViewModel @Inject constructor(
     val sortOrder = _sortOrder.asStateFlow()
 
     //Get all playlist entities from the db
-    private val _allPlaylists = playlistInteractor.allPlaylists
+    private val _allPlaylists = playlistRepository.allPlaylists
 
     //Filter full list by combining with search query
     val filteredPlaylists = combine(_allPlaylists, _searchQuery, _sortOrder) { playlists, query, sort ->
@@ -70,29 +69,29 @@ class PlaylistsViewModel @Inject constructor(
 
     fun createPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.createPlaylist(playlist) //Perform db insert
+            playlistRepository.insertPlaylist(playlist) //Perform db insert
         }
     }
 
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.editPlaylist(playlist) //Perform db insert
+            playlistRepository.updatePlaylist(playlist) //Perform db insert
         }
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.deletePlaylist(playlist)
+            playlistRepository.deletePlaylist(playlist)
         }
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
+            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
         }
     }
 
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> {
-        return playlistInteractor.getMediaNotInPlaylist(playlistId)
+        return playlistRepository.getMediaNotInPlaylist(playlistId)
     }
 }

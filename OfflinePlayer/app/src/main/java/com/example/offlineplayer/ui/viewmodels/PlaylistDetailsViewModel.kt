@@ -1,21 +1,18 @@
 package com.example.offlineplayer.ui.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.domain.MediaInteractor
-import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.data.repository.MediaRepository
+import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -26,25 +23,24 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistDetailsViewModel @Inject constructor(
-    private val mediaInteractor: MediaInteractor,
-    private val playlistInteractor: PlaylistInteractor,
+    private val mediaRepository: MediaRepository,
+    private val playlistRepository: PlaylistRepository,
     savedStateHandle: SavedStateHandle,
-    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     //Get clicked playlist id straight from navigation arguments
     private val playlistId: Int = checkNotNull(savedStateHandle["id"])
 
     //Get the actual playlist from db
-    val playlist = playlistInteractor.getPlaylistById(playlistId)
+    val playlist = playlistRepository.getPlaylistById(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     //Get the number of media items in this playlist
-    val itemCount = playlistInteractor.getPlaylistItemCount(playlistId)
+    val itemCount = playlistRepository.getPlaylistItemCount(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     //Get all media items in this playlist
-    val playlistMedia = playlistInteractor.getMediaInPlaylist(playlistId)
+    val playlistMedia = playlistRepository.getMediaInPlaylist(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     //For searching
@@ -77,7 +73,7 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun refreshAvailablePlaylists(mediaIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            val playlists = playlistInteractor.getPlaylistsNotHavingMediaList(mediaIds)
+            val playlists = playlistRepository.getPlaylistsNotHavingMediaList(mediaIds)
             _availablePlaylists.value = playlists
         }
     }
@@ -114,25 +110,25 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun editPlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.editPlaylist(playlist)
+            playlistRepository.updatePlaylist(playlist)
         }
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.deletePlaylist(playlist)
+            playlistRepository.deletePlaylist(playlist)
         }
     }
 
     fun removeMediaFromPlaylist(ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.removeMediaFromPlaylist(ids, playlistId)
+            playlistRepository.removeMediaFromPlaylist(ids, playlistId)
         }
     }
 
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateMedia(item) //Perform db update
+            mediaRepository.updateMedia(item) //Perform db update
         }
     }
 
@@ -144,36 +140,36 @@ class PlaylistDetailsViewModel @Inject constructor(
 
         //Perform db update
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos, toPos)
+            playlistRepository.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos, toPos)
         }
     }
 
     fun updateCreatorBulk(creator: String, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateCreatorBulk(creator, ids)
+            mediaRepository.updateCreatorBulk(creator, ids)
         }
     }
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateArtworkBulk(artworkUri, ids) //Perform db update
+            mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
         }
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
+            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
         }
     }
 
     fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.createPlaylist(playlist) //Perform db insert
+            playlistRepository.insertPlaylist(playlist) //Perform db insert
             if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
         }
     }
 
     suspend fun getMediaNotInPlaylist(): List<MediaEntity> {
-        return playlistInteractor.getMediaNotInPlaylist(playlistId)
+        return playlistRepository.getMediaNotInPlaylist(playlistId)
     }
 }

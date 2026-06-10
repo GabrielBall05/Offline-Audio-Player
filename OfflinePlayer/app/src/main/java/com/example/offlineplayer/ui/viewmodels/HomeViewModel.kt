@@ -4,10 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.domain.MediaInteractor
-import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
+import com.example.offlineplayer.data.repository.MediaRepository
+import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.util.MediaSortOrder
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
@@ -28,9 +28,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val mediaInteractor: MediaInteractor,
-    private val playlistInteractor: PlaylistInteractor,
-    @param:ApplicationContext private val context: Context
+    private val mediaRepository: MediaRepository,
+    private val playlistRepository: PlaylistRepository,
 ): ViewModel() {
 
     //For searching
@@ -42,7 +41,7 @@ class HomeViewModel @Inject constructor(
     val sortOrder = _sortOrder.asStateFlow()
 
     //Get all media entities from DB using the interactor's shared flow
-    private val _allMedia = mediaInteractor.allMedia
+    private val _allMedia = mediaRepository.allMedia
 
     //Filter full list by combining with the search query (this is the list shown in UI)
     val filteredMedia = combine(_allMedia, _searchQuery, _sortOrder) { media, query, sort ->
@@ -95,7 +94,7 @@ class HomeViewModel @Inject constructor(
 
     fun refreshAvailablePlaylists(mediaIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            val playlists = playlistInteractor.getPlaylistsNotHavingMediaList(mediaIds)
+            val playlists = playlistRepository.getPlaylistsNotHavingMediaList(mediaIds)
             _availablePlaylists.value = playlists
         }
     }
@@ -136,44 +135,44 @@ class HomeViewModel @Inject constructor(
 
     fun importMedia(uriList: List<Uri>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.importMedia(uriList)
+            mediaRepository.importMedia(uriList)
         }
     }
 
     fun deleteMediaByIds(ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.deleteMediaList(ids) //Perform db deletions
+            mediaRepository.deleteMediaList(ids) //Perform db deletions
             _selectedMediaIds.value -= ids.toSet() //Remove from selection list since they no longer exist
         }
     }
 
     fun updateMediaItem(item: MediaEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateMedia(item) //Perform db update
+            mediaRepository.updateMedia(item) //Perform db update
         }
     }
 
     fun updateCreatorBulk(creator: String, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateCreatorBulk(creator, ids)
+            mediaRepository.updateCreatorBulk(creator, ids)
         }
     }
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaInteractor.updateArtworkBulk(artworkUri, ids) //Perform db update
+            mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
         }
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.addMediaToPlaylists(mediaIds, playlistIds)
+            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
         }
     }
 
     fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistInteractor.createPlaylist(playlist) //Perform db insert
+            playlistRepository.insertPlaylist(playlist) //Perform db insert
             if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
         }
     }

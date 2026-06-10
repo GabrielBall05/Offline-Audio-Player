@@ -3,10 +3,9 @@ package com.example.offlineplayer.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.offlineplayer.data.domain.MediaInteractor
-import com.example.offlineplayer.data.domain.PlaylistInteractor
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.toMediaItem
+import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -17,8 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val controllerManager: MediaControllerManager,
-    private val mediaInteractor: MediaInteractor,
-    private val playlistInteractor: PlaylistInteractor
+    private val playlistRepository: PlaylistRepository
 ): ViewModel() {
 
     private var playbackJob: Job? = null
@@ -57,12 +55,12 @@ class MainViewModel @Inject constructor(
     }
     fun playPlaylist(playlistId: Int) {
         viewModelScope.launch {
-            playlistInteractor.playPlaylistById(playlistId)
+            playlistRepository.playPlaylistById(playlistId)
         }
     }
     fun addPlaylistToQueue(playlistId: Int) {
         viewModelScope.launch {
-            playlistInteractor.addPlaylistToQueue(playlistId)
+            playlistRepository.addPlaylistToQueue(playlistId)
         }
     }
     fun playMediaNow(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
