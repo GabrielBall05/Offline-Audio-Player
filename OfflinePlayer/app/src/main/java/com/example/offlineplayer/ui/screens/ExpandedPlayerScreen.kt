@@ -64,7 +64,8 @@ fun ExpandedPlayerScreen(
     viewModel: MainViewModel,
     onCollapse: () -> Unit
 ) {
-    KeepScreenOn() //Call helper composable to ensure the screen stays on while this screen/composable is active
+    val keepScreenOn by viewModel.keepScreenOn.collectAsStateWithLifecycle() //User's keep screen on setting
+    if (keepScreenOn) KeepScreenOn() //Call helper composable to ensure the screen stays on while this screen/composable is active
 
     //Collect states from viewmodel
     val currentMediaItem by viewModel.currentMediaItem.collectAsStateWithLifecycle()

@@ -12,12 +12,12 @@ enum class MediaSortOrder(override val label: String) : SortOption {
     DURATION_ASC("Duration (Low-High)"),
     DURATION_DESC("Duration (High-Low)"),
     DATE_ADDED_MOST_RECENT("Date Added (Most Recent)"),
-    DATE_ADDED_LEAST_RECENT("Date Added (Least Recent)")
+    DATE_ADDED_LEAST_RECENT("Date Added (Least Recent)");
 }
 
-enum class PlaylistSortOrder(override val label: String): SortOption {
+enum class PlaylistsSortOrder(override val label: String): SortOption {
     NAME_ASC("Name (A-Z)"),
     NAME_DESC("Name (Z-A)"),
     DATE_CREATED_MOST_RECENT("Date Created (Most Recent)"),
-    DATE_CREATED_LEAST_RECENT("Date Created (Least Recent)")
+    DATE_CREATED_LEAST_RECENT("Date Created (Least Recent)");
 }

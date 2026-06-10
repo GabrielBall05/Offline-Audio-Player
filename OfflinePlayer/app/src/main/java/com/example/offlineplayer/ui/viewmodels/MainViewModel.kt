@@ -6,17 +6,22 @@ import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.toMediaItem
 import com.example.offlineplayer.data.repository.PlaylistRepository
+import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.player.MediaControllerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val controllerManager: MediaControllerManager,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    settingsRepository: SettingsRepository
 ): ViewModel() {
 
     private var playbackJob: Job? = null
@@ -29,6 +34,13 @@ class MainViewModel @Inject constructor(
     val isShuffleModeEnabled = controllerManager.isShuffleModeEnabled
     val manualQueue = controllerManager.manualQueueState
     val upNextBase = controllerManager.upNextBaseState
+
+    //Expose states from settings
+    val keepScreenOn: StateFlow<Boolean> = settingsRepository.keepScreenOnFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = SettingsRepository.INITIAL_KEEP_SCREEN_ON
+    )
 
     init {
         // Ensure the controller is connected when the app starts or reopens

@@ -8,6 +8,7 @@ import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.repository.MediaRepository
 import com.example.offlineplayer.data.repository.PlaylistRepository
+import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.util.MediaSortOrder
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -30,6 +32,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val playlistRepository: PlaylistRepository,
+    settingsRepository: SettingsRepository
 ): ViewModel() {
 
     //For searching
@@ -37,7 +40,7 @@ class HomeViewModel @Inject constructor(
     val searchQuery = _searchQuery.asStateFlow()
 
     //Sort State
-    private val _sortOrder = MutableStateFlow(MediaSortOrder.TITLE_ASC)
+    private val _sortOrder = MutableStateFlow(SettingsRepository.INITIAL_MEDIA_SORT_ORDER)
     val sortOrder = _sortOrder.asStateFlow()
 
     //Get all media entities from DB using the interactor's shared flow
@@ -91,6 +94,12 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
         )
+
+    init {
+        viewModelScope.launch {
+            _sortOrder.value = settingsRepository.defaultMediaSortOrderFlow.first()
+        }
+    }
 
     fun refreshAvailablePlaylists(mediaIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {

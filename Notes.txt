@@ -1,11 +1,10 @@
 TODO:
 
 Settings:
-1. default playlist details mode (reordering vs viewing)
-2. default sort order (home screen and playlists screen)
-3. keep screen on in expanded player toggle
-4. default playlist play mode setting (shuffle vs ordered)
-5. 
+1. default sort order (home screen and playlists screen)
+2. keep screen on in expanded player toggle
+3. default playlist play mode setting (shuffle vs ordered)
+4. 
 
 
 Other:

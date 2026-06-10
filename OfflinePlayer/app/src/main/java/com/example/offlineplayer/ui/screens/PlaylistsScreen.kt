@@ -31,7 +31,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,7 +48,7 @@ import com.example.offlineplayer.ui.components.listitems.PlaylistListItemStandar
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistsViewModel
-import com.example.offlineplayer.util.PlaylistSortOrder
+import com.example.offlineplayer.util.PlaylistsSortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -231,7 +230,7 @@ fun PlaylistsScreen(
     if (showSortDialog) {
         SortOrderDialog(
             title = "Sort Playlists By",
-            options = PlaylistSortOrder.entries.toTypedArray(),
+            options = PlaylistsSortOrder.entries.toTypedArray(),
             currentSelection = sortOrder,
             onDismiss = { showSortDialog = false },
             onOptionSelected = { option ->

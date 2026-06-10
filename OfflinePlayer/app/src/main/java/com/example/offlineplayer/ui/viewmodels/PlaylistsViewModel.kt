@@ -1,19 +1,19 @@
 package com.example.offlineplayer.ui.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.repository.PlaylistRepository
-import com.example.offlineplayer.util.PlaylistSortOrder
+import com.example.offlineplayer.data.repository.SettingsRepository
+import com.example.offlineplayer.util.PlaylistsSortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     //For searching
@@ -28,7 +29,7 @@ class PlaylistsViewModel @Inject constructor(
     val searchQuery = _searchQuery.asStateFlow()
 
     //Sort State
-    private val _sortOrder = MutableStateFlow(PlaylistSortOrder.NAME_ASC)
+    private val _sortOrder = MutableStateFlow(SettingsRepository.INITIAL_PLAYLISTS_SORT_ORDER)
     val sortOrder = _sortOrder.asStateFlow()
 
     //Get all playlist entities from the db
@@ -47,10 +48,10 @@ class PlaylistsViewModel @Inject constructor(
         }
         //Then sort
         when (sort) {
-            PlaylistSortOrder.NAME_ASC -> filtered.sortedBy { it.name.lowercase() }
-            PlaylistSortOrder.NAME_DESC -> filtered.sortedByDescending { it.name.lowercase() }
-            PlaylistSortOrder.DATE_CREATED_MOST_RECENT -> filtered.sortedByDescending { it.dateCreated }
-            PlaylistSortOrder.DATE_CREATED_LEAST_RECENT -> filtered.sortedBy { it.dateCreated }
+            PlaylistsSortOrder.NAME_ASC -> filtered.sortedBy { it.name.lowercase() }
+            PlaylistsSortOrder.NAME_DESC -> filtered.sortedByDescending { it.name.lowercase() }
+            PlaylistsSortOrder.DATE_CREATED_MOST_RECENT -> filtered.sortedByDescending { it.dateCreated }
+            PlaylistsSortOrder.DATE_CREATED_LEAST_RECENT -> filtered.sortedBy { it.dateCreated }
         }
     }.stateIn(
         scope = viewModelScope,
@@ -58,12 +59,17 @@ class PlaylistsViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    init {
+        viewModelScope.launch {
+            _sortOrder.value = settingsRepository.defaultPlaylistsSortOrderFlow.first()
+        }
+    }
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
     }
 
-    fun onSortOrderChange(newOrder: PlaylistSortOrder) {
+    fun onSortOrderChange(newOrder: PlaylistsSortOrder) {
         _sortOrder.value = newOrder
     }
 
