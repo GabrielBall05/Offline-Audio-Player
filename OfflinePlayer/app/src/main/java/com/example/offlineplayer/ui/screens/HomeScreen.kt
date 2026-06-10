@@ -49,6 +49,7 @@ import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
+import com.example.offlineplayer.ui.components.dialogs.LoadingDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
@@ -74,6 +75,7 @@ fun HomeScreen(
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
     val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
@@ -320,5 +322,9 @@ fun HomeScreen(
                 viewModel.clearSelection()
             }
         )
+    }
+
+    if (isLoading) {
+        LoadingDialog()
     }
 }

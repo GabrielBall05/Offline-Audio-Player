@@ -1,12 +1,5 @@
 TODO:
 
-Settings:
-1. default sort order (home screen and playlists screen)
-2. keep screen on in expanded player toggle
-3. default playlist play mode setting (shuffle vs ordered)
-4. 
-
-
 Other:
 Log statements and snackbars
 Loading popup for things that take time (ex: uploading media)

@@ -95,6 +95,9 @@ class HomeViewModel @Inject constructor(
             initialValue = false
         )
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
     init {
         viewModelScope.launch {
             _sortOrder.value = settingsRepository.defaultMediaSortOrderFlow.first()
@@ -143,8 +146,15 @@ class HomeViewModel @Inject constructor(
     }
 
     fun importMedia(uriList: List<Uri>) {
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.importMedia(uriList)
+            try {
+                mediaRepository.importMedia(uriList)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
@@ -163,7 +173,7 @@ class HomeViewModel @Inject constructor(
 
     fun updateCreatorBulk(creator: String, ids: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateCreatorBulk(creator, ids)
+            mediaRepository.updateCreatorBulk(creator, ids) //Perform db update
         }
     }
 
@@ -175,7 +185,7 @@ class HomeViewModel @Inject constructor(
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
+            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds) //Perform db insert
         }
     }
 
