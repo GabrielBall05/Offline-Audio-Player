@@ -33,7 +33,7 @@ class HomeViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val playlistRepository: PlaylistRepository,
     settingsRepository: SettingsRepository
-): ViewModel() {
+): BaseViewModel() {
 
     //For searching
     private val _searchQuery = MutableStateFlow("")
@@ -95,8 +95,6 @@ class HomeViewModel @Inject constructor(
             initialValue = false
         )
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -145,54 +143,33 @@ class HomeViewModel @Inject constructor(
         return filteredMedia.value.filter { it.mediaId in ids }.getCommonArtwork()
     }
 
-    fun importMedia(uriList: List<Uri>) {
-        _isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                mediaRepository.importMedia(uriList)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                _isLoading.value = false
-            }
-        }
+    fun importMedia(uriList: List<Uri>) = launchWithLoading {
+        mediaRepository.importMedia(uriList)
     }
 
-    fun deleteMediaByIds(ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.deleteMediaList(ids) //Perform db deletions
-            _selectedMediaIds.value -= ids.toSet() //Remove from selection list since they no longer exist
-        }
+    fun deleteMediaByIds(ids: List<Int>) = launchWithLoading {
+        mediaRepository.deleteMediaList(ids) //Perform db deletions
+        _selectedMediaIds.value -= ids.toSet() //Remove from selection list since they no longer exist
     }
 
-    fun updateMediaItem(item: MediaEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateMedia(item) //Perform db update
-        }
+    fun updateMediaItem(item: MediaEntity) = launchWithoutLoading {
+        mediaRepository.updateMedia(item) //Perform db update
     }
 
-    fun updateCreatorBulk(creator: String, ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateCreatorBulk(creator, ids) //Perform db update
-        }
+    fun updateCreatorBulk(creator: String, ids: List<Int>) = launchWithLoading {
+        mediaRepository.updateCreatorBulk(creator, ids) //Perform db update
     }
 
-    fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
-        }
+    fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = launchWithLoading {
+        mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
     }
 
-    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds) //Perform db insert
-        }
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = launchWithLoading {
+        playlistRepository.addMediaToPlaylists(mediaIds, playlistIds) //Perform db insert
     }
 
-    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.insertPlaylist(playlist) //Perform db insert
-            if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
-        }
+    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) = launchWithoutLoading {
+        playlistRepository.insertPlaylist(playlist) //Perform db insert
+        if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
     }
 }

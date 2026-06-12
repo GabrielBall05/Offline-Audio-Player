@@ -22,7 +22,7 @@ import javax.inject.Inject
 class PlaylistsViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     settingsRepository: SettingsRepository
-) : ViewModel() {
+) : BaseViewModel() {
 
     //For searching
     private val _searchQuery = MutableStateFlow("")
@@ -73,28 +73,20 @@ class PlaylistsViewModel @Inject constructor(
         _sortOrder.value = newOrder
     }
 
-    fun createPlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.insertPlaylist(playlist) //Perform db insert
-        }
+    fun createPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
+        playlistRepository.insertPlaylist(playlist) //Perform db insert
     }
 
-    fun editPlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.updatePlaylist(playlist) //Perform db insert
-        }
+    fun editPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
+        playlistRepository.updatePlaylist(playlist) //Perform db insert
     }
 
-    fun deletePlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.deletePlaylist(playlist)
-        }
+    fun deletePlaylist(playlist: PlaylistEntity) = launchWithLoading {
+        playlistRepository.deletePlaylist(playlist)
     }
 
-    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
-        }
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = launchWithLoading {
+        playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
     }
 
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> {

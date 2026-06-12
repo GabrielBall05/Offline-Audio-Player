@@ -64,6 +64,7 @@ import com.example.offlineplayer.ui.components.common.SurfacedImage
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaBulkDialog
 import com.example.offlineplayer.ui.components.dialogs.EditMediaDialog
+import com.example.offlineplayer.ui.components.dialogs.LoadingDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
@@ -98,6 +99,7 @@ fun PlaylistDetailsScreen(
     val selectedIds by viewModel.selectedMediaIds.collectAsStateWithLifecycle()
     val isAnySelected by viewModel.isAnySelected.collectAsStateWithLifecycle()
     val isAllSelected by viewModel.isAllSelected.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
@@ -545,5 +547,10 @@ fun PlaylistDetailsScreen(
                 creatingPlaylist = false
             }
         )
+    }
+
+    //Show loading screen for potentially long operations
+    if (isLoading) {
+        LoadingDialog()
     }
 }

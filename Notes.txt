@@ -2,13 +2,13 @@ TODO:
 
 Other:
 Log statements and snackbars
-Loading popup for things that take time (ex: uploading media)
 horizontal orientation layouts - or just only allow vertical
 thoroughly comment code and just make it look better
 app icon
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
 default "all" playlist (newly uploaded songs automatically added to it - maybe unremovable) 
 maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
+maybe: widget
 
 Queue:
 completely redo the queue logic

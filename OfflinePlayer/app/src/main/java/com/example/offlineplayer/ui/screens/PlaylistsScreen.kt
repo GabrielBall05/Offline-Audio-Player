@@ -41,6 +41,7 @@ import com.example.offlineplayer.ui.Screen
 import com.example.offlineplayer.ui.components.common.EmptyMessage
 import com.example.offlineplayer.ui.components.common.SearchBar
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
+import com.example.offlineplayer.ui.components.dialogs.LoadingDialog
 import com.example.offlineplayer.ui.components.dialogs.MediaPicker
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.SortOrderDialog
@@ -62,6 +63,7 @@ fun PlaylistsScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlistList by viewModel.filteredPlaylists.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     val listState = rememberLazyListState()
@@ -253,5 +255,10 @@ fun PlaylistsScreen(
                 playlistToDelete = null
             }
         )
+    }
+
+    //Show loading screen for potentially long operations
+    if (isLoading) {
+        LoadingDialog()
     }
 }

@@ -26,7 +26,7 @@ class PlaylistDetailsViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val playlistRepository: PlaylistRepository,
     savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+) : BaseViewModel() {
 
     //Get clicked playlist id straight from navigation arguments
     private val playlistId: Int = checkNotNull(savedStateHandle["id"])
@@ -108,28 +108,20 @@ class PlaylistDetailsViewModel @Inject constructor(
         return filteredMedia.value.filter { it.mediaId in ids }.getCommonArtwork()
     }
 
-    fun editPlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.updatePlaylist(playlist)
-        }
+    fun editPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
+        playlistRepository.updatePlaylist(playlist)
     }
 
-    fun deletePlaylist(playlist: PlaylistEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.deletePlaylist(playlist)
-        }
+    fun deletePlaylist(playlist: PlaylistEntity) = launchWithLoading {
+        playlistRepository.deletePlaylist(playlist)
     }
 
-    fun removeMediaFromPlaylist(ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.removeMediaFromPlaylist(ids, playlistId)
-        }
+    fun removeMediaFromPlaylist(ids: List<Int>) = launchWithLoading {
+        playlistRepository.removeMediaFromPlaylist(ids, playlistId)
     }
 
-    fun updateMediaItem(item: MediaEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateMedia(item) //Perform db update
-        }
+    fun updateMediaItem(item: MediaEntity) = launchWithoutLoading {
+        mediaRepository.updateMedia(item) //Perform db update
     }
 
     fun moveMediaItemPosition(fromMediaId: Int, toMediaId: Int) {
@@ -139,34 +131,26 @@ class PlaylistDetailsViewModel @Inject constructor(
         if (fromPos == -1 || toPos == -1) return
 
         //Perform db update
-        viewModelScope.launch(Dispatchers.IO) {
+        launchWithoutLoading {
             playlistRepository.moveMediaItemPositionInPlaylist(playlistId, fromMediaId, toMediaId, fromPos, toPos)
         }
     }
 
-    fun updateCreatorBulk(creator: String, ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateCreatorBulk(creator, ids)
-        }
+    fun updateCreatorBulk(creator: String, ids: List<Int>) = launchWithLoading {
+        mediaRepository.updateCreatorBulk(creator, ids)
     }
 
-    fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
-        }
+    fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = launchWithLoading {
+        mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
     }
 
-    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
-        }
+    fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = launchWithLoading {
+        playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
     }
 
-    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) {
-        viewModelScope.launch(Dispatchers.IO) {
-            playlistRepository.insertPlaylist(playlist) //Perform db insert
-            if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
-        }
+    fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) = launchWithoutLoading {
+        playlistRepository.insertPlaylist(playlist) //Perform db insert
+        if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
     }
 
     suspend fun getMediaNotInPlaylist(): List<MediaEntity> {

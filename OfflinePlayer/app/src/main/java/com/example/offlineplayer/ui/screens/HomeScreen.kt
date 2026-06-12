@@ -324,6 +324,7 @@ fun HomeScreen(
         )
     }
 
+    //Show loading screen for potentially long operations
     if (isLoading) {
         LoadingDialog()
     }
