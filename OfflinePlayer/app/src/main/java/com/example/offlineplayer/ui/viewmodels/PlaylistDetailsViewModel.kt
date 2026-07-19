@@ -1,12 +1,12 @@
 package com.example.offlineplayer.ui.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.repository.MediaRepository
 import com.example.offlineplayer.data.repository.PlaylistRepository
+import com.example.offlineplayer.util.UiEvent
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -110,18 +110,22 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun editPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
         playlistRepository.updatePlaylist(playlist)
+        sendUiEvent(UiEvent.ShowToast("Playlist details saved"))
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) = launchWithLoading {
         playlistRepository.deletePlaylist(playlist)
+        sendUiEvent(UiEvent.ShowToast("Playlist deleted"))
     }
 
     fun removeMediaFromPlaylist(ids: List<Int>) = launchWithLoading {
         playlistRepository.removeMediaFromPlaylist(ids, playlistId)
+        sendUiEvent(UiEvent.ShowToast("${ids.size} item${if (ids.size > 1) "s" else ""} removed from playlist"))
     }
 
     fun updateMediaItem(item: MediaEntity) = launchWithoutLoading {
         mediaRepository.updateMedia(item) //Perform db update
+        sendUiEvent(UiEvent.ShowToast("Changes saved"))
     }
 
     fun moveMediaItemPosition(fromMediaId: Int, toMediaId: Int) {
@@ -138,19 +142,25 @@ class PlaylistDetailsViewModel @Inject constructor(
 
     fun updateCreatorBulk(creator: String, ids: List<Int>) = launchWithLoading {
         mediaRepository.updateCreatorBulk(creator, ids)
+        sendUiEvent(UiEvent.ShowToast("${ids.size} item${if (ids.size > 1) "s" else ""} updated"))
+
     }
 
     fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = launchWithLoading {
         mediaRepository.updateArtworkBulk(artworkUri, ids) //Perform db update
+        sendUiEvent(UiEvent.ShowToast("${ids.size} item${if (ids.size > 1) "s" else ""} updated"))
+
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = launchWithLoading {
         playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
+        sendUiEvent(UiEvent.ShowToast("${mediaIds.size} item${if (mediaIds.size > 1) "s" else ""} added to ${playlistIds.size} playlist${if (playlistIds.size > 1) "s" else ""}"))
     }
 
     fun createPlaylist(playlist: PlaylistEntity, mediaIdsContext: List<Int> = emptyList()) = launchWithoutLoading {
         playlistRepository.insertPlaylist(playlist) //Perform db insert
         if (mediaIdsContext.isNotEmpty()) refreshAvailablePlaylists(mediaIdsContext)
+        sendUiEvent(UiEvent.ShowToast("Playlist created"))
     }
 
     suspend fun getMediaNotInPlaylist(): List<MediaEntity> {

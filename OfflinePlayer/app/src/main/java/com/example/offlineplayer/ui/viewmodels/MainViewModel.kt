@@ -1,19 +1,18 @@
 package com.example.offlineplayer.ui.viewmodels
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.toMediaItem
 import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.player.MediaControllerManager
+import com.example.offlineplayer.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,7 +23,7 @@ class MainViewModel @Inject constructor(
     private val controllerManager: MediaControllerManager,
     private val playlistRepository: PlaylistRepository,
     private val settingsRepository: SettingsRepository
-): ViewModel() {
+): BaseViewModel() {
 
     private var playbackJob: Job? = null
 
@@ -67,22 +66,33 @@ class MainViewModel @Inject constructor(
         //TODO: Implement
         Log.d("OfflineAudioSuite", "MainVM: User requesting to change repeat mode")
     }
-    fun playPlaylist(playlistId: Int) {
+
+    fun playPlaylist(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
         viewModelScope.launch {
             val isShuffleEnabled = settingsRepository.defaultShuffleFlow.first()
             playlistRepository.playPlaylistById(playlistId, startShuffled = isShuffleEnabled)
         }
     }
-    fun addPlaylistToQueue(playlistId: Int) {
+
+    fun addPlaylistToQueue(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
         viewModelScope.launch {
             playlistRepository.addPlaylistToQueue(playlistId)
+            sendUiEvent(UiEvent.ShowToast("Added playlist to queue"))
         }
     }
+
+    fun addMediaToQueue(mediaList: List<MediaEntity>) {
+        controllerManager.addToQueue(mediaList.map { it.toMediaItem() })
+        sendUiEvent(UiEvent.ShowToast("Added ${mediaList.size} item${if (mediaList.size > 1) "s" else ""} to queue"))
+    }
+
     fun playMediaNow(media: MediaEntity) = controllerManager.playNow(media.toMediaItem())
-    fun addMediaToQueue(mediaList: List<MediaEntity>) = controllerManager.addToQueue(mediaList.map { it.toMediaItem() })
+
     fun clearQueue() = controllerManager.clearQueue()
+
     fun moveManualQueueItem(fromIndex: Int, toIndex: Int) = controllerManager.moveManualQueueItem(fromIndex, toIndex)
     fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) = controllerManager.moveBasePlaylistItem(fromIndex, toIndex)
+
     fun manualQueueSkipToIndex(index: Int) = controllerManager.manualQueueSkipToIndex(index)
     fun baseSkipToIndex(index: Int) = controllerManager.baseSkipToIndex(index)
 

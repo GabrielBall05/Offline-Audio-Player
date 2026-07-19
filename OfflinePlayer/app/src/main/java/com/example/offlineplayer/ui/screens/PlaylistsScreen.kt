@@ -1,5 +1,6 @@
 package com.example.offlineplayer.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,13 +28,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation.NavController
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
@@ -49,7 +54,9 @@ import com.example.offlineplayer.ui.components.listitems.PlaylistListItemStandar
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistsViewModel
+import com.example.offlineplayer.util.ObserveUiEvents
 import com.example.offlineplayer.util.PlaylistsSortOrder
+import com.example.offlineplayer.util.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +66,9 @@ fun PlaylistsScreen(
     onPlayPlaylistClick: (Int) -> Unit,
     onAddPlaylistToQueueClick: (Int) -> Unit
 ) {
+    //Ui Event Observer
+    ObserveUiEvents(eventFlow = viewModel.uiEvent)
+
     //Collect states from ViewModel
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlistList by viewModel.filteredPlaylists.collectAsStateWithLifecycle()

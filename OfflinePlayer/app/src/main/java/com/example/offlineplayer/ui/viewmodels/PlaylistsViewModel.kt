@@ -1,14 +1,13 @@
 package com.example.offlineplayer.ui.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.util.PlaylistsSortOrder
+import com.example.offlineplayer.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,18 +74,22 @@ class PlaylistsViewModel @Inject constructor(
 
     fun createPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
         playlistRepository.insertPlaylist(playlist) //Perform db insert
+        sendUiEvent(UiEvent.ShowToast("Playlist created"))
     }
 
     fun editPlaylist(playlist: PlaylistEntity) = launchWithoutLoading {
         playlistRepository.updatePlaylist(playlist) //Perform db insert
+        sendUiEvent(UiEvent.ShowToast("Playlist details saved"))
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) = launchWithLoading {
         playlistRepository.deletePlaylist(playlist)
+        sendUiEvent(UiEvent.ShowToast("Playlist deleted"))
     }
 
     fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = launchWithLoading {
         playlistRepository.addMediaToPlaylists(mediaIds, playlistIds)
+        sendUiEvent(UiEvent.ShowToast("${mediaIds.size} item${if (mediaIds.size > 1) "s" else ""} added to ${playlistIds.size} playlist${if (playlistIds.size > 1) "s" else ""}"))
     }
 
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> {

@@ -1,6 +1,7 @@
 package com.example.offlineplayer.ui.screens
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -39,9 +41,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.EmptyMessage
@@ -58,6 +63,8 @@ import com.example.offlineplayer.ui.components.optionsheets.MediaOption
 import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.viewmodels.HomeViewModel
 import com.example.offlineplayer.util.MediaSortOrder
+import com.example.offlineplayer.util.ObserveUiEvents
+import com.example.offlineplayer.util.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +73,9 @@ fun HomeScreen(
     onPlayMediaClick: (MediaEntity) -> Unit,
     onAddToQueueClick: (List<MediaEntity>) -> Unit
 ) {
+    //Ui Event Observer
+    ObserveUiEvents(eventFlow = viewModel.uiEvent)
+
     //Collect states from ViewModel
     val hasMedia by viewModel.hasMedia.collectAsStateWithLifecycle()
     val mediaList by viewModel.filteredMedia.collectAsStateWithLifecycle()
@@ -262,7 +272,7 @@ fun HomeScreen(
                 commonCreator = viewModel.getCommonCreator(idsToEdit),
                 commonArtwork = viewModel.getCommonArtwork(idsToEdit),
                 onDismiss = { idsToEdit = emptyList() },
-                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) }, //TODO: snack bar (creator and artwork)
+                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) },
                 onConfirmArtwork = { viewModel.updateArtworkBulk(it, idsToEdit) }
             )
         }

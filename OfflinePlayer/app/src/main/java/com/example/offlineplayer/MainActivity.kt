@@ -1,6 +1,7 @@
 package com.example.offlineplayer
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,11 +29,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -52,7 +55,11 @@ import com.example.offlineplayer.ui.screens.PlaylistsScreen
 import com.example.offlineplayer.ui.screens.SettingsScreen
 import com.example.offlineplayer.ui.theme.OfflinePlayerTheme
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
+import com.example.offlineplayer.util.UiEvent
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import com.example.offlineplayer.util.ObserveUiEvents
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -80,6 +87,9 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
+    //Ui Event Observer
+    ObserveUiEvents(eventFlow = mainViewModel.uiEvent)
+
     val navController = rememberNavController()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -92,12 +102,14 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
 
     Scaffold(
         bottomBar = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            if (!hideBottomBars) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     MiniPlayerBar(
                         viewModel = mainViewModel,
                         onExpand = { showExpandedPlayerSheet = true }
                     )
                     BottomNavigationBar(navController)
+                }
             }
         }
     ) { innerPadding ->
@@ -182,7 +194,6 @@ fun BottomNavigationBar(navController: NavController) {
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
-                        //Prevents building up massive back stack as users tab over
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
@@ -194,19 +205,3 @@ fun BottomNavigationBar(navController: NavController) {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

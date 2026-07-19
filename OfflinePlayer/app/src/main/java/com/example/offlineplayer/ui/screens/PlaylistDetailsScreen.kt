@@ -1,5 +1,6 @@
 package com.example.offlineplayer.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -52,10 +53,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.ui.components.common.BulkActionsBar
 import com.example.offlineplayer.ui.components.common.EmptyMessage
@@ -76,6 +80,8 @@ import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetCon
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistDetailsViewModel
+import com.example.offlineplayer.util.ObserveUiEvents
+import com.example.offlineplayer.util.UiEvent
 
 private enum class TopBarState {
     Reordering, Selecting, Standard
@@ -90,6 +96,9 @@ fun PlaylistDetailsScreen(
     onAddToQueueClick: (List<MediaEntity>) -> Unit,
     onPlayPlaylistClick: (Int) -> Unit
 ) {
+    //Ui Event Observer
+    ObserveUiEvents(eventFlow = viewModel.uiEvent)
+
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val itemCount by viewModel.itemCount.collectAsStateWithLifecycle()
@@ -118,7 +127,6 @@ fun PlaylistDetailsScreen(
     var editingPlaylist by rememberSaveable { mutableStateOf(false) }
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
-
 
     //Jump to top of list when list size changes
     LaunchedEffect(mediaList.size) {
@@ -505,7 +513,7 @@ fun PlaylistDetailsScreen(
                 commonCreator = viewModel.getCommonCreator(idsToEdit),
                 commonArtwork = viewModel.getCommonArtwork(idsToEdit),
                 onDismiss = { idsToEdit = emptyList() },
-                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) }, //TODO: snack bar (creator and artwork)
+                onConfirmCreator = { viewModel.updateCreatorBulk(it, idsToEdit) },
                 onConfirmArtwork = { viewModel.updateArtworkBulk(it, idsToEdit) }
             )
         }

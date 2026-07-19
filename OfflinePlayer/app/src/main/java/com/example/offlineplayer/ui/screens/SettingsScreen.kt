@@ -108,7 +108,7 @@ fun SettingsScreen(
             ) {
                 Switch(
                     checked = uiState.defaultShuffle,
-                    onCheckedChange = { viewModel.setDefaultShuffle(it) } //TODO: Currently saves, but mediacontrollermanager doesn't use it
+                    onCheckedChange = { viewModel.setDefaultShuffle(it) }
                 )
             }
         }

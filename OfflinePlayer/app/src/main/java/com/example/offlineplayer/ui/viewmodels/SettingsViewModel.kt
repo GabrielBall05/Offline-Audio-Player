@@ -1,6 +1,5 @@
 package com.example.offlineplayer.ui.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.util.MediaSortOrder
@@ -13,17 +12,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class SettingsUIState(
-    val keepScreenOn: Boolean = SettingsRepository.INITIAL_KEEP_SCREEN_ON,
-    val defaultMediaSortOrder: MediaSortOrder = SettingsRepository.INITIAL_MEDIA_SORT_ORDER,
-    val defaultPlaylistsSortOrder: PlaylistsSortOrder = SettingsRepository.INITIAL_PLAYLISTS_SORT_ORDER,
-    val defaultShuffle: Boolean = SettingsRepository.INITIAL_SHUFFLE
-)
-
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository
-): ViewModel() {
+): BaseViewModel() {
     //Combine all flows into a single source for the UI
     val uiState: StateFlow<SettingsUIState> = combine(
         settingsRepository.keepScreenOnFlow,
@@ -69,3 +61,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 }
+
+data class SettingsUIState(
+    val keepScreenOn: Boolean = SettingsRepository.INITIAL_KEEP_SCREEN_ON,
+    val defaultMediaSortOrder: MediaSortOrder = SettingsRepository.INITIAL_MEDIA_SORT_ORDER,
+    val defaultPlaylistsSortOrder: PlaylistsSortOrder = SettingsRepository.INITIAL_PLAYLISTS_SORT_ORDER,
+    val defaultShuffle: Boolean = SettingsRepository.INITIAL_SHUFFLE
+)

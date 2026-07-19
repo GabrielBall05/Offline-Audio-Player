@@ -41,6 +41,9 @@ class PlaylistRepository @Inject constructor(
         }
     }
 
+    //DB Actions
+    fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = playlistDao.getPlaylistById(id)
+
     private suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> {
         return withContext(Dispatchers.IO) {
             playlistDao.getMediaInPlaylist(id)
@@ -48,9 +51,6 @@ class PlaylistRepository @Inject constructor(
                 .map { it.toMediaItem() }
         }
     }
-
-    //DB Actions
-    fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = playlistDao.getPlaylistById(id)
 
     suspend fun insertPlaylist(playlist: PlaylistEntity): Long {
         val newPlaylist = processPlaylistCover(playlist)
