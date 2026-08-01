@@ -24,7 +24,7 @@ class SettingsRepository @Inject constructor(
         val INITIAL_KEEP_SCREEN_ON = true
         val INITIAL_MEDIA_SORT_ORDER = MediaSortOrder.DATE_ADDED_MOST_RECENT
         val INITIAL_PLAYLISTS_SORT_ORDER = PlaylistsSortOrder.DATE_CREATED_MOST_RECENT
-        val INITIAL_SHUFFLE = false
+        //val INITIAL_SHUFFLE = false
     }
 
     //Keys
@@ -32,7 +32,7 @@ class SettingsRepository @Inject constructor(
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
         val DEFAULT_MEDIA_SORT_ORDER = stringPreferencesKey("default_media_sort_order")
         val DEFAULT_PLAYLISTS_SORT_ORDER = stringPreferencesKey("default_playlists_sort_order")
-        val DEFAULT_SHUFFLE = booleanPreferencesKey("default_shuffle")
+        //val DEFAULT_SHUFFLE = booleanPreferencesKey("default_shuffle")
     }
 
 
@@ -69,14 +69,14 @@ class SettingsRepository @Inject constructor(
             }.getOrDefault(INITIAL_PLAYLISTS_SORT_ORDER)
         }
 
-    //Default Shuffle Setting (Flow)
-    val defaultShuffleFlow: Flow<Boolean> = dataStore.data
-        .catch { exception ->
-            if (exception is IOException) emit(emptyPreferences()) else throw exception
-        }
-        .map { preferences ->
-            preferences[Keys.DEFAULT_SHUFFLE] ?: INITIAL_SHUFFLE
-        }
+//    //Default Shuffle Setting (Flow)
+//    val defaultShuffleFlow: Flow<Boolean> = dataStore.data
+//        .catch { exception ->
+//            if (exception is IOException) emit(emptyPreferences()) else throw exception
+//        }
+//        .map { preferences ->
+//            preferences[Keys.DEFAULT_SHUFFLE] ?: INITIAL_SHUFFLE
+//        }
 
 
     //Update Keep Screen On Setting
@@ -100,10 +100,10 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    //Update Default Shuffle Setting
-    suspend fun setDefaultShuffle(shuffle: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[Keys.DEFAULT_SHUFFLE] = shuffle
-        }
-    }
+//    //Update Default Shuffle Setting
+//    suspend fun setDefaultShuffle(shuffle: Boolean) {
+//        dataStore.edit { preferences ->
+//            preferences[Keys.DEFAULT_SHUFFLE] = shuffle
+//        }
+//    }
 }

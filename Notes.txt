@@ -1,26 +1,28 @@
 TODO:
 
 Other:
+On toggle shuffe, save the new shuffle setting and just refer to it whenever playing new playlists or reloading player state
+play button in playlistdetails: show pause if that playlist is playing. Also save which playlist is currently playing
+show hours on duration
+long press in home to open menu
+on queue skip, jump list to top
 expanded player screen functionality (ellipsis/add to playlist) and redo iconbuttons
+skip/rewind 5 sec buttons on exp player screen
+swipe image in explanded player screen to go next/prev
 playlist details screen swipe to go back
 no longer valid file path (attach new one)
-swipe image in explanded player screen to go next/prev
-log statements
+log statements everywhere (and improve its tag/message)
 horizontal orientation layouts - or just only allow vertical
-thoroughly comment code and just make it look better
 app icon
 when copying/storing images, maybe try to make sure there are no duplicated or orphaned images to save space on phone
+move the add media button to bottom nav bar. maybe do snackbar instead of toasts because it won't be a problem anymore
+thoroughly comment code and just make it look better
 maybe: wrap mediaitem in wrapper class with uuid to use as lazycolumn key for queue screen
 maybe: widget
+maybe: audio equalization setting
+maybe: gapless playback by finding empty noise and using .setClippingConfiguration in MediaItem builder
 
 Queue:
-completely redo the queue logic
-known issues:
- 1. next button in notification panel doesn't work the same as next button in expanded player screen
-	- this seems to mostly be the case for if manual queue contains several of the same items
- 2. hitting previous to go back to an item from the manual queue will change the "up next" to start after that backed
-    into item's position in the original playlist, rather than where the playlist was actually left off at before hitting previous
-also implement:
-1. removing items from queue
+1. removing items from queue (UI SIDE)
 2. save player state (timeline, current item, current duration, all the queues, etc)
 3. swipe image for next/prev in expanded player screen

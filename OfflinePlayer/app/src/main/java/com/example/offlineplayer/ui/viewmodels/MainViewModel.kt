@@ -69,8 +69,8 @@ class MainViewModel @Inject constructor(
 
     fun playPlaylist(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
         viewModelScope.launch {
-            val isShuffleEnabled = settingsRepository.defaultShuffleFlow.first()
-            playlistRepository.playPlaylistById(playlistId, startShuffled = isShuffleEnabled)
+            //val isShuffleEnabled = settingsRepository.defaultShuffleFlow.first()
+            playlistRepository.playPlaylistById(playlistId, false) //TODO: Fix with the saved shuffle on/off once ready
         }
     }
 

@@ -100,18 +100,18 @@ fun SettingsScreen(
             }
         }
 
-        //Default Shuffle
-        item {
-            SettingsItem(
-                mainText = "Set Default Play Mode To Shuffle",
-                subText = "If enabled, shuffle will be the default play mode when playing from a playlist (Shuffle does not affect the queue)."
-            ) {
-                Switch(
-                    checked = uiState.defaultShuffle,
-                    onCheckedChange = { viewModel.setDefaultShuffle(it) }
-                )
-            }
-        }
+//        //Default Shuffle
+//        item {
+//            SettingsItem(
+//                mainText = "Set Default Play Mode To Shuffle",
+//                subText = "If enabled, shuffle will be the default play mode when playing from a playlist (Shuffle does not affect the queue)."
+//            ) {
+//                Switch(
+//                    checked = uiState.defaultShuffle,
+//                    onCheckedChange = { viewModel.setDefaultShuffle(it) }
+//                )
+//            }
+//        }
 
         item {
             Spacer(Modifier.height(16.dp))
@@ -147,9 +147,9 @@ fun SettingsScreen(
     }
 }
 
-private fun breakStringAtDelimiter(stringToFormat: String, delimiter: Char): String? {
-    val delimiterIndex = stringToFormat.indexOf(delimiter)
-    return if (delimiterIndex != -1)
-        stringToFormat.take(delimiterIndex - 1) + "\n" + stringToFormat.takeLast(stringToFormat.length - delimiterIndex)
-    else null
-}
+//private fun breakStringAtDelimiter(stringToFormat: String, delimiter: Char): String? {
+//    val delimiterIndex = stringToFormat.indexOf(delimiter)
+//    return if (delimiterIndex != -1)
+//        stringToFormat.take(delimiterIndex - 1) + "\n" + stringToFormat.takeLast(stringToFormat.length - delimiterIndex)
+//    else null
+//}

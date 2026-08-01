@@ -4,6 +4,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,7 +34,10 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true) //Pauses when headphones are unplugged
             .build()
 
-        //Attach listener so applyCrossfade() can fire
+        //Add detailed logging
+        exoPlayer.addAnalyticsListener(EventLogger())
+
+        //Attach listener
         exoPlayer.addListener(playerListener)
 
         //Initialize MediaSession and link it to the player

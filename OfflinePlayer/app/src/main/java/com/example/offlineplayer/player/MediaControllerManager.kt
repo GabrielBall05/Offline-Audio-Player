@@ -17,7 +17,7 @@ import javax.inject.Singleton
 
 @Singleton
 class MediaControllerManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     var controller: MediaController? = null
@@ -253,19 +253,20 @@ class MediaControllerManager @Inject constructor(
             return
         }
 
-        //Identify the active base playlist (can be empty)
-        val basePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
-
-        //Find our position in the base playlist (if one exists)
+        val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
         val baseIndex = currentBasePlaylistIndex
 
-        //Get everything after current position
-        val remainingBaseItems = if (baseIndex != -1 && baseIndex + 1 < basePlaylist.size) {
-            basePlaylist.subList(baseIndex + 1, basePlaylist.size)
-        } else if (basePlaylist.isNotEmpty() && currentPlayingItem == null) {
-            basePlaylist //Nothing is playing yet, so all base items are upcoming
+        val itemAtBaseIndex = activePlaylist.getOrNull(baseIndex)
+        val isPlayingBaseItem = currentPlayingItem?.mediaId == itemAtBaseIndex?.mediaId
+
+        val nextBaseStart = if (isPlayingBaseItem) baseIndex + 1 else baseIndex
+
+        val remainingBaseItems = if (baseIndex != -1 && nextBaseStart < activePlaylist.size) {
+            activePlaylist.subList(nextBaseStart, activePlaylist.size)
+        } else if (activePlaylist.isNotEmpty() && currentPlayingItem == null) {
+            activePlaylist
         } else {
-            emptyList() //No base playlist active, or we reached the end of it
+            emptyList()
         }
 
         //Push to UI
@@ -304,7 +305,7 @@ class MediaControllerManager @Inject constructor(
                 val player = controllerFuture?.get() ?: return@addListener
                 controller = player
 
-                // Sync initial state from the connected session
+                //Sync initial state from the connected session
                 _currentMediaItem.value = player.currentMediaItem
                 _isPlaying.value = player.isPlaying
                 _duration.value = player.duration.coerceAtLeast(0L)
@@ -314,37 +315,68 @@ class MediaControllerManager @Inject constructor(
                 player.addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         super.onMediaItemTransition(mediaItem, reason)
+//                        _currentMediaItem.value = mediaItem
+//                        _duration.value = player.duration.coerceAtLeast(0L)
+//
+//                        if (mediaItem == null) return
+//                        var isManualQueueItem = false
+//
+//                        var manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
+//
+//                        if (manualQueueIndex != -1) {
+//                            isManualQueueItem = true
+//
+//                            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+//                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
+//                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+//                            ) {
+//                                for (i in 0..manualQueueIndex) {
+//                                    manualQueue.removeFirst()
+//                                }
+//                                _manualQueueState.value = manualQueue.toList()
+//                            }
+//                        }
+//
+//                        //Only update tracker if it wasn't a manualQueue item
+//                        if (!isManualQueueItem) {
+//                            val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+//                            val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
+//                            if (newIndex != -1) {
+//                                if (_isShuffleModeEnabled.value) shuffledIndex = newIndex else linearIndex = newIndex
+//                            }
+//                        }
+//
+//                        rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
+
                         _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
 
                         if (mediaItem == null) return
-                        var isManualQueueItem = false
 
-                        var manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
+                        //Check if the item that just started is in manual queue
+                        val manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
 
                         if (manualQueueIndex != -1) {
-                            isManualQueueItem = true
-
-                            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
-                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
-                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
-                            ) {
-                                for (i in 0..manualQueueIndex) {
-                                    manualQueue.removeFirst()
-                                }
-                                _manualQueueState.value = manualQueue.toList()
+                            //It's a Manual Queue item - Remove it from the queue (consume it)
+                            for (i in 0..manualQueueIndex) {
+                                manualQueue.removeFirst()
                             }
-                        }
-
-                        //Only update tracker if it wasn't a manualQueue item
-                        if (!isManualQueueItem) {
+                            _manualQueueState.value = manualQueue.toList()
+                        } else {
+                            //It's a Base Playlist item. Update our pointers.
                             val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
                             val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
+
                             if (newIndex != -1) {
-                                if (_isShuffleModeEnabled.value) shuffledIndex = newIndex else linearIndex = newIndex
+                                if (_isShuffleModeEnabled.value) {
+                                    shuffledIndex = newIndex
+                                } else {
+                                    linearIndex = newIndex
+                                }
                             }
                         }
 
+                        // 4. Rebuild the timeline.
                         rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
                     }
 
