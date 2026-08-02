@@ -13,7 +13,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,9 +31,9 @@ class MainViewModel @Inject constructor(
     val isPlaying = controllerManager.isPlaying
     val currentPosition = controllerManager.currentPosition
     val duration = controllerManager.duration
-    val isShuffleModeEnabled = controllerManager.isShuffleModeEnabled
+    val isShuffleModeEnabled = controllerManager.isShuffling
     val manualQueue = controllerManager.manualQueueState
-    val upNextBase = controllerManager.upNextBaseState
+    val upNext = controllerManager.upNextState
 
     //Expose states from settings
     val keepScreenOn: StateFlow<Boolean> = settingsRepository.keepScreenOnFlow.stateIn(
@@ -44,7 +43,7 @@ class MainViewModel @Inject constructor(
     )
 
     init {
-        // Ensure the controller is connected when the app starts or reopens
+        //Ensure the controller is connected when the app starts or reopens
         controllerManager.setupController()
 
         //Watch the isPlaying state to toggle ticker
@@ -91,10 +90,13 @@ class MainViewModel @Inject constructor(
     fun clearQueue() = controllerManager.clearQueue()
 
     fun moveManualQueueItem(fromIndex: Int, toIndex: Int) = controllerManager.moveManualQueueItem(fromIndex, toIndex)
-    fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) = controllerManager.moveBasePlaylistItem(fromIndex, toIndex)
+    fun moveUpNextItem(fromIndex: Int, toIndex: Int) = controllerManager.moveUpNextItem(fromIndex, toIndex)
 
     fun manualQueueSkipToIndex(index: Int) = controllerManager.manualQueueSkipToIndex(index)
-    fun baseSkipToIndex(index: Int) = controllerManager.baseSkipToIndex(index)
+    fun upNextSkipToIndex(index: Int) = controllerManager.upNextSkipToIndex(index)
+
+    fun manualQueueRemoveItemAtIndex(index: Int) = controllerManager.manualQueueRemoveItemAtIndex(index)
+    fun upNextRemoveItemAtIndex(index: Int) = controllerManager.upNextRemoveItemAtIndex(index)
 
     fun onAddToPlaylistClicked(id: Int) {
         viewModelScope.launch {

@@ -17,21 +17,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ShuffleOn
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,7 +70,7 @@ fun ExpandedPlayerScreen(
     val duration by viewModel.duration.collectAsStateWithLifecycle()
     val isShuffleModeEnabled by viewModel.isShuffleModeEnabled.collectAsStateWithLifecycle()
     val manualQueue by viewModel.manualQueue.collectAsStateWithLifecycle()
-    val upNextBase by viewModel.upNextBase.collectAsStateWithLifecycle()
+    val upNext by viewModel.upNext.collectAsStateWithLifecycle()
 
     var showQueueScreen by remember { mutableStateOf(false) }
 
@@ -343,17 +339,19 @@ fun ExpandedPlayerScreen(
                     QueueScreen(
                         currentlyPlaying = currentMediaItem,
                         manualQueue = manualQueue,
-                        upNextBase = upNextBase,
+                        upNext = upNext,
                         onDismiss = { showQueueScreen = false },
                         onClearQueue = { viewModel.clearQueue() },
-                        onMoveManualItem = { from, to ->
+                        onMoveManualQueueItem = { from, to ->
                             viewModel.moveManualQueueItem(from, to)
                         },
-                        onMoveBaseItem = { from, to ->
-                            viewModel.moveBasePlaylistItem(from, to)
+                        onMoveUpNextItem = { from, to ->
+                            viewModel.moveUpNextItem(from, to)
                         },
-                        onManualQueueSkipTo = { viewModel.manualQueueSkipToIndex(it) },
-                        onBaseSkipTo = { viewModel.baseSkipToIndex(it) }
+                        onManualQueueSkipToIndex = { viewModel.manualQueueSkipToIndex(it) },
+                        onUpNextSkipToIndex = { viewModel.upNextSkipToIndex(it) },
+                        onManualQueueRemoveItemAtIndex = { viewModel.manualQueueRemoveItemAtIndex(it) },
+                        onUpNextRemoveItemAtIndex = { viewModel.upNextRemoveItemAtIndex(it) }
                     )
                 }
             }

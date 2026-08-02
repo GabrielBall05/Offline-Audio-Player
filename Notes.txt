@@ -26,3 +26,60 @@ Queue:
 1. removing items from queue (UI SIDE)
 2. save player state (timeline, current item, current duration, all the queues, etc)
 3. swipe image for next/prev in expanded player screen
+
+
+
+
+
+
+
+
+
+
+that fixed that issue. Now, I am getting a weird issue where lets say I'm at the third song in the playlist. I then click a "down" button to move an Up Next item down (swap with item below). Let's say that the item I click the down button on is the 6th item in the playlist (3rd in the upnextstate list that the ui shows). I click that and i actually transition to the first item in the list for some reason. Here is the output starting from when i click play on the playlist:
+2026-08-01 20:20:51.059  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: Playing playlist of size 74
+                                                                                                    Starting at index: -1
+                                                                                                    Starting shuffled: false
+2026-08-01 20:20:51.060  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: Playing Ordered Playlist, and starting at index 0
+2026-08-01 20:20:51.074  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: onMediaItemTransition
+                                                                                                    Transitioned to: Title = A Familiar Room, ID = 89
+                                                                                                    Reason: MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+2026-08-01 20:20:51.602  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: true
+2026-08-01 20:20:53.448  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: seekToNext
+2026-08-01 20:20:53.452  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: onMediaItemTransition
+                                                                                                    Transitioned to: Title = Aerie, ID = 90
+                                                                                                    Reason: MEDIA_ITEM_TRANSITION_REASON_SEEK
+2026-08-01 20:20:53.453  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: false
+2026-08-01 20:20:53.814  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: true
+2026-08-01 20:20:54.309  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: seekToNext
+2026-08-01 20:20:54.311  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: onMediaItemTransition
+                                                                                                    Transitioned to: Title = Alpha, ID = 91
+                                                                                                    Reason: MEDIA_ITEM_TRANSITION_REASON_SEEK
+2026-08-01 20:20:54.312  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: false
+2026-08-01 20:20:54.586  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: true
+2026-08-01 20:21:46.944  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: moveUpNextItem: UI indices - from 2 to 3
+2026-08-01 20:21:46.944  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: moveUpNextItem: Actual indices - from 5 to 6
+2026-08-01 20:21:46.944  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: Rebuilding Timeline
+2026-08-01 20:21:46.953  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: onMediaItemTransition
+                                                                                                    Transitioned to: Title = A Familiar Room, ID = 89
+                                                                                                    Reason: MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+2026-08-01 20:21:47.152  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: false
+2026-08-01 20:21:47.308  1572-1572  OfflineAudioSuite       com.example.offlineplayer            D  MCM-New: isPlaying changed to: true
+
+btw: here is the actual true order of the playlist (the relevant portion at least): A Familiar Room, Aerie, Alpha, An Ordinary Day, Ancestry, Aria Math, Axolotl, Beginning 2.
+
+the items do appear to swap btw, because i do in fact see Axolotl come before Aria Math now in my Up Next ui.
+
+
+
+
+
+
+
+
+
+
+
+next: i transitioned into a manual queue item. i see it in the ui as the current item as well as the first item in the manual queue.
+it should be updating _manualQueueState appropriately so that I don't see duplicate (one in current and one in manual queue - ui).
+in fact, the whole manual queue just stays there and i can go previous and next into it way too easily. 

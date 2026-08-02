@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,14 +28,16 @@ import com.example.offlineplayer.ui.components.listitems.QueueItem
 fun QueueScreen(
     currentlyPlaying: MediaItem?,
     manualQueue: List<MediaItem>,
-    upNextBase: List<MediaItem>,
+    upNext: List<MediaItem>,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
     onClearQueue: () -> Unit,
-    onMoveManualItem: (Int, Int) -> Unit,
-    onMoveBaseItem: (Int, Int) -> Unit,
-    onManualQueueSkipTo: (Int) -> Unit,
-    onBaseSkipTo: (Int) -> Unit
+    onMoveManualQueueItem: (Int, Int) -> Unit,
+    onMoveUpNextItem: (Int, Int) -> Unit,
+    onManualQueueSkipToIndex: (Int) -> Unit,
+    onUpNextSkipToIndex: (Int) -> Unit,
+    onManualQueueRemoveItemAtIndex: (Int) -> Unit, //TODO: Implement in UI
+    onUpNextRemoveItemAtIndex: (Int) -> Unit //TODO: Implement in UI
 ) {
     BackHandler(onBack = onDismiss)
 
@@ -96,15 +97,15 @@ fun QueueScreen(
                     item = item,
                     isFirst = (index == 0),
                     isLast = (index == manualQueue.size - 1),
-                    onClick = { onManualQueueSkipTo(index) },
-                    onMoveUp = { onMoveManualItem(index, index - 1) },
-                    onMoveDown = { onMoveManualItem(index, index + 1) }
+                    onClick = { onManualQueueSkipToIndex(index) },
+                    onMoveUp = { onMoveManualQueueItem(index, index - 1) },
+                    onMoveDown = { onMoveManualQueueItem(index, index + 1) }
                 )
             }
         }
 
         //Up Next
-        if (upNextBase.isNotEmpty()) {
+        if (upNext.isNotEmpty()) {
             item {
                 //Section Header
                 Text(
@@ -114,14 +115,14 @@ fun QueueScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            itemsIndexed(upNextBase) { index, item ->
+            itemsIndexed(upNext) { index, item ->
                 QueueItem(
                     item = item,
                     isFirst = (index == 0),
-                    isLast = (index == upNextBase.size - 1),
-                    onClick = { onBaseSkipTo(index) },
-                    onMoveUp = { onMoveBaseItem(index, index - 1) },
-                    onMoveDown = { onMoveBaseItem(index, index + 1) }
+                    isLast = (index == upNext.size - 1),
+                    onClick = { onUpNextSkipToIndex(index) },
+                    onMoveUp = { onMoveUpNextItem(index, index - 1) },
+                    onMoveDown = { onMoveUpNextItem(index, index + 1) }
                 )
             }
         }

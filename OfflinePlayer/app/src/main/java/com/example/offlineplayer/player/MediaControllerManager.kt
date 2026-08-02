@@ -40,14 +40,14 @@ class MediaControllerManager @Inject constructor(
     val duration = _duration.asStateFlow()
 
     //Shuffle state for UI
-    private val _isShuffleModeEnabled = MutableStateFlow(false)
-    val isShuffleModeEnabled = _isShuffleModeEnabled.asStateFlow()
+    private val _isShuffling = MutableStateFlow(false)
+    val isShuffling = _isShuffling.asStateFlow()
 
     //Queue states for UI
     private val _manualQueueState = MutableStateFlow<List<MediaItem>>(emptyList())
     val manualQueueState = _manualQueueState.asStateFlow()
-    private val _upNextBaseState = MutableStateFlow<List<MediaItem>>(emptyList())
-    val upNextBaseState = _upNextBaseState.asStateFlow()
+    private val _upNextState = MutableStateFlow<List<MediaItem>>(emptyList())
+    val upNextState = _upNextState.asStateFlow()
 
     //Source of truth - Original playlist in order
     private var sourcePlaylist: List<MediaItem> = emptyList()
@@ -65,7 +65,7 @@ class MediaControllerManager @Inject constructor(
     private var linearIndex = 0
     private var shuffledIndex = 0
     private val currentBasePlaylistIndex: Int
-        get() = if (_isShuffleModeEnabled.value) shuffledIndex else linearIndex
+        get() = if (_isShuffling.value) shuffledIndex else linearIndex
 
 
     init {
@@ -93,7 +93,7 @@ class MediaControllerManager @Inject constructor(
         sourcePlaylist = mediaItems
         manualQueue.clear()
 
-        _isShuffleModeEnabled.value = startShuffled
+        _isShuffling.value = startShuffled
 
         val finalStartIndex = if (startShuffled) mediaItems.indices.random() else startItemIndex
         val startingItem = sourcePlaylist.getOrNull(finalStartIndex)
@@ -137,12 +137,12 @@ class MediaControllerManager @Inject constructor(
         rebuildTimeline(player.currentMediaItem, isStartingNew = false)
     }
 
-    fun moveBasePlaylistItem(fromIndex: Int, toIndex: Int) {
+    fun moveUpNextItem(fromIndex: Int, toIndex: Int) {
         val player = controller ?: return
         val currentItem = player.currentMediaItem ?: return
 
         //Determine which master playlist layout we are actively using
-        val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+        val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
         if (activePlaylist.isEmpty()) return
 
         //Get the actual indices
@@ -159,11 +159,11 @@ class MediaControllerManager @Inject constructor(
         mutableList[actualToIndex] = temp
 
         //Save change
-        if (_isShuffleModeEnabled.value) shuffledPlaylist = mutableList else sourcePlaylist = mutableList
+        if (_isShuffling.value) shuffledPlaylist = mutableList else sourcePlaylist = mutableList
 
         //Update UI then rebuild timeline
         val remainingBaseItems = mutableList.subList(currentBasePlaylistIndex + 1, mutableList.size)
-        _upNextBaseState.value = remainingBaseItems.toList()
+        _upNextState.value = remainingBaseItems.toList()
         rebuildTimeline(currentItem, isStartingNew = false)
     }
 
@@ -184,15 +184,23 @@ class MediaControllerManager @Inject constructor(
         }
     }
 
-    fun baseSkipToIndex(index: Int) {
+    fun upNextSkipToIndex(index: Int) {
         val player = controller ?: return
-        if (index !in _upNextBaseState.value.indices) return
+        if (index !in _upNextState.value.indices) return
 
         val targetPlayerIndex = player.currentMediaItemIndex + 1 + manualQueue.size + index
         if (targetPlayerIndex < player.mediaItemCount) {
             player.seekTo(targetPlayerIndex, 0L)
             player.play()
         }
+    }
+
+    fun manualQueueRemoveItemAtIndex(index: Int) {
+
+    }
+
+    fun upNextRemoveItemAtIndex(index: Int) {
+
     }
 
     fun seekToNext() {
@@ -218,10 +226,10 @@ class MediaControllerManager @Inject constructor(
     }
 
     fun toggleShuffle() {
-        _isShuffleModeEnabled.value = !_isShuffleModeEnabled.value
+        _isShuffling.value = !_isShuffling.value
         val current = controller?.currentMediaItem
 
-        if (_isShuffleModeEnabled.value) {
+        if (_isShuffling.value) {
             val anchorItem = current ?: sourcePlaylist.getOrNull(linearIndex)
             val remaining = sourcePlaylist.filter { it.mediaId != anchorItem?.mediaId }.shuffled()
             shuffledPlaylist = listOfNotNull(anchorItem) + remaining
@@ -244,7 +252,7 @@ class MediaControllerManager @Inject constructor(
         //Return if there is nothing to play at all - also clear timeline except for the current item
         if (sourcePlaylist.isEmpty() && manualQueue.isEmpty()) {
             _manualQueueState.value = emptyList()
-            _upNextBaseState.value = emptyList()
+            _upNextState.value = emptyList()
             activeTimeline = listOfNotNull(currentPlayingItem)
 
             val nextIndex = player.currentMediaItemIndex + 1
@@ -253,7 +261,7 @@ class MediaControllerManager @Inject constructor(
             return
         }
 
-        val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+        val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
         val baseIndex = currentBasePlaylistIndex
 
         val itemAtBaseIndex = activePlaylist.getOrNull(baseIndex)
@@ -271,7 +279,7 @@ class MediaControllerManager @Inject constructor(
 
         //Push to UI
         _manualQueueState.value = manualQueue.toList()
-        _upNextBaseState.value = remainingBaseItems.toList()
+        _upNextState.value = remainingBaseItems.toList()
 
         //Construct the active timeline
         activeTimeline = listOfNotNull(currentPlayingItem) + manualQueue + remainingBaseItems
@@ -364,11 +372,11 @@ class MediaControllerManager @Inject constructor(
                             _manualQueueState.value = manualQueue.toList()
                         } else {
                             //It's a Base Playlist item. Update our pointers.
-                            val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
+                            val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
                             val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
 
                             if (newIndex != -1) {
-                                if (_isShuffleModeEnabled.value) {
+                                if (_isShuffling.value) {
                                     shuffledIndex = newIndex
                                 } else {
                                     linearIndex = newIndex
