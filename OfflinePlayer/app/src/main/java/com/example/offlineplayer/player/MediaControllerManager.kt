@@ -60,8 +60,7 @@ class MediaControllerManager @Inject constructor(
 
     //To give ExoPlayer
     private var activeTimeline: List<MediaItem> = emptyList()
-
-
+    
     private var linearIndex = 0
     private var shuffledIndex = 0
     private val currentBasePlaylistIndex: Int
@@ -70,6 +69,36 @@ class MediaControllerManager @Inject constructor(
 
     init {
         setupController()
+    }
+
+
+    fun updateCurrentPosition() {
+        controller?.let {
+            _currentPosition.value = it.currentPosition
+            _duration.value = it.duration.coerceAtLeast(0L)
+        }
+    }
+
+    fun seekToNext() {
+        controller?.let {
+            it.seekToNext()
+            it.play() //Force play
+        }
+    }
+
+    fun seekToPrevious() {
+        controller?.let {
+            it.seekToPrevious()
+            it.play() //Force play
+        }
+    }
+
+    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
+
+    fun togglePlayPause() {
+        controller?.let {
+            if (it.isPlaying) it.pause() else it.play()
+        }
     }
 
     fun playNow(mediaItem: MediaItem) {
@@ -203,28 +232,6 @@ class MediaControllerManager @Inject constructor(
 
     }
 
-    fun seekToNext() {
-        controller?.let {
-            it.seekToNext()
-            it.play() //Force play
-        }
-    }
-
-    fun seekToPrevious() {
-        controller?.let {
-            it.seekToPrevious()
-            it.play() //Force play
-        }
-    }
-
-    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
-
-    fun togglePlayPause() {
-        controller?.let {
-            if (it.isPlaying) it.pause() else it.play()
-        }
-    }
-
     fun toggleShuffle() {
         _isShuffling.value = !_isShuffling.value
         val current = controller?.currentMediaItem
@@ -237,13 +244,6 @@ class MediaControllerManager @Inject constructor(
         }
 
         rebuildTimeline(current, isStartingNew = false)
-    }
-
-    fun updateCurrentPosition() {
-        controller?.let {
-            _currentPosition.value = it.currentPosition
-            _duration.value = it.duration.coerceAtLeast(0L)
-        }
     }
 
     private fun rebuildTimeline(currentPlayingItem: MediaItem?, isStartingNew: Boolean) {
@@ -323,39 +323,6 @@ class MediaControllerManager @Inject constructor(
                 player.addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         super.onMediaItemTransition(mediaItem, reason)
-//                        _currentMediaItem.value = mediaItem
-//                        _duration.value = player.duration.coerceAtLeast(0L)
-//
-//                        if (mediaItem == null) return
-//                        var isManualQueueItem = false
-//
-//                        var manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
-//
-//                        if (manualQueueIndex != -1) {
-//                            isManualQueueItem = true
-//
-//                            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
-//                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
-//                                || reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
-//                            ) {
-//                                for (i in 0..manualQueueIndex) {
-//                                    manualQueue.removeFirst()
-//                                }
-//                                _manualQueueState.value = manualQueue.toList()
-//                            }
-//                        }
-//
-//                        //Only update tracker if it wasn't a manualQueue item
-//                        if (!isManualQueueItem) {
-//                            val activePlaylist = if (_isShuffleModeEnabled.value) shuffledPlaylist else sourcePlaylist
-//                            val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
-//                            if (newIndex != -1) {
-//                                if (_isShuffleModeEnabled.value) shuffledIndex = newIndex else linearIndex = newIndex
-//                            }
-//                        }
-//
-//                        rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
-
                         _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
 
@@ -371,20 +338,16 @@ class MediaControllerManager @Inject constructor(
                             }
                             _manualQueueState.value = manualQueue.toList()
                         } else {
-                            //It's a Base Playlist item. Update our pointers.
+                            //It's a Base Playlist item. Update pointers.
                             val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
                             val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
 
                             if (newIndex != -1) {
-                                if (_isShuffling.value) {
-                                    shuffledIndex = newIndex
-                                } else {
-                                    linearIndex = newIndex
-                                }
+                                if (_isShuffling.value) shuffledIndex = newIndex
+                                else linearIndex = newIndex
                             }
                         }
 
-                        // 4. Rebuild the timeline.
                         rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
                     }
 

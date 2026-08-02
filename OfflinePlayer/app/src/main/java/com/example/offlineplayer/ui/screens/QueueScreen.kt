@@ -8,12 +8,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -23,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.listitems.QueueItem
+import kotlinx.coroutines.launch
 
 @Composable
 fun QueueScreen(
@@ -36,16 +42,25 @@ fun QueueScreen(
     onMoveUpNextItem: (Int, Int) -> Unit,
     onManualQueueSkipToIndex: (Int) -> Unit,
     onUpNextSkipToIndex: (Int) -> Unit,
-    onManualQueueRemoveItemAtIndex: (Int) -> Unit, //TODO: Implement in UI
-    onUpNextRemoveItemAtIndex: (Int) -> Unit //TODO: Implement in UI
+    onManualQueueRemoveItemAtIndex: (Int) -> Unit, //TODO: Implement
+    onUpNextRemoveItemAtIndex: (Int) -> Unit //TODO: Implement
 ) {
     BackHandler(onBack = onDismiss)
 
     var showClearQueueConfirmation by rememberSaveable { mutableStateOf(false) }
 
+    var scrollToTopTrigger by remember { mutableIntStateOf(0) }
+    val listState = rememberLazyListState()
+    LaunchedEffect(scrollToTopTrigger) {
+        if (scrollToTopTrigger > 0) {
+            listState.scrollToItem(0)
+        }
+    }
+
     //Screen UI
     LazyColumn(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        state = listState
     ) {
         //Currently Playing
         currentlyPlaying?.let { current ->
@@ -97,7 +112,10 @@ fun QueueScreen(
                     item = item,
                     isFirst = (index == 0),
                     isLast = (index == manualQueue.size - 1),
-                    onClick = { onManualQueueSkipToIndex(index) },
+                    onClick = {
+                        onManualQueueSkipToIndex(index)
+                        scrollToTopTrigger++
+                    },
                     onMoveUp = { onMoveManualQueueItem(index, index - 1) },
                     onMoveDown = { onMoveManualQueueItem(index, index + 1) }
                 )
@@ -120,7 +138,10 @@ fun QueueScreen(
                     item = item,
                     isFirst = (index == 0),
                     isLast = (index == upNext.size - 1),
-                    onClick = { onUpNextSkipToIndex(index) },
+                    onClick = {
+                        onUpNextSkipToIndex(index)
+                        scrollToTopTrigger++
+                    },
                     onMoveUp = { onMoveUpNextItem(index, index - 1) },
                     onMoveDown = { onMoveUpNextItem(index, index + 1) }
                 )
