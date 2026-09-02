@@ -188,7 +188,11 @@ fun ExpandedPlayerScreen(
                     IconButton(
                         modifier = Modifier.size(32.dp),
                         onClick = {
-                            currentMediaItem?.mediaId?.toIntOrNull()?.let { id ->
+                            //Look for the hidden original ID first, fallback to the standard mediaId if it's a base playlist item
+                            val realIdString = currentMediaItem?.mediaMetadata?.extras?.getString("ORIGINAL_MEDIA_ID")
+                                ?: currentMediaItem?.mediaId
+
+                            realIdString?.toIntOrNull()?.let { id ->
                                 viewModel.onAddToPlaylistClicked(id)
                             }
                         }

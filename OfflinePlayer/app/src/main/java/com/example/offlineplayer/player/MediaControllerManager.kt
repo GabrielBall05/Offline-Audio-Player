@@ -2,9 +2,12 @@ package com.example.offlineplayer.player
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -12,6 +15,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,77 +27,61 @@ class MediaControllerManager @Inject constructor(
     var controller: MediaController? = null
         private set
 
-    //Current item for UI
     private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
     val currentMediaItem = _currentMediaItem.asStateFlow()
 
-    //Playing state for UI
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
 
-    //Current position state for UI
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition = _currentPosition.asStateFlow()
 
-    //Duration state for UI
     private val _duration = MutableStateFlow(0L)
     val duration = _duration.asStateFlow()
 
-    //Shuffle state for UI
     private val _isShuffling = MutableStateFlow(false)
     val isShuffling = _isShuffling.asStateFlow()
 
-    //Queue states for UI
+    private val _repeatModeState = MutableStateFlow(Player.REPEAT_MODE_OFF)
+    val repeatModeState = _repeatModeState.asStateFlow()
+
     private val _manualQueueState = MutableStateFlow<List<MediaItem>>(emptyList())
     val manualQueueState = _manualQueueState.asStateFlow()
+
     private val _upNextState = MutableStateFlow<List<MediaItem>>(emptyList())
     val upNextState = _upNextState.asStateFlow()
 
-    //Source of truth - Original playlist in order
-    private var sourcePlaylist: List<MediaItem> = emptyList()
-
-    //Stable shuffled playlist
-    private var shuffledPlaylist: List<MediaItem> = emptyList()
-
-    //User's manual FIFO queue
-    private val manualQueue = ArrayDeque<MediaItem>()
-
-    //To give ExoPlayer
-    private var activeTimeline: List<MediaItem> = emptyList()
-    
-    private var linearIndex = 0
-    private var shuffledIndex = 0
-    private val currentBasePlaylistIndex: Int
-        get() = if (_isShuffling.value) shuffledIndex else linearIndex
-
+    // Used strictly for restoring the natural order when shuffle is toggled off
+    // or for repeating the playlist when the queue ends.
+    private var originalPlaylist: List<MediaItem> = emptyList()
 
     init {
         setupController()
     }
 
-
     fun updateCurrentPosition() {
-        controller?.let {
-            _currentPosition.value = it.currentPosition
-            _duration.value = it.duration.coerceAtLeast(0L)
-        }
+        val player = controller ?: return
+        _currentPosition.value = player.currentPosition
+        _duration.value = player.duration.coerceAtLeast(0L)
     }
 
     fun seekToNext() {
         controller?.let {
             it.seekToNext()
-            it.play() //Force play
+            it.play()
         }
     }
 
     fun seekToPrevious() {
         controller?.let {
             it.seekToPrevious()
-            it.play() //Force play
+            it.play()
         }
     }
 
-    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
+    fun seekTo(positionMs: Long) {
+        controller?.seekTo(positionMs)
+    }
 
     fun togglePlayPause() {
         controller?.let {
@@ -101,205 +89,195 @@ class MediaControllerManager @Inject constructor(
         }
     }
 
+    fun toggleRepeatMode() {
+        val player = controller ?: return
+        val nextMode = when (player.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
+            else -> Player.REPEAT_MODE_OFF
+        }
+        player.repeatMode = nextMode
+        _repeatModeState.value = nextMode
+    }
+
+    fun toggleShuffle() {
+        val player = controller ?: return
+        if (originalPlaylist.isEmpty() || player.mediaItemCount == 0) return
+
+        _isShuffling.value = !_isShuffling.value
+
+        val currentIndex = player.currentMediaItemIndex
+        val manualQueueSize = _manualQueueState.value.size
+        val upNextStartIndex = currentIndex + 1 + manualQueueSize
+
+        if (upNextStartIndex >= player.mediaItemCount) return // Nothing to shuffle
+
+        // Extract ONLY the up next items (the base playlist items)
+        val currentUpNext = mutableListOf<MediaItem>()
+        for (i in upNextStartIndex until player.mediaItemCount) {
+            currentUpNext.add(player.getMediaItemAt(i))
+        }
+
+        val newUpNext = if (_isShuffling.value) {
+            // Turning ON: Shuffle the remaining base playlist items
+            currentUpNext.shuffled()
+        } else {
+            // Turning OFF: Restore natural order based on originalPlaylist
+            currentUpNext.sortedBy { item ->
+                val realId = item.mediaMetadata.extras?.getString("ORIGINAL_MEDIA_ID") ?: item.mediaId
+                val index = originalPlaylist.indexOfFirst { it.mediaId == realId }
+                if (index != -1) index else Int.MAX_VALUE
+            }
+        }
+
+        // Seamlessly replace the upcoming base items without touching the current or manual queue items
+        player.replaceMediaItems(upNextStartIndex, player.mediaItemCount, newUpNext)
+    }
+
     fun playNow(mediaItem: MediaItem) {
         val player = controller ?: return
-        val wasEmpty = player.mediaItemCount == 0
+        val taggedItem = mediaItem.asManualQueueItem()
 
-        //Insert media item at the from of manualQueue and rebuild the timeline
-        manualQueue.addFirst(mediaItem)
-        _manualQueueState.value = manualQueue.toList() //Update UI
-        rebuildTimeline(player.currentMediaItem, isStartingNew = false)
-
-        //If something was already playing, force a jump to the new item
-        if (!wasEmpty) player.seekTo(player.currentMediaItemIndex + 1, 0L)
-
-        //Force play
+        val insertIndex = if (player.mediaItemCount == 0) 0 else player.currentMediaItemIndex + 1
+        player.addMediaItem(insertIndex, taggedItem)
+        player.seekTo(insertIndex, 0L)
         player.play()
     }
 
-    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = 0, startShuffled: Boolean) {
+    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = -1, startShuffled: Boolean) {
         if (mediaItems.isEmpty()) return
-        sourcePlaylist = mediaItems
-        manualQueue.clear()
+        val player = controller ?: return
 
+        originalPlaylist = mediaItems
         _isShuffling.value = startShuffled
 
-        val finalStartIndex = if (startShuffled) mediaItems.indices.random() else startItemIndex
-        val startingItem = sourcePlaylist.getOrNull(finalStartIndex)
+        val startAtSpecific = startItemIndex != -1
+        val finalTimeline: List<MediaItem>
+        val playIndex: Int
 
-        val remaining = sourcePlaylist.filterIndexed { index, _ -> index != finalStartIndex }.shuffled()
-        shuffledPlaylist = listOfNotNull(startingItem) + remaining
+        if (startShuffled) {
+            val startIndex = if (startAtSpecific) startItemIndex else mediaItems.indices.random()
+            val startingItem = mediaItems[startIndex]
+            val remaining = mediaItems.filterIndexed { index, _ -> index != startIndex }.shuffled()
 
-        linearIndex = finalStartIndex
-        shuffledIndex = if (startingItem != null) 0 else -1
+            finalTimeline = listOf(startingItem) + remaining
+            playIndex = 0
+        } else {
+            finalTimeline = mediaItems
+            playIndex = if (startAtSpecific) startItemIndex else 0
+        }
 
-        rebuildTimeline(startingItem, isStartingNew = true)
+        player.setMediaItems(finalTimeline)
+        player.seekTo(playIndex, 0L)
+        player.prepare()
+        player.play()
     }
 
     fun addToQueue(mediaItems: List<MediaItem>) {
-        //Insert media items(s) to the end of manualQueue and rebuild the timeline
-        manualQueue.addAll(manualQueue.size, mediaItems)
-        _manualQueueState.value = manualQueue.toList() //Update UI
-        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
+        val player = controller ?: return
+        if (mediaItems.isEmpty()) return
+
+        val taggedItems = mediaItems.map { it.asManualQueueItem() }
+
+        // Insert right after the last existing manual queue item
+        val insertIndex = player.currentMediaItemIndex + 1 + _manualQueueState.value.size
+        player.addMediaItems(insertIndex, taggedItems)
     }
 
     fun clearQueue() {
-        //Clear queue and rebuild timeline
-        manualQueue.clear()
-        _manualQueueState.value = manualQueue.toList() //Update UI
-        rebuildTimeline(controller?.currentMediaItem, isStartingNew = false)
+        val player = controller ?: return
+        val currentIndex = player.currentMediaItemIndex
+
+        // Iterate backward through the upcoming items to safely remove manual queue items
+        for (i in player.mediaItemCount - 1 downTo currentIndex + 1) {
+            val item = player.getMediaItemAt(i)
+            if (item.mediaMetadata.extras?.getBoolean("IS_MANUAL_QUEUE") == true) {
+                player.removeMediaItem(i)
+            }
+        }
     }
 
     fun moveManualQueueItem(fromIndex: Int, toIndex: Int) {
         val player = controller ?: return
+        if (fromIndex == toIndex || fromIndex !in _manualQueueState.value.indices || toIndex !in _manualQueueState.value.indices) return
 
-        //Safety check
-        if (fromIndex !in manualQueue.indices || toIndex !in manualQueue.indices || fromIndex == toIndex) return
+        val actualFrom = player.currentMediaItemIndex + 1 + fromIndex
+        val actualTo = player.currentMediaItemIndex + 1 + toIndex
 
-        //Swap in memory
-        val temp = manualQueue[fromIndex]
-        manualQueue[fromIndex] = manualQueue[toIndex]
-        manualQueue[toIndex] = temp
-
-        //Update UI then rebuild timeline
-        _manualQueueState.value = manualQueue.toList()
-        rebuildTimeline(player.currentMediaItem, isStartingNew = false)
+        player.moveMediaItem(actualFrom, actualTo)
     }
 
     fun moveUpNextItem(fromIndex: Int, toIndex: Int) {
         val player = controller ?: return
-        val currentItem = player.currentMediaItem ?: return
+        if (fromIndex == toIndex || fromIndex !in _upNextState.value.indices || toIndex !in _upNextState.value.indices) return
 
-        //Determine which master playlist layout we are actively using
-        val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
-        if (activePlaylist.isEmpty()) return
+        val offset = player.currentMediaItemIndex + 1 + _manualQueueState.value.size
+        val actualFrom = offset + fromIndex
+        val actualTo = offset + toIndex
 
-        //Get the actual indices
-        val actualFromIndex = currentBasePlaylistIndex + 1 + fromIndex
-        val actualToIndex = currentBasePlaylistIndex + 1 + toIndex
-
-        //Safety check
-        if (actualFromIndex !in activePlaylist.indices || actualToIndex !in activePlaylist.indices) return
-
-        //Swap in memory
-        val mutableList = activePlaylist.toMutableList()
-        val temp = mutableList[actualFromIndex]
-        mutableList[actualFromIndex] = mutableList[actualToIndex]
-        mutableList[actualToIndex] = temp
-
-        //Save change
-        if (_isShuffling.value) shuffledPlaylist = mutableList else sourcePlaylist = mutableList
-
-        //Update UI then rebuild timeline
-        val remainingBaseItems = mutableList.subList(currentBasePlaylistIndex + 1, mutableList.size)
-        _upNextState.value = remainingBaseItems.toList()
-        rebuildTimeline(currentItem, isStartingNew = false)
+        player.moveMediaItem(actualFrom, actualTo)
     }
 
     fun manualQueueSkipToIndex(index: Int) {
         val player = controller ?: return
-        if (index !in manualQueue.indices) return
+        if (index !in _manualQueueState.value.indices) return
 
-        val targetPlayerIndex = player.currentMediaItemIndex + 1 + index
-
-        for (i in 0 until index) {
-            manualQueue.removeFirst()
-        }
-        _manualQueueState.value = manualQueue.toList()
-
-        if (targetPlayerIndex < player.mediaItemCount) {
-            player.seekTo(targetPlayerIndex, 0L)
-            player.play()
-        }
+        val targetIndex = player.currentMediaItemIndex + 1 + index
+        player.seekTo(targetIndex, 0L)
+        player.play() // onMediaItemTransition handles consuming the skipped items
     }
 
     fun upNextSkipToIndex(index: Int) {
         val player = controller ?: return
         if (index !in _upNextState.value.indices) return
 
-        val targetPlayerIndex = player.currentMediaItemIndex + 1 + manualQueue.size + index
-        if (targetPlayerIndex < player.mediaItemCount) {
-            player.seekTo(targetPlayerIndex, 0L)
-            player.play()
+        val currentIndex = player.currentMediaItemIndex
+        val manualQueueSize = _manualQueueState.value.size
+
+        if (manualQueueSize > 0) {
+            // 1. Safely extract the manual queue block
+            val queueItems = mutableListOf<MediaItem>()
+            val queueStartIndex = currentIndex + 1
+            val queueEndIndex = queueStartIndex + manualQueueSize
+
+            for (i in queueStartIndex until queueEndIndex) {
+                queueItems.add(player.getMediaItemAt(i))
+            }
+
+            // 2. Erase them from their old position (removeMediaItems is exclusive of the end index)
+            player.removeMediaItems(queueStartIndex, queueEndIndex)
+
+            // 3. The timeline is now [History] + [Current] + [Up Next]. Calculate true target.
+            val newTargetIndex = currentIndex + 1 + index
+
+            // 4. Inject the manual queue exactly ONE slot after the new target song
+            player.addMediaItems(newTargetIndex + 1, queueItems)
+
+            // 5. Navigate to the target
+            player.seekTo(newTargetIndex, 0L)
+        } else {
+            // No queue to worry about, seek normally
+            val targetIndex = currentIndex + 1 + index
+            player.seekTo(targetIndex, 0L)
         }
+
+        player.play()
     }
 
     fun manualQueueRemoveItemAtIndex(index: Int) {
+        val player = controller ?: return
+        if (index !in _manualQueueState.value.indices) return
 
+        val actualIndex = player.currentMediaItemIndex + 1 + index
+        player.removeMediaItem(actualIndex)
     }
 
     fun upNextRemoveItemAtIndex(index: Int) {
-
-    }
-
-    fun toggleShuffle() {
-        _isShuffling.value = !_isShuffling.value
-        val current = controller?.currentMediaItem
-
-        if (_isShuffling.value) {
-            val anchorItem = current ?: sourcePlaylist.getOrNull(linearIndex)
-            val remaining = sourcePlaylist.filter { it.mediaId != anchorItem?.mediaId }.shuffled()
-            shuffledPlaylist = listOfNotNull(anchorItem) + remaining
-            shuffledIndex = if (anchorItem != null) 0 else -1
-        }
-
-        rebuildTimeline(current, isStartingNew = false)
-    }
-
-    private fun rebuildTimeline(currentPlayingItem: MediaItem?, isStartingNew: Boolean) {
         val player = controller ?: return
+        if (index !in _upNextState.value.indices) return
 
-        //Return if there is nothing to play at all - also clear timeline except for the current item
-        if (sourcePlaylist.isEmpty() && manualQueue.isEmpty()) {
-            _manualQueueState.value = emptyList()
-            _upNextState.value = emptyList()
-            activeTimeline = listOfNotNull(currentPlayingItem)
-
-            val nextIndex = player.currentMediaItemIndex + 1
-            if (player.mediaItemCount > nextIndex) player.removeMediaItems(nextIndex, player.mediaItemCount)
-
-            return
-        }
-
-        val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
-        val baseIndex = currentBasePlaylistIndex
-
-        val itemAtBaseIndex = activePlaylist.getOrNull(baseIndex)
-        val isPlayingBaseItem = currentPlayingItem?.mediaId == itemAtBaseIndex?.mediaId
-
-        val nextBaseStart = if (isPlayingBaseItem) baseIndex + 1 else baseIndex
-
-        val remainingBaseItems = if (baseIndex != -1 && nextBaseStart < activePlaylist.size) {
-            activePlaylist.subList(nextBaseStart, activePlaylist.size)
-        } else if (activePlaylist.isNotEmpty() && currentPlayingItem == null) {
-            activePlaylist
-        } else {
-            emptyList()
-        }
-
-        //Push to UI
-        _manualQueueState.value = manualQueue.toList()
-        _upNextState.value = remainingBaseItems.toList()
-
-        //Construct the active timeline
-        activeTimeline = listOfNotNull(currentPlayingItem) + manualQueue + remainingBaseItems
-        //Return if there is still nothing to play
-        if (activeTimeline.isEmpty()) return
-
-        //Give to ExoPlayer
-        if (isStartingNew || player.mediaItemCount == 0) { //Hard reset for new playlist or empty player
-            player.setMediaItems(activeTimeline)
-            player.prepare()
-            player.play()
-        } else {
-            val nextIndex = player.currentMediaItemIndex + 1
-            val itemsToAdd = manualQueue.toList() + remainingBaseItems
-
-            if (player.mediaItemCount > nextIndex) {
-                player.removeMediaItems(nextIndex, player.mediaItemCount)
-            }
-            player.addMediaItems(nextIndex, itemsToAdd)
-        }
+        val actualIndex = player.currentMediaItemIndex + 1 + _manualQueueState.value.size + index
+        player.removeMediaItem(actualIndex)
     }
 
     fun setupController() {
@@ -313,42 +291,28 @@ class MediaControllerManager @Inject constructor(
                 val player = controllerFuture?.get() ?: return@addListener
                 controller = player
 
-                //Sync initial state from the connected session
                 _currentMediaItem.value = player.currentMediaItem
                 _isPlaying.value = player.isPlaying
                 _duration.value = player.duration.coerceAtLeast(0L)
                 _currentPosition.value = player.currentPosition
+                _repeatModeState.value = player.repeatMode
 
-                //Attach listener to track state changes
                 player.addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         super.onMediaItemTransition(mediaItem, reason)
+
                         _currentMediaItem.value = mediaItem
                         _duration.value = player.duration.coerceAtLeast(0L)
 
-                        if (mediaItem == null) return
+                        consumePastQueueItems(player)
+                        updateUIStates(player)
+                    }
 
-                        //Check if the item that just started is in manual queue
-                        val manualQueueIndex = manualQueue.indexOfFirst { it.mediaId == mediaItem.mediaId }
-
-                        if (manualQueueIndex != -1) {
-                            //It's a Manual Queue item - Remove it from the queue (consume it)
-                            for (i in 0..manualQueueIndex) {
-                                manualQueue.removeFirst()
-                            }
-                            _manualQueueState.value = manualQueue.toList()
-                        } else {
-                            //It's a Base Playlist item. Update pointers.
-                            val activePlaylist = if (_isShuffling.value) shuffledPlaylist else sourcePlaylist
-                            val newIndex = activePlaylist.indexOfFirst { it.mediaId == mediaItem.mediaId }
-
-                            if (newIndex != -1) {
-                                if (_isShuffling.value) shuffledIndex = newIndex
-                                else linearIndex = newIndex
-                            }
-                        }
-
-                        rebuildTimeline(currentPlayingItem = mediaItem, isStartingNew = false)
+                    override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                        super.onTimelineChanged(timeline, reason)
+                        // This guarantees the UI StateFlows sync automatically anytime
+                        // items are added, removed, moved, or replaced in ExoPlayer.
+                        updateUIStates(player)
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -364,10 +328,53 @@ class MediaControllerManager @Inject constructor(
                     }
                 })
             } catch (e: Exception) {
-                Log.e("OfflineAudioSuite", "MediaControllerManager: Failed to connect to MediaController", e)
+                Log.e("OfflineAudioSuite", "MCM: Failed to connect", e)
                 controllerFuture = null
             }
         }, MoreExecutors.directExecutor())
+    }
+
+    /**
+     * Rebuilds the UI lists dynamically straight from ExoPlayer's internal timeline.
+     */
+    private fun updateUIStates(player: Player) {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex == C.INDEX_UNSET || player.mediaItemCount == 0) {
+            _manualQueueState.value = emptyList()
+            _upNextState.value = emptyList()
+            return
+        }
+
+        val queue = mutableListOf<MediaItem>()
+        val upNext = mutableListOf<MediaItem>()
+
+        for (i in currentIndex + 1 until player.mediaItemCount) {
+            val item = player.getMediaItemAt(i)
+            if (item.mediaMetadata.extras?.getBoolean("IS_MANUAL_QUEUE") == true) {
+                queue.add(item)
+            } else {
+                upNext.add(item)
+            }
+        }
+
+        _manualQueueState.value = queue
+        _upNextState.value = upNext
+    }
+
+    /**
+     * Erases manual queue items from ExoPlayer's history so the "Previous" button functions natively.
+     */
+    private fun consumePastQueueItems(player: Player) {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex == C.INDEX_UNSET) return
+
+        // Iterate backward from right behind the currently playing item down to index 0
+        for (i in currentIndex - 1 downTo 0) {
+            val item = player.getMediaItemAt(i)
+            if (item.mediaMetadata.extras?.getBoolean("IS_MANUAL_QUEUE") == true) {
+                player.removeMediaItem(i)
+            }
+        }
     }
 
     fun stop() { controller?.stop() }
@@ -379,4 +386,21 @@ class MediaControllerManager @Inject constructor(
             controller = null
         }
     }
+}
+
+private fun MediaItem.asManualQueueItem(): MediaItem {
+    // Preserve any existing extras, but inject our manual queue identifiers
+    val newExtras = Bundle(this.mediaMetadata.extras ?: Bundle()).apply {
+        putString("ORIGINAL_MEDIA_ID", this@asManualQueueItem.mediaId)
+        putBoolean("IS_MANUAL_QUEUE", true)
+    }
+
+    return this.buildUpon()
+        .setMediaId("queue_${UUID.randomUUID()}_${this.mediaId}")
+        .setMediaMetadata(
+            this.mediaMetadata.buildUpon()
+                .setExtras(newExtras)
+                .build()
+        )
+        .build()
 }
