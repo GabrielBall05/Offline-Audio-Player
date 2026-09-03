@@ -42,8 +42,8 @@ class MediaControllerManager @Inject constructor(
     private val _isShuffling = MutableStateFlow(false)
     val isShuffling = _isShuffling.asStateFlow()
 
-    private val _repeatModeState = MutableStateFlow(Player.REPEAT_MODE_OFF)
-    val repeatModeState = _repeatModeState.asStateFlow()
+    private val _repeatingCurrentState = MutableStateFlow(false)
+    val repeatingCurrentState = _repeatingCurrentState.asStateFlow()
 
     private val _manualQueueState = MutableStateFlow<List<MediaItem>>(emptyList())
     val manualQueueState = _manualQueueState.asStateFlow()
@@ -91,13 +91,9 @@ class MediaControllerManager @Inject constructor(
 
     fun toggleRepeatMode() {
         val player = controller ?: return
-        val nextMode = when (player.repeatMode) {
-            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
-            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
-            else -> Player.REPEAT_MODE_OFF
-        }
-        player.repeatMode = nextMode
-        _repeatModeState.value = nextMode
+        _repeatingCurrentState.value = !_repeatingCurrentState.value
+
+        player.repeatMode = if (_repeatingCurrentState.value) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
     }
 
     fun toggleShuffle() {
@@ -295,7 +291,7 @@ class MediaControllerManager @Inject constructor(
                 _isPlaying.value = player.isPlaying
                 _duration.value = player.duration.coerceAtLeast(0L)
                 _currentPosition.value = player.currentPosition
-                _repeatModeState.value = player.repeatMode
+                _repeatingCurrentState.value = player.repeatMode == Player.REPEAT_MODE_ONE
 
                 player.addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {

@@ -31,6 +31,7 @@ class MainViewModel @Inject constructor(
     val isPlaying = controllerManager.isPlaying
     val currentPosition = controllerManager.currentPosition
     val duration = controllerManager.duration
+    val isRepeatingCurrent = controllerManager.repeatingCurrentState
     val isShuffleModeEnabled = controllerManager.isShuffling
     val manualQueue = controllerManager.manualQueueState
     val upNext = controllerManager.upNextState
@@ -61,10 +62,7 @@ class MainViewModel @Inject constructor(
     fun seekToPrevious() = controllerManager.seekToPrevious()
     fun seekTo(positionMs: Long) = controllerManager.seekTo(positionMs)
     fun toggleShuffle() = controllerManager.toggleShuffle()
-    fun onRepeatModeClicked() {
-        //TODO: Implement
-        Log.d("OfflineAudioSuite", "MainVM: User requesting to change repeat mode")
-    }
+    fun toggleRepeatMode() = controllerManager.toggleRepeatMode()
 
     fun playPlaylist(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
         viewModelScope.launch {
