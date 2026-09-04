@@ -7,7 +7,6 @@ play button in playlistdetails: show pause if that playlist is playing. Also sav
 expanded player screen functionality (ellipsis/add to playlist) and redo iconbuttons
 skip/rewind 5 sec buttons on exp player screen
 swipe image in explanded player screen to go next/prev
-playlist details screen swipe to go back
 no longer valid file path (attach new one)
 log statements everywhere (and improve its tag/message)
 horizontal orientation layouts - or just only allow vertical

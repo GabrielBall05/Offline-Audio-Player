@@ -155,12 +155,14 @@ fun ExpandedPlayerScreen(
             ) {
                 //Title + Creator + Repeat Mode + Add To Playlist Button
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 6.dp)
+                    ) {
                         //Title
                         Text(
                             text = currentMediaItem?.mediaMetadata?.title?.toString() ?: "Unknown Title",
@@ -259,20 +261,18 @@ fun ExpandedPlayerScreen(
                         ) {
                             //Duration Texts
                             Text(text = formatTime(sliderPosition.toLong()), style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                            Text(text = formatTime(duration), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                            Text(text = formatTime(duration), style = MaterialTheme.typography.labelMedium, maxLines = 1, textAlign = TextAlign.End)
                         }
                     }
                 }
 
                 //Controls
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-//                    //Shuffle Toggle Button
+                    //Shuffle Toggle Button
                     Box(
                         modifier = Modifier
                             .size(56.dp)
@@ -359,7 +359,7 @@ fun ExpandedPlayerScreen(
                         Icon(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(4.dp),
+                                .padding(6.dp),
                             imageVector = Icons.AutoMirrored.Filled.QueueMusic,
                             tint = MaterialTheme.colorScheme.primary,
                             contentDescription = "Open Queue"
@@ -407,6 +407,7 @@ fun formatTime(ms: Long): String {
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
-    return if (hours > 0) "%02d:%02d:%02d".format(hours, minutes, seconds)
-    else "%02d:%02d".format(minutes, seconds)
+
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+        else "%d:%02d".format(minutes, seconds)
 }

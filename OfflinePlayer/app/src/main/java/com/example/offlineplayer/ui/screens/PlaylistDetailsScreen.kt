@@ -1,13 +1,18 @@
 package com.example.offlineplayer.ui.screens
 
 import android.widget.Toast
+import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -49,13 +56,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,7 +93,10 @@ import com.example.offlineplayer.ui.components.optionsheets.PlaylistOption
 import com.example.offlineplayer.ui.components.optionsheets.PlaylistOptionsSheet
 import com.example.offlineplayer.ui.viewmodels.PlaylistDetailsViewModel
 import com.example.offlineplayer.util.ObserveUiEvents
+import com.example.offlineplayer.util.SwipeDismissable
 import com.example.offlineplayer.util.UiEvent
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private enum class TopBarState {
     Reordering, Selecting, Standard
@@ -128,6 +143,10 @@ fun PlaylistDetailsScreen(
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
 
+    val offsetX = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val velocityTracker = remember { VelocityTracker() }
+
     //Jump to top of list when list size changes
     LaunchedEffect(mediaList.size) {
         if (mediaList.isNotEmpty()) {
@@ -151,239 +170,243 @@ fun PlaylistDetailsScreen(
 
 
     //Screen UI
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            //Header (Back button, playlist details, menu button)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, end = 8.dp, top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                //Back Button
-                IconButton(onClick = onBack) {
-                    Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back")
-                }
-
-                //Cover Image, Name, Description, Item Count
+    SwipeDismissable(onDismiss = onBack) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                //Header (Back button, playlist details, menu button)
                 Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //Artwork
-                    SurfacedImage(
-                        model = playlist?.coverUri,
-                        contentDescription = "Cover Image",
-                        modifier = Modifier.clickable(onClick = { editingPlaylist = true }),
-                        fallbackIcon = Icons.Default.LibraryMusic,
-                        sizeInDp = 80.dp
-                    )
+                    //Back Button
+                    IconButton(onClick = onBack) {
+                        Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back")
+                    }
 
-                    //Playlist Details
-                    Column(
-                        modifier = Modifier.padding(start = 8.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Center
+                    //Cover Image, Name, Description, Item Count
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
-                        playlist?.description?.let { description ->
-                            Text(text = description, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                        }
-                        Text(text = "$itemCount items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
-                    }
-                }
+                        //Artwork
+                        SurfacedImage(
+                            model = playlist?.coverUri,
+                            contentDescription = "Cover Image",
+                            modifier = Modifier.clickable(onClick = { editingPlaylist = true }),
+                            fallbackIcon = Icons.Default.LibraryMusic,
+                            sizeInDp = 80.dp
+                        )
 
-                //Menu Button
-                IconButton(onClick = { showPlaylistOptionsSheet = true }) {
-                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options")
-                }
-            }
-
-            //Calculate state for top bar
-            val topBarState = when {
-                isReordering -> TopBarState.Reordering
-                isAnySelected -> TopBarState.Selecting
-                else -> TopBarState.Standard
-            }
-
-            //Top Bar
-            AnimatedContent(
-                targetState = topBarState,
-                label = "TopBarStateTransition",
-                transitionSpec = {
-                    (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.95f))
-                        .togetherWith(fadeOut(animationSpec = tween(180)))
-                }
-            ) { targetState ->
-                when (targetState) {
-                    //Reordering = Show Done Button
-                    TopBarState.Reordering -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(all = 12.dp),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
+                        //Playlist Details
+                        Column(
+                            modifier = Modifier.padding(start = 8.dp),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Button(
-                                onClick = { isReordering = false },
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
-                            ) { Text("Done") }
+                            Text(text = playlist?.name ?: "Playlist Name", style = MaterialTheme.typography.titleLarge, maxLines = 1)
+                            playlist?.description?.let { description ->
+                                Text(text = description, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                            }
+                            Text(text = "$itemCount items", style = MaterialTheme.typography.bodyLarge, maxLines = 1)
                         }
                     }
 
-                    //Selecting = Show Bulk Actions Bar
-                    TopBarState.Selecting -> {
-                        BulkActionsBar(
-                            modifier = Modifier.padding(vertical = 12.dp),
-                            isAnySelected = isAnySelected,
-                            isAllSelected = isAllSelected,
-                            onToggleAllClick = { viewModel.toggleSelectAll() },
-                            onClearSelectionClick = { viewModel.clearSelection() }
-                        ) {
-                            IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit")
-                            }
-                            IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
-                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
-                            }
-                            IconButton(onClick = { onAddToQueueClick(selectedIds.mapNotNull { id -> mediaMap[id] }) }) {
-                                Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
-                            }
-                            IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
-                                Icon(Icons.Default.PlaylistRemove, tint = MaterialTheme.colorScheme.error, contentDescription = "Remove From Playlist")
-                            }
-                        }
+                    //Menu Button
+                    IconButton(onClick = { showPlaylistOptionsSheet = true }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options")
                     }
+                }
 
-                    //Nothing = Show Search Bar + Play Button
-                    TopBarState.Standard -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 6.dp, vertical = 8.dp)
-                                .height(IntrinsicSize.Min),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            //Search Bar
-                            SearchBar(
-                                value = searchQuery,
-                                placeHolderText = "Search in playlist",
+                //Calculate state for top bar
+                val topBarState = when {
+                    isReordering -> TopBarState.Reordering
+                    isAnySelected -> TopBarState.Selecting
+                    else -> TopBarState.Standard
+                }
+
+                //Top Bar
+                AnimatedContent(
+                    targetState = topBarState,
+                    label = "TopBarStateTransition",
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.95f))
+                            .togetherWith(fadeOut(animationSpec = tween(180)))
+                    }
+                ) { targetState ->
+                    when (targetState) {
+                        //Reordering = Show Done Button
+                        TopBarState.Reordering -> {
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                                onClear = { viewModel.onSearchQueryChange("") },
-                                onValueChange = { viewModel.onSearchQueryChange(it) }
-                            )
+                                    .fillMaxWidth()
+                                    .padding(all = 12.dp),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = { isReordering = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 32.dp)
+                                ) { Text("Done") }
+                            }
+                        }
 
-                            //Play Button
-                            IconButton(
+                        //Selecting = Show Bulk Actions Bar
+                        TopBarState.Selecting -> {
+                            BulkActionsBar(
+                                modifier = Modifier.padding(vertical = 12.dp),
+                                isAnySelected = isAnySelected,
+                                isAllSelected = isAllSelected,
+                                onToggleAllClick = { viewModel.toggleSelectAll() },
+                                onClearSelectionClick = { viewModel.clearSelection() }
+                            ) {
+                                IconButton(onClick = { idsToEdit = selectedIds.toList() }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                }
+                                IconButton(onClick = { idsToAddToPlaylists = selectedIds.toList() }) {
+                                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = "Add To Another Playlist")
+                                }
+                                IconButton(onClick = { onAddToQueueClick(selectedIds.mapNotNull { id -> mediaMap[id] }) }) {
+                                    Icon(Icons.Default.AddToQueue, contentDescription = "Add Selection to Queue")
+                                }
+                                IconButton(onClick = { idsToRemove = selectedIds.toList() }) {
+                                    Icon(Icons.Default.PlaylistRemove, tint = MaterialTheme.colorScheme.error, contentDescription = "Remove From Playlist")
+                                }
+                            }
+                        }
+
+                        //Nothing = Show Search Bar + Play Button
+                        TopBarState.Standard -> {
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxHeight()
-                                    .aspectRatio(1f),
-                                onClick = {
-                                    playlist?.let { currentPlaylist ->
-                                        onPlayPlaylistClick(currentPlaylist.playlistId)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 6.dp, vertical = 8.dp)
+                                    .height(IntrinsicSize.Min),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                //Search Bar
+                                SearchBar(
+                                    value = searchQuery,
+                                    placeHolderText = "Search in playlist",
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(),
+                                    onClear = { viewModel.onSearchQueryChange("") },
+                                    onValueChange = { viewModel.onSearchQueryChange(it) }
+                                )
+
+                                //Play Button
+                                IconButton(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .aspectRatio(1f),
+                                    onClick = {
+                                        playlist?.let { currentPlaylist ->
+                                            onPlayPlaylistClick(currentPlaylist.playlistId)
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayCircle,
+                                        contentDescription = "Play Playlist",
+                                        modifier = Modifier.fillMaxSize(),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //Media List
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    if (fullMediaList.isEmpty()) {
+                        item {
+                            EmptyMessage(text = "You have no items in this playlist. Add some using the \"+\" button at the bottom-right of your screen, " +
+                                    "or utilize the Home Screen's selecting options.")
+                        }
+                    } else if (mediaList.isEmpty()) {
+                        item {
+                            EmptyMessage(text = "No matches found.")
+                        }
+                    } else if (isReordering) {
+                        //Use reorderable list item with the full media list
+                        itemsIndexed(
+                            items = fullMediaList,
+                            key = { _, media -> media.mediaId }
+                        ) { index, media ->
+                            MediaListItemReorderable(
+                                media = media,
+                                isFirst = index == 0,
+                                isLast = index == fullMediaList.size - 1,
+                                onMoveUp = {
+                                    if (index > 0) {
+                                        viewModel.moveMediaItemPosition(
+                                            media.mediaId,
+                                            fullMediaList[index - 1].mediaId
+                                        )
+                                    }
+                                },
+                                onMoveDown = {
+                                    if (index < fullMediaList.size - 1) {
+                                        viewModel.moveMediaItemPosition(
+                                            media.mediaId,
+                                            fullMediaList[index + 1].mediaId
+                                        )
                                     }
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayCircle,
-                                    contentDescription = "Play Playlist",
-                                    modifier = Modifier.fillMaxSize(),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                            )
+                        }
+                    } else {
+                        //Use regular or selectable list item with the filtered list
+                        items(
+                            items = mediaList,
+                            key = { it.mediaId }
+                        ) { media ->
+                            //Animate transition between viewing/selectable list items
+                            AnimatedContent(
+                                targetState = isAnySelected,
+                                label = "MediaListItemTransition"
+                            ) { animatingSelectionMode ->
+                                if (animatingSelectionMode) { //Use selectable list item if selecting
+                                    MediaListItemSelectable(
+                                        media = media,
+                                        isSelected = selectedIds.contains(media.mediaId),
+                                        onSelect = { viewModel.toggleSelection(media.mediaId) },
+                                        constrainSelectToCheckbox = false,
+                                        onMoreClick = { selectedMediaItemForMenu = it }
+                                    )
+                                } else {
+                                    MediaListItemStandard( //Use standard viewing list item if not selecting
+                                        media = media,
+                                        onLongClick = { viewModel.toggleSelection(it.mediaId) },
+                                        onMoreClick = { selectedMediaItemForMenu = it }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            //Media List
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                if (fullMediaList.isEmpty()) {
-                    item {
-                        EmptyMessage(text = "You have no items in this playlist. Add some using the \"+\" button at the bottom-right of your screen, " +
-                                "or utilize the Home Screen's selecting options.")
-                    }
-                } else if (mediaList.isEmpty()) {
-                    item {
-                        EmptyMessage(text = "No matches found.")
-                    }
-                } else if (isReordering) {
-                    //Use reorderable list item with the full media list
-                    itemsIndexed(
-                        items = fullMediaList,
-                        key = { _, media -> media.mediaId }
-                    ) { index, media ->
-                        MediaListItemReorderable(
-                            media = media,
-                            isFirst = index == 0,
-                            isLast = index == fullMediaList.size - 1,
-                            onMoveUp = {
-                                if (index > 0) {
-                                    viewModel.moveMediaItemPosition(
-                                        media.mediaId,
-                                        fullMediaList[index - 1].mediaId
-                                    )
-                                }
-                            },
-                            onMoveDown = {
-                                if (index < fullMediaList.size - 1) {
-                                    viewModel.moveMediaItemPosition(
-                                        media.mediaId,
-                                        fullMediaList[index + 1].mediaId
-                                    )
-                                }
-                            }
-                        )
-                    }
-                } else {
-                    //Use regular or selectable list item with the filtered list
-                    items(
-                        items = mediaList,
-                        key = { it.mediaId }
-                    ) { media ->
-                        //Animate transition between viewing/selectable list items
-                        AnimatedContent(
-                            targetState = isAnySelected,
-                            label = "MediaListItemTransition"
-                        ) { animatingSelectionMode ->
-                            if (animatingSelectionMode) { //Use selectable list item if selecting
-                                MediaListItemSelectable(
-                                    media = media,
-                                    isSelected = selectedIds.contains(media.mediaId),
-                                    onSelect = { viewModel.toggleSelection(media.mediaId) },
-                                    constrainSelectToCheckbox = false,
-                                    onMoreClick = { selectedMediaItemForMenu = it }
-                                )
-                            } else {
-                                MediaListItemStandard( //Use standard viewing list item if not selecting
-                                    media = media,
-                                    onLongClick = { viewModel.toggleSelection(it.mediaId) },
-                                    onMoreClick = { selectedMediaItemForMenu = it }
-                                )
-                            }
-                        }
-                    }
-                }
+            if (!isAnySelected && !isReordering) {
+                //Add Media To Playlist Button
+                FloatingActionButton(
+                    onClick = { showMediaPicker = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 4.dp, bottom = 16.dp)
+                ) { Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist") }
             }
-        }
-
-        if (!isAnySelected && !isReordering) {
-            //Add Media To Playlist Button
-            FloatingActionButton(
-                onClick = { showMediaPicker = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 4.dp, bottom = 16.dp)
-            ) { Icon(Icons.Default.Add, contentDescription = "Add Media To Playlist") }
         }
     }
 
