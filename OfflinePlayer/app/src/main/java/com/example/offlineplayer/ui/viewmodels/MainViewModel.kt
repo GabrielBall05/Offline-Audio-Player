@@ -74,13 +74,7 @@ class MainViewModel @Inject constructor(
                 val id = mediaItem?.mediaMetadata?.extras?.getString("ORIGINAL_MEDIA_ID")?.toIntOrNull()
                     ?: mediaItem?.mediaId?.toIntOrNull()
 
-                if (id != null) {
-                    val entity = withContext(Dispatchers.IO) {
-                        mediaRepository.getMediaById(id)
-                    }
-                    _currentMediaEntity.value = entity
-                }
-                else _currentMediaEntity.value = null
+                _currentMediaEntity.value = id?.let { mediaRepository.getMediaById(it) }
             }
         }
     }
@@ -137,9 +131,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun refreshAvailablePlaylists(mediaId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val playlists = playlistRepository.getPlaylistsNotHavingMediaList(listOf(mediaId))
-            _availablePlaylists.value = playlists
+        viewModelScope.launch {
+            _availablePlaylists.value = playlistRepository.getPlaylistsNotHavingMediaList(listOf(mediaId))
         }
     }
 

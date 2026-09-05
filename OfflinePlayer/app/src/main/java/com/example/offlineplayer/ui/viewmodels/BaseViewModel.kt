@@ -28,7 +28,7 @@ abstract class BaseViewModel : ViewModel() {
     //Launch Coroutine and show loading screen
     protected fun launchWithLoading(block: suspend () -> Unit) {
         _isLoading.value = true //Show loading screen
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try { block() } //Perform given operation
             catch (e: Exception) {
                 e.printStackTrace()
@@ -42,7 +42,7 @@ abstract class BaseViewModel : ViewModel() {
 
     //Launch Coroutine without showing loading screen
     protected fun launchWithoutLoading(block: suspend () -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try { block() } //Perform given operation
             catch (e: Exception) {
                 e.printStackTrace()

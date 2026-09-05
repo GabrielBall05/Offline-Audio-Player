@@ -293,7 +293,7 @@ fun ExpandedPlayerScreen(
                     //Grouped Playback Controls (Prev, Toggle, Next)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         //Previous Button
                         Box(

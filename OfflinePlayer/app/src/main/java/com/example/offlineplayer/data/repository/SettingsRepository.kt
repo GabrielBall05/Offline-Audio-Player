@@ -10,9 +10,11 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.offlineplayer.util.MediaSortOrder
 import com.example.offlineplayer.util.PlaylistsSortOrder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SettingsRepository @Inject constructor(
@@ -80,28 +82,28 @@ class SettingsRepository @Inject constructor(
 
 
     //Update Keep Screen On Setting
-    suspend fun setKeepScreenOn(keepOn: Boolean) {
+    suspend fun setKeepScreenOn(keepOn: Boolean) = withContext(Dispatchers.IO) {
         dataStore.edit { preferences ->
             preferences[Keys.KEEP_SCREEN_ON] = keepOn
         }
     }
 
     //Update Default Media Sort Order Setting
-    suspend fun setDefaultMediaSortOrder(sortOrder: MediaSortOrder) {
+    suspend fun setDefaultMediaSortOrder(sortOrder: MediaSortOrder) = withContext(Dispatchers.IO) {
         dataStore.edit { preferences ->
             preferences[Keys.DEFAULT_MEDIA_SORT_ORDER] = sortOrder.name
         }
     }
 
     //Update Default Playlists Sort Order Setting
-    suspend fun setDefaultPlaylistsSortOrder(sortOrder: PlaylistsSortOrder) {
+    suspend fun setDefaultPlaylistsSortOrder(sortOrder: PlaylistsSortOrder) = withContext(Dispatchers.IO) {
         dataStore.edit { preferences ->
             preferences[Keys.DEFAULT_PLAYLISTS_SORT_ORDER] = sortOrder.name
         }
     }
 
 //    //Update Default Shuffle Setting
-//    suspend fun setDefaultShuffle(shuffle: Boolean) {
+//    suspend fun setDefaultShuffle(shuffle: Boolean) = withContext(Dispatchers.IO) {
 //        dataStore.edit { preferences ->
 //            preferences[Keys.DEFAULT_SHUFFLE] = shuffle
 //        }

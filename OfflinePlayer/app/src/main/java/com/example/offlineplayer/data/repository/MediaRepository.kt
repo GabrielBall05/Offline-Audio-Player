@@ -10,7 +10,9 @@ import com.example.offlineplayer.data.local.MediaEntity
 import com.example.offlineplayer.util.copyUriToInternalStorage
 import com.example.offlineplayer.util.getMediaMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,10 +23,12 @@ class MediaRepository @Inject constructor(
 ) {
     val allMedia: Flow<List<MediaEntity>> = mediaDao.getAllMedia()
 
-    suspend fun getMediaById(id: Int) = mediaDao.getMediaById(id)
+    suspend fun getMediaById(id: Int): MediaEntity? = withContext(Dispatchers.IO) {
+        mediaDao.getMediaById(id)
+    }
 
     //DB Actions
-    suspend fun updateMedia(media: MediaEntity) {
+    suspend fun updateMedia(media: MediaEntity) = withContext(Dispatchers.IO) {
         var updatedItem = media
         media.artworkUri?.let { uri ->
             val permanentPath = copyUriToInternalStorage(context, uri.toUri())
@@ -35,8 +39,10 @@ class MediaRepository @Inject constructor(
         mediaDao.updateMedia(updatedItem)
     }
 
-    suspend fun updateCreatorBulk(creator: String, ids: List<Int>) = mediaDao.updateCreatorBulk(creator, ids)
-    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) {
+    suspend fun updateCreatorBulk(creator: String, ids: List<Int>) =  withContext(Dispatchers.IO) {
+        mediaDao.updateCreatorBulk(creator, ids)
+    }
+    suspend fun updateArtworkBulk(artworkUri: String?, ids: List<Int>) = withContext(Dispatchers.IO) {
         var permanentPath = artworkUri
         artworkUri?.let { uri ->
             permanentPath = copyUriToInternalStorage(context, uri.toUri())
@@ -44,9 +50,11 @@ class MediaRepository @Inject constructor(
         mediaDao.updateArtworkBulk(permanentPath, ids)
     }
 
-    suspend fun deleteMediaList(mediaIds: List<Int>) = mediaDao.deleteMediaList(mediaIds)
+    suspend fun deleteMediaList(mediaIds: List<Int>) = withContext(Dispatchers.IO) {
+        mediaDao.deleteMediaList(mediaIds)
+    }
 
-    suspend fun importMedia(uriList: List<Uri>) {
+    suspend fun importMedia(uriList: List<Uri>) = withContext(Dispatchers.IO) {
         val entities = uriList.mapNotNull { uri ->
             try {
                 //Ensures persistent permission

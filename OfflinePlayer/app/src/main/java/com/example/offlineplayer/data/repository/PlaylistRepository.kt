@@ -44,37 +44,43 @@ class PlaylistRepository @Inject constructor(
     //DB Actions
     fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = playlistDao.getPlaylistById(id)
 
-    private suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> {
-        return withContext(Dispatchers.IO) {
-            playlistDao.getMediaInPlaylist(id)
-                .first()
-                .map { it.toMediaItem() }
-        }
+    private suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> = withContext(Dispatchers.IO) {
+        playlistDao.getMediaInPlaylist(id)
+            .first()
+            .map { it.toMediaItem() }
     }
 
-    suspend fun insertPlaylist(playlist: PlaylistEntity): Long {
+    suspend fun insertPlaylist(playlist: PlaylistEntity): Long = withContext(Dispatchers.IO) {
         val newPlaylist = processPlaylistCover(playlist)
-        return playlistDao.insertPlaylist(newPlaylist)
+        playlistDao.insertPlaylist(newPlaylist)
     }
 
-    suspend fun updatePlaylist(playlist: PlaylistEntity) {
+    suspend fun updatePlaylist(playlist: PlaylistEntity) = withContext(Dispatchers.IO) {
         val updatedPlaylist = processPlaylistCover(playlist)
         playlistDao.updatePlaylist(updatedPlaylist)
     }
 
-    suspend fun deletePlaylist(playlist: PlaylistEntity) = playlistDao.deletePlaylist(playlist)
+    suspend fun deletePlaylist(playlist: PlaylistEntity) = withContext(Dispatchers.IO) {
+        playlistDao.deletePlaylist(playlist)
+    }
 
     fun getMediaInPlaylist(playlistId: Int): Flow<List<MediaEntity>> = playlistDao.getMediaInPlaylist(playlistId)
 
-    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = playlistDao.getMediaNotInPlaylist(playlistId)
+    suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity> = withContext(Dispatchers.IO) {
+        playlistDao.getMediaNotInPlaylist(playlistId)
+    }
 
-    suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>) = playlistDao.getPlaylistsNotHavingMediaList(mediaIds.distinct())
+    suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>) = withContext(Dispatchers.IO) {
+        playlistDao.getPlaylistsNotHavingMediaList(mediaIds.distinct())
+    }
 
     fun getPlaylistItemCount(playlistId: Int): Flow<Int> = playlistDao.getPlaylistItemCount(playlistId)
 
-    suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = playlistDao.removeMediaFromPlaylist(mediaIds, playlistId)
+    suspend fun removeMediaFromPlaylist(mediaIds: List<Int>, playlistId: Int) = withContext(Dispatchers.IO) {
+        playlistDao.removeMediaFromPlaylist(mediaIds, playlistId)
+    }
 
-    suspend fun moveMediaItemPositionInPlaylist(playlistId: Int, fromMediaId: Int, toMediaId: Int, fromPos: Int, toPos: Int) {
+    suspend fun moveMediaItemPositionInPlaylist(playlistId: Int, fromMediaId: Int, toMediaId: Int, fromPos: Int, toPos: Int) = withContext(Dispatchers.IO) {
         if (fromMediaId != toMediaId)
             playlistDao.moveMediaItemPositionInPlaylist(
                 playlistId,
@@ -86,7 +92,7 @@ class PlaylistRepository @Inject constructor(
     }
 
     //Shared Business Logic
-    suspend fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) {
+    suspend fun addMediaToPlaylists(mediaIds: List<Int>, playlistIds: List<Int>) = withContext(Dispatchers.IO) {
         val allNewRefs = mutableListOf<PlaylistMediaItem>()
 
         //Loop through selected playlists

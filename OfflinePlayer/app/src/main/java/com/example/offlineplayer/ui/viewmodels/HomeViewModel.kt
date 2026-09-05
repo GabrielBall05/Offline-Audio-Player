@@ -12,7 +12,6 @@ import com.example.offlineplayer.util.UiEvent
 import com.example.offlineplayer.util.getCommonArtwork
 import com.example.offlineplayer.util.getCommonCreator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +30,6 @@ class HomeViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     settingsRepository: SettingsRepository
 ): BaseViewModel() {
-
     //For searching
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -100,9 +98,8 @@ class HomeViewModel @Inject constructor(
     }
 
     fun refreshAvailablePlaylists(mediaIds: List<Int>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val playlists = playlistRepository.getPlaylistsNotHavingMediaList(mediaIds)
-            _availablePlaylists.value = playlists
+        viewModelScope.launch {
+            _availablePlaylists.value = playlistRepository.getPlaylistsNotHavingMediaList(mediaIds)
         }
     }
 
