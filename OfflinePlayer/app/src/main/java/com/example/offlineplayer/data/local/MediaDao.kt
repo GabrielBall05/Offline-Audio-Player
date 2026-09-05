@@ -18,6 +18,9 @@ interface MediaDao {
     @Query("SELECT * FROM ${MediaEntity.TABLE_NAME} ORDER BY title ASC")
     fun getAllMedia(): Flow<List<MediaEntity>>
 
+    @Query("SELECT * FROM ${MediaEntity.TABLE_NAME} WHERE mediaId = :id")
+    fun getMediaById(id: Int): MediaEntity?
+
     //----------UPDATE----------
     //Update single media item
     @Update

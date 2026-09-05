@@ -27,6 +27,8 @@ enum class MediaOption {
 @Composable
 fun MediaOptionsSheetContent(
     media: MediaEntity,
+    showEditOption: Boolean = true,
+    showPlayOption: Boolean = true,
     showRemoveOption: Boolean = false,
     showDeleteOption: Boolean = false,
     onOptionClick: (MediaOption) -> Unit
@@ -46,17 +48,21 @@ fun MediaOptionsSheetContent(
         HorizontalDivider()
 
         //Edit
-        MenuOptionItem(
-            icon = Icons.Default.Edit,
-            label = "Edit Details",
-            onClick = { onOptionClick(MediaOption.EDIT) }
-        )
+        if (showEditOption) {
+            MenuOptionItem(
+                icon = Icons.Default.Edit,
+                label = "Edit Details",
+                onClick = { onOptionClick(MediaOption.EDIT) }
+            )
+        }
         //Play now
-        MenuOptionItem(
-            icon = Icons.Default.PlayArrow,
-            label = "Play",
-            onClick = { onOptionClick(MediaOption.PLAY_NOW) }
-        )
+        if (showPlayOption) {
+            MenuOptionItem(
+                icon = Icons.Default.PlayArrow,
+                label = "Play",
+                onClick = { onOptionClick(MediaOption.PLAY_NOW) }
+            )
+        }
         //Add to Queue
         MenuOptionItem(
             icon = Icons.Default.AddToQueue,

@@ -2,6 +2,7 @@ package com.example.offlineplayer.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,8 +60,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.ui.components.common.SurfacedImage
+import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
+import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
+import com.example.offlineplayer.ui.components.optionsheets.MediaOption
+import com.example.offlineplayer.ui.components.optionsheets.MediaOptionsSheetContent
 import com.example.offlineplayer.ui.viewmodels.MainViewModel
 import com.example.offlineplayer.util.KeepScreenOn
+import com.example.offlineplayer.util.indicatorBorder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +79,7 @@ fun ExpandedPlayerScreen(
 
     //Collect states from viewmodel
     val currentMediaItem by viewModel.currentMediaItem.collectAsStateWithLifecycle()
+    val currentMediaEntity by viewModel.currentMediaEntity.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val duration by viewModel.duration.collectAsStateWithLifecycle()
@@ -79,11 +87,16 @@ fun ExpandedPlayerScreen(
     val isShuffleModeEnabled by viewModel.isShuffleModeEnabled.collectAsStateWithLifecycle()
     val manualQueue by viewModel.manualQueue.collectAsStateWithLifecycle()
     val upNext by viewModel.upNext.collectAsStateWithLifecycle()
+    val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
 
     var showQueueScreen by rememberSaveable { mutableStateOf(false) }
+    var showMediaItemMenu by rememberSaveable { mutableStateOf(false) }
+    var showPlaylistPicker by rememberSaveable { mutableStateOf(false) }
+    var showPlaylistForm by rememberSaveable { mutableStateOf(false) }
 
-    //Sheet state
+    //Sheet states
     val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val optionsSheetState = rememberModalBottomSheetState()
 
     //Slider states
     var sliderPosition by remember { mutableFloatStateOf(0F) }
@@ -92,6 +105,10 @@ fun ExpandedPlayerScreen(
     //Sync slider with actual position unless user is dragging it
     LaunchedEffect(currentPosition) { if (!isDragging) sliderPosition = currentPosition.toFloat() }
 
+    //Refresh playlists when the picker is opened for the current media item
+    LaunchedEffect(showPlaylistPicker, currentMediaEntity) {
+        if (showPlaylistPicker) currentMediaEntity?.let { viewModel.refreshAvailablePlaylists(it.mediaId) }
+    }
 
     //Screen UI
     Box(modifier = Modifier.fillMaxSize()) {
@@ -128,7 +145,7 @@ fun ExpandedPlayerScreen(
                 )
 
                 //Options Menu
-                IconButton(onClick = { /* TODO: Set some var to open a menu sheet for something idk */ }) {
+                IconButton(onClick = { showMediaItemMenu = true }) {
                     Icon(
                         modifier = Modifier.size(32.dp),
                         imageVector = Icons.Default.MoreVert,
@@ -182,7 +199,9 @@ fun ExpandedPlayerScreen(
                     //Repeat Button
                     IconButton(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(48.dp)
+                            .indicatorBorder(enabled = isRepeatingCurrent, color = MaterialTheme.colorScheme.primary)
+                            .clip(CircleShape)
                             .aspectRatio(1f),
                         onClick = { viewModel.toggleRepeatMode() }
                     ) {
@@ -190,31 +209,11 @@ fun ExpandedPlayerScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(6.dp),
-                            imageVector = if (isRepeatingCurrent) Icons.Default.RepeatOn else Icons.Default.Repeat,
-                            tint = if (isRepeatingCurrent) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            imageVector = Icons.Default.Repeat,
+                            tint = if (isRepeatingCurrent) MaterialTheme.colorScheme.primary else LocalContentColor.current.copy(alpha = 0.75f),
                             contentDescription = "Repeat Mode"
                         )
                     }
-
-//                    //Add to Playlist Button
-//                    IconButton(
-//                        modifier = Modifier.size(32.dp),
-//                        onClick = {
-//                            //Look for the hidden original ID first, fallback to the standard mediaId if it's a base playlist item
-//                            val realIdString = currentMediaItem?.mediaMetadata?.extras?.getString("ORIGINAL_MEDIA_ID")
-//                                ?: currentMediaItem?.mediaId
-//
-//                            realIdString?.toIntOrNull()?.let { id ->
-//                                viewModel.onAddToPlaylistClicked(id)
-//                            }
-//                        }
-//                    ) {
-//                        Icon(
-//                            modifier = Modifier.fillMaxSize(),
-//                            imageVector = Icons.Default.AddCircleOutline,
-//                            contentDescription = "Add to Playlist"
-//                        )
-//                    }
                 }
 
                 //Slider + Times
@@ -275,7 +274,8 @@ fun ExpandedPlayerScreen(
                     //Shuffle Toggle Button
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(48.dp)
+                            .indicatorBorder(enabled = isShuffleModeEnabled, color = MaterialTheme.colorScheme.primary)
                             .clip(CircleShape)
                             .clickable { viewModel.toggleShuffle() },
                         contentAlignment = Alignment.Center
@@ -283,9 +283,9 @@ fun ExpandedPlayerScreen(
                         Icon(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(6.dp),
-                            imageVector = if(isShuffleModeEnabled) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
-                            tint = if(isShuffleModeEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                                .padding(4.dp),
+                            imageVector = Icons.Rounded.Shuffle,
+                            tint = if(isShuffleModeEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current.copy(alpha = 0.75f),
                             contentDescription = "Shuffle Toggle"
                         )
                     }
@@ -398,6 +398,66 @@ fun ExpandedPlayerScreen(
                     )
                 }
             }
+        }
+
+        //Show options menu if user hits ellipsis and the media entity is available
+        if (showMediaItemMenu) currentMediaEntity?.let { media ->
+            ModalBottomSheet(
+                onDismissRequest = { showMediaItemMenu = false },
+                sheetState = optionsSheetState,
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
+                MediaOptionsSheetContent(
+                    media = media,
+                    showEditOption = false,
+                    showPlayOption = false,
+                    showRemoveOption = true,
+                    onOptionClick = { option ->
+                        showMediaItemMenu = false
+                        when (option) {
+                            MediaOption.EDIT -> { /* Not used in Expanded Player Screen */ }
+                            MediaOption.PLAY_NOW -> { /* Not used in Expanded Player Screen (already playing) */ }
+                            MediaOption.ADD_TO_QUEUE -> { viewModel.addMediaToQueue(listOf(media)) }
+                            MediaOption.ADD_TO_PLAYLIST -> { showPlaylistPicker = true }
+                            MediaOption.REMOVE_FROM_PLAYLIST -> { /* TODO: REMOVE FROM PLAYLIST */ }
+                            MediaOption.DELETE -> { /* Not used in Expanded Player Screen */ }
+                        }
+                    }
+                )
+            }
+        }
+
+        //Show playlist picker if user hits add to playlist
+        if (showPlaylistPicker) currentMediaEntity?.let { media ->
+            PlaylistPicker(
+                playlists = availablePlaylists,
+                onDismiss = { showPlaylistPicker = false },
+                onCreateClick = {
+                    showPlaylistPicker = false
+                    showPlaylistForm = true
+                },
+                onConfirm = { selectedIds ->
+                    viewModel.addMediaToPlaylists(media.mediaId, selectedIds)
+                    showPlaylistPicker = false
+                }
+            )
+        }
+
+        //Show playlist form if user hits create playlist from playlist picker
+        if (showPlaylistForm) {
+            PlaylistFormDialog(
+                onDismiss = {
+                    showPlaylistForm = false
+                    showPlaylistPicker = true
+                },
+                onConfirm = { newPlaylist ->
+                    currentMediaEntity?.let { media ->
+                        viewModel.createPlaylist(newPlaylist, media.mediaId)
+                    }
+                    showPlaylistForm = false
+                    showPlaylistPicker = true
+                }
+            )
         }
     }
 }

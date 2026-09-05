@@ -3,27 +3,33 @@ package com.example.offlineplayer.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.example.offlineplayer.data.local.MediaEntity
+import com.example.offlineplayer.data.local.PlaylistEntity
 import com.example.offlineplayer.data.local.toMediaItem
+import com.example.offlineplayer.data.repository.MediaRepository
 import com.example.offlineplayer.data.repository.PlaylistRepository
 import com.example.offlineplayer.data.repository.SettingsRepository
 import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val controllerManager: MediaControllerManager,
+    private val mediaRepository: MediaRepository,
     private val playlistRepository: PlaylistRepository,
     private val settingsRepository: SettingsRepository
 ): BaseViewModel() {
-
     private var playbackJob: Job? = null
 
     //Expose states from the manager
@@ -35,6 +41,14 @@ class MainViewModel @Inject constructor(
     val isShuffleModeEnabled = controllerManager.isShuffling
     val manualQueue = controllerManager.manualQueueState
     val upNext = controllerManager.upNextState
+
+    //Full db entry for the currently playing media item
+    private val _currentMediaEntity = MutableStateFlow<MediaEntity?>(null)
+    val currentMediaEntity = _currentMediaEntity.asStateFlow()
+
+    //Available playlists for playlist picker
+    private val _availablePlaylists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
+    val availablePlaylists = _availablePlaylists.asStateFlow()
 
     //Expose states from settings
     val keepScreenOn: StateFlow<Boolean> = settingsRepository.keepScreenOnFlow.stateIn(
@@ -52,6 +66,21 @@ class MainViewModel @Inject constructor(
             isPlaying.collect { playing ->
                 if (playing) startPlaybackTicker()
                 else stopPlaybackTicker()
+            }
+        }
+
+        viewModelScope.launch {
+            currentMediaItem.collect { mediaItem ->
+                val id = mediaItem?.mediaMetadata?.extras?.getString("ORIGINAL_MEDIA_ID")?.toIntOrNull()
+                    ?: mediaItem?.mediaId?.toIntOrNull()
+
+                if (id != null) {
+                    val entity = withContext(Dispatchers.IO) {
+                        mediaRepository.getMediaById(id)
+                    }
+                    _currentMediaEntity.value = entity
+                }
+                else _currentMediaEntity.value = null
             }
         }
     }
@@ -96,10 +125,21 @@ class MainViewModel @Inject constructor(
     fun manualQueueRemoveItemAtIndex(index: Int) = controllerManager.manualQueueRemoveItemAtIndex(index)
     fun upNextRemoveItemAtIndex(index: Int) = controllerManager.upNextRemoveItemAtIndex(index)
 
-    fun onAddToPlaylistClicked(id: Int) {
-        viewModelScope.launch {
-            //TODO: Open playlist picker
-            Log.d("OfflineAudioSuite", "MainVM: User requesting to open playlist picker to add item $id to a playlist")
+    fun createPlaylist(playlist: PlaylistEntity, mediaIdContext: Int) = viewModelScope.launch {
+        playlistRepository.insertPlaylist(playlist)
+        refreshAvailablePlaylists(mediaIdContext)
+        sendUiEvent(UiEvent.ShowToast("Playlist created"))
+    }
+
+    fun addMediaToPlaylists(mediaId: Int, playlistIds: List<Int>) = viewModelScope.launch {
+        playlistRepository.addMediaToPlaylists(listOf(mediaId), playlistIds)
+        sendUiEvent(UiEvent.ShowToast("Added to ${playlistIds.size} playlist${if (playlistIds.size > 1) "s" else ""}"))
+    }
+
+    fun refreshAvailablePlaylists(mediaId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlists = playlistRepository.getPlaylistsNotHavingMediaList(listOf(mediaId))
+            _availablePlaylists.value = playlists
         }
     }
 

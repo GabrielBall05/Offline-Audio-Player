@@ -21,6 +21,8 @@ class MediaRepository @Inject constructor(
 ) {
     val allMedia: Flow<List<MediaEntity>> = mediaDao.getAllMedia()
 
+    suspend fun getMediaById(id: Int) = mediaDao.getMediaById(id)
+
     //DB Actions
     suspend fun updateMedia(media: MediaEntity) {
         var updatedItem = media

@@ -4,9 +4,9 @@ Other:
 On toggle shuffe, save the new shuffle setting and just refer to it whenever playing new playlists or reloading player state
 	This will be done with saving player state
 play button in playlistdetails: show pause if that playlist is playing. Also save which playlist is currently playing
-expanded player screen functionality (ellipsis/add to playlist) and redo iconbuttons
-skip/rewind 5 sec buttons on exp player screen
+remove from playlist functionality on expanded player screen
 swipe image in explanded player screen to go next/prev
+
 no longer valid file path (attach new one)
 log statements everywhere (and improve its tag/message)
 horizontal orientation layouts - or just only allow vertical
