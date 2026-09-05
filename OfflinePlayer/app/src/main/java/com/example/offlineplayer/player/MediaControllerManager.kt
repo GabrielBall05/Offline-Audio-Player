@@ -10,17 +10,24 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.example.offlineplayer.data.local.asManualQueueItem
+import com.example.offlineplayer.data.repository.PlaybackPersistenceRepository
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class MediaControllerManager @Inject constructor(
+    private val persistenceRepository: PlaybackPersistenceRepository,
     @param:ApplicationContext private val context: Context
 ) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -42,8 +49,8 @@ class MediaControllerManager @Inject constructor(
     private val _isShuffling = MutableStateFlow(false)
     val isShuffling = _isShuffling.asStateFlow()
 
-    private val _repeatingCurrentState = MutableStateFlow(false)
-    val repeatingCurrentState = _repeatingCurrentState.asStateFlow()
+    private val _repeatingCurrent = MutableStateFlow(false)
+    val repeatingCurrent = _repeatingCurrent.asStateFlow()
 
     private val _manualQueueState = MutableStateFlow<List<MediaItem>>(emptyList())
     val manualQueueState = _manualQueueState.asStateFlow()
@@ -51,9 +58,10 @@ class MediaControllerManager @Inject constructor(
     private val _upNextState = MutableStateFlow<List<MediaItem>>(emptyList())
     val upNextState = _upNextState.asStateFlow()
 
-    // Used strictly for restoring the natural order when shuffle is toggled off
-    // or for repeating the playlist when the queue ends.
+    private val _currentPlaylistId = MutableStateFlow<Int?>(null)
+    val currentPlaylistId = _currentPlaylistId.asStateFlow()
     private var originalPlaylist: List<MediaItem> = emptyList()
+
 
     init {
         setupController()
@@ -91,9 +99,9 @@ class MediaControllerManager @Inject constructor(
 
     fun toggleRepeatMode() {
         val player = controller ?: return
-        _repeatingCurrentState.value = !_repeatingCurrentState.value
+        _repeatingCurrent.value = !_repeatingCurrent.value
 
-        player.repeatMode = if (_repeatingCurrentState.value) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+        player.repeatMode = if (_repeatingCurrent.value) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
     }
 
     fun toggleShuffle() {
@@ -140,11 +148,12 @@ class MediaControllerManager @Inject constructor(
         player.play()
     }
 
-    fun playPlaylist(mediaItems: List<MediaItem>, startItemIndex: Int = -1, startShuffled: Boolean) {
+    fun playPlaylist(mediaItems: List<MediaItem>, playlistId: Int?, startItemIndex: Int = -1, startShuffled: Boolean) {
         if (mediaItems.isEmpty()) return
         val player = controller ?: return
 
         originalPlaylist = mediaItems
+        _currentPlaylistId.value = playlistId
         _isShuffling.value = startShuffled
 
         val startAtSpecific = startItemIndex != -1
@@ -167,6 +176,8 @@ class MediaControllerManager @Inject constructor(
         player.seekTo(playIndex, 0L)
         player.prepare()
         player.play()
+
+        saveCurrentStateToDisk()
     }
 
     fun addToQueue(mediaItems: List<MediaItem>) {
@@ -291,7 +302,7 @@ class MediaControllerManager @Inject constructor(
                 _isPlaying.value = player.isPlaying
                 _duration.value = player.duration.coerceAtLeast(0L)
                 _currentPosition.value = player.currentPosition
-                _repeatingCurrentState.value = player.repeatMode == Player.REPEAT_MODE_ONE
+                _repeatingCurrent.value = player.repeatMode == Player.REPEAT_MODE_ONE
 
                 player.addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -309,6 +320,9 @@ class MediaControllerManager @Inject constructor(
                         // This guarantees the UI StateFlows sync automatically anytime
                         // items are added, removed, moved, or replaced in ExoPlayer.
                         updateUIStates(player)
+
+                        //Whenever order changes, ensure it is saved
+                        saveCurrentStateToDisk()
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -322,7 +336,17 @@ class MediaControllerManager @Inject constructor(
                             _duration.value = player.duration.coerceAtLeast(0L)
                         }
                     }
+
+                    override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                        super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+                        saveCurrentStateToDisk() //Save whenever a new item is jumped to
+                    }
                 })
+
+                //Restoration
+                if (player.mediaItemCount == 0) restorePlaybackState() //If player is empty (cold start), restore playback from disk
+                else updateUIStates(player) //Otherwise (app relaunched while music playing), just let the ui sync to the live player
+
             } catch (e: Exception) {
                 Log.e("OfflineAudioSuite", "MCM: Failed to connect", e)
                 controllerFuture = null
@@ -373,6 +397,78 @@ class MediaControllerManager @Inject constructor(
         }
     }
 
+    fun restorePlaybackState() {
+        val player = controller ?: return
+
+        CoroutineScope(Dispatchers.Main).launch {
+            val timelineItems = persistenceRepository.getRestoredMediaItems()
+            val originalItems = persistenceRepository.getRestoredOriginalPlaylist()
+            val meta = persistenceRepository.playbackMetadata.first()
+
+            if (timelineItems.isNotEmpty()) {
+                originalPlaylist = originalItems
+                _currentPlaylistId.value = meta.playlistId
+                _isShuffling.value = meta.isShuffling
+                _repeatingCurrent.value = meta.repeatingCurrent
+                _currentPosition.value = meta.position
+
+                player.setMediaItems(timelineItems) //Rebuild timeline
+                player.repeatMode = if (meta.repeatingCurrent) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+
+                val targetIndex = if (meta.index >= 0 && meta.index < timelineItems.size) meta.index else 0
+                player.seekTo(targetIndex, meta.position)
+                player.prepare()
+
+                //Immediately force ui updates
+                updateUIStates(player)
+            }
+        }
+    }
+
+    private fun saveCurrentStateToDisk() {
+        val player = controller ?: return
+
+        //Capture snapshot on main thread
+        val position = player.currentPosition
+        val index = player.currentMediaItemIndex
+        val isShuffling = _isShuffling.value
+        val isRepeating = _repeatingCurrent.value
+        val playlistId = _currentPlaylistId.value
+        val originalCopy = originalPlaylist.toList()
+
+        //Extract timeline items
+        val timelineItems = mutableListOf<MediaItem>()
+        for (i in 0 until player.mediaItemCount) {
+            timelineItems.add(player.getMediaItemAt(i))
+        }
+
+        //Pass snapshot to io thread
+        CoroutineScope(Dispatchers.IO).launch {
+            persistenceRepository.savePlaybackState(
+                position = position,
+                index = index,
+                isShuffling = isShuffling,
+                isRepeating = isRepeating,
+                playlistId = playlistId,
+                timelineItems = timelineItems,
+                originalItems = originalCopy
+            )
+        }
+    }
+
+    fun savePositionOnly() {
+        val player = controller ?: return
+        if (!player.isPlaying) return
+
+        //Capture snapshot on main thread
+        val index = player.currentMediaItemIndex
+        val position = player.currentPosition
+
+        CoroutineScope(Dispatchers.IO).launch {
+            persistenceRepository.savePlaybackPosition(index, position)
+        }
+    }
+
     fun stop() { controller?.stop() }
 
     fun releaseController() {
@@ -382,21 +478,4 @@ class MediaControllerManager @Inject constructor(
             controller = null
         }
     }
-}
-
-private fun MediaItem.asManualQueueItem(): MediaItem {
-    // Preserve any existing extras, but inject our manual queue identifiers
-    val newExtras = Bundle(this.mediaMetadata.extras ?: Bundle()).apply {
-        putString("ORIGINAL_MEDIA_ID", this@asManualQueueItem.mediaId)
-        putBoolean("IS_MANUAL_QUEUE", true)
-    }
-
-    return this.buildUpon()
-        .setMediaId("queue_${UUID.randomUUID()}_${this.mediaId}")
-        .setMediaMetadata(
-            this.mediaMetadata.buildUpon()
-                .setExtras(newExtras)
-                .build()
-        )
-        .build()
 }

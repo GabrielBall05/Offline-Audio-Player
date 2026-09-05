@@ -88,11 +88,13 @@ fun ExpandedPlayerScreen(
     val manualQueue by viewModel.manualQueue.collectAsStateWithLifecycle()
     val upNext by viewModel.upNext.collectAsStateWithLifecycle()
     val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
+    val currentPlaylistId by viewModel.currentPlaylistId.collectAsStateWithLifecycle()
 
     var showQueueScreen by rememberSaveable { mutableStateOf(false) }
     var showMediaItemMenu by rememberSaveable { mutableStateOf(false) }
     var showPlaylistPicker by rememberSaveable { mutableStateOf(false) }
     var showPlaylistForm by rememberSaveable { mutableStateOf(false) }
+    var currentPlaylistName by rememberSaveable { mutableStateOf("Player") }
 
     //Sheet states
     val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -108,6 +110,13 @@ fun ExpandedPlayerScreen(
     //Refresh playlists when the picker is opened for the current media item
     LaunchedEffect(showPlaylistPicker, currentMediaEntity) {
         if (showPlaylistPicker) currentMediaEntity?.let { viewModel.refreshAvailablePlaylists(it.mediaId) }
+    }
+
+    //Get playlist name whenever current playlist id changes
+    LaunchedEffect(currentPlaylistId) {
+        currentPlaylistId?.let { id ->
+            //currentPlaylistName = viewModel.getPlaylistNameById(id) //TODO: IMPLEMENT GETTING PLAYLIST NAME
+        } ?: run { currentPlaylistName = "Player" }
     }
 
     //Screen UI
@@ -140,7 +149,7 @@ fun ExpandedPlayerScreen(
 
                 //Title
                 Text(
-                    text = "Player", //TODO: Show a good title for this, ex: playlist name if playing from a playlist
+                    text = currentPlaylistName,
                     style = MaterialTheme.typography.titleLarge
                 )
 

@@ -7,15 +7,18 @@ import androidx.room.RoomDatabase
     entities = [
         MediaEntity::class,
         PlaylistEntity::class,
-        PlaylistMediaItem::class
+        PlaylistMediaItem::class,
+        PlaybackQueueEntity::class,
+        OriginalPlaylistEntity::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     //Connect Database to Dao
     abstract fun mediaDao(): MediaDao
     abstract fun playlistDao(): PlaylistDao
+    abstract fun playbackQueueDao(): PlaybackQueueDao
 
     companion object {
         const val DATABASE_NAME = "offline_player_db"

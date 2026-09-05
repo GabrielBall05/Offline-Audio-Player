@@ -37,10 +37,11 @@ class MainViewModel @Inject constructor(
     val isPlaying = controllerManager.isPlaying
     val currentPosition = controllerManager.currentPosition
     val duration = controllerManager.duration
-    val isRepeatingCurrent = controllerManager.repeatingCurrentState
+    val isRepeatingCurrent = controllerManager.repeatingCurrent
     val isShuffleModeEnabled = controllerManager.isShuffling
     val manualQueue = controllerManager.manualQueueState
     val upNext = controllerManager.upNextState
+    val currentPlaylistId = controllerManager.currentPlaylistId
 
     //Full db entry for the currently playing media item
     private val _currentMediaEntity = MutableStateFlow<MediaEntity?>(null)
@@ -87,17 +88,26 @@ class MainViewModel @Inject constructor(
     fun toggleShuffle() = controllerManager.toggleShuffle()
     fun toggleRepeatMode() = controllerManager.toggleRepeatMode()
 
-    fun playPlaylist(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
+    fun playPlaylist(playlistId: Int) {
         viewModelScope.launch {
-            //val isShuffleEnabled = settingsRepository.defaultShuffleFlow.first()
-            playlistRepository.playPlaylistById(playlistId, false) //TODO: Fix with the saved shuffle on/off once ready
+            val mediaItems = playlistRepository.fetchPlaylistMediaList(playlistId)
+            withContext(Dispatchers.Main) { //MediaController must use Main thread
+                controllerManager.playPlaylist(
+                    mediaItems = mediaItems,
+                    playlistId = playlistId,
+                    startShuffled = isShuffleModeEnabled.value //Use current shuffle preference
+                )
+            }
         }
     }
 
-    fun addPlaylistToQueue(playlistId: Int) { //TODO: Change to controllerManager and not playlistRepository
+    fun addPlaylistToQueue(playlistId: Int) {
         viewModelScope.launch {
-            playlistRepository.addPlaylistToQueue(playlistId)
-            sendUiEvent(UiEvent.ShowToast("Added playlist to queue"))
+            val mediaItems = playlistRepository.fetchPlaylistMediaList(playlistId)
+            withContext(Dispatchers.Main) { //MediaController must use Main thread
+                controllerManager.addToQueue(mediaItems)
+                sendUiEvent(UiEvent.ShowToast("Added playlist to queue"))
+            }
         }
     }
 
@@ -130,6 +140,8 @@ class MainViewModel @Inject constructor(
         sendUiEvent(UiEvent.ShowToast("Added to ${playlistIds.size} playlist${if (playlistIds.size > 1) "s" else ""}"))
     }
 
+    //fun getPlaylistNameById(id: Int) = //TODO: IMPLEMENT GET PLAYLIST NAME
+
     fun refreshAvailablePlaylists(mediaId: Int) {
         viewModelScope.launch {
             _availablePlaylists.value = playlistRepository.getPlaylistsNotHavingMediaList(listOf(mediaId))
@@ -139,8 +151,17 @@ class MainViewModel @Inject constructor(
     private fun startPlaybackTicker() {
         playbackJob?.cancel() //Clear any existing job
         playbackJob = viewModelScope.launch {
+            var tickCount = 0
             while (true) {
                 controllerManager.updateCurrentPosition()
+
+                //Every 5 seconds, save current position
+                tickCount++
+                if (tickCount >= 10) {
+                    controllerManager.savePositionOnly()
+                    tickCount = 0
+                }
+
                 delay(500L) //Tick every 500ms
             }
         }

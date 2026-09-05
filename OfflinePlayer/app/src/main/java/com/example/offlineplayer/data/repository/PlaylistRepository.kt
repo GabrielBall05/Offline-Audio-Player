@@ -21,30 +21,15 @@ import javax.inject.Singleton
 @Singleton
 class PlaylistRepository @Inject constructor(
     private val playlistDao: PlaylistDao,
-    private val controllerManager: MediaControllerManager,
     @param:ApplicationContext private val context: Context
 ) {
     val allPlaylists: Flow<List<PlaylistEntity>> = playlistDao.getAllPlaylists()
 
-    //Player Actions
-    suspend fun playPlaylistById(id: Int, startShuffled: Boolean) {
-        val mediaList = fetchPlaylistMediaList(id)
-        withContext(Dispatchers.Main) { //MediaController methods must be called on the main thread
-            controllerManager.playPlaylist(mediaItems = mediaList, startShuffled = startShuffled)
-        }
-    }
-
-    suspend fun addPlaylistToQueue(id: Int) {
-        val mediaList = fetchPlaylistMediaList(id)
-        withContext(Dispatchers.Main) { //MediaController methods must be called on the main thread
-            controllerManager.addToQueue(mediaList)
-        }
-    }
 
     //DB Actions
     fun getPlaylistById(id: Int): Flow<PlaylistEntity?> = playlistDao.getPlaylistById(id)
 
-    private suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchPlaylistMediaList(id: Int): List<MediaItem> = withContext(Dispatchers.IO) {
         playlistDao.getMediaInPlaylist(id)
             .first()
             .map { it.toMediaItem() }

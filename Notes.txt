@@ -1,8 +1,15 @@
 TODO:
 
-Other:
+display playlist name on expanded player
 On toggle shuffe, save the new shuffle setting and just refer to it whenever playing new playlists or reloading player state
 	This will be done with saving player state
+when adding/removing/reordering playlists in playlistdetails, also trigger updating original playlist for media controller manager
+	may have to move original playlist somewhere else
+
+repeat original playlist at end of timeline
+
+clear entire player option in settings
+
 play button in playlistdetails: show pause if that playlist is playing. Also save which playlist is currently playing
 remove from playlist functionality on expanded player screen
 swipe image in explanded player screen to go next/prev

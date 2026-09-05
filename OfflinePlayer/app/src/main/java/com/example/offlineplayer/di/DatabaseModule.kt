@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.offlineplayer.data.local.AppDatabase
 import com.example.offlineplayer.data.local.DatabaseTriggerCallback
 import com.example.offlineplayer.data.local.MediaDao
+import com.example.offlineplayer.data.local.PlaybackQueueDao
 import com.example.offlineplayer.data.local.PlaylistDao
 import dagger.Module
 import dagger.Provides
@@ -38,5 +39,10 @@ object DatabaseModule {
     @Provides
     fun providePlaylistDao(database: AppDatabase): PlaylistDao {
         return database.playlistDao()
+    }
+
+    @Provides
+    fun providePlaybackQueueDao(database: AppDatabase): PlaybackQueueDao {
+        return database.playbackQueueDao()
     }
 }
