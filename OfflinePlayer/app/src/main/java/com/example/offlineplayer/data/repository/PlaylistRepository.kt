@@ -55,6 +55,10 @@ class PlaylistRepository @Inject constructor(
         playlistDao.getMediaNotInPlaylist(playlistId)
     }
 
+    fun isMediaInPlaylist(mediaId: Int, playlistId: Int): Flow<Boolean> {
+        return playlistDao.isMediaInPlaylist(mediaId, playlistId)
+    }
+
     suspend fun getPlaylistsNotHavingMediaList(mediaIds: List<Int>) = withContext(Dispatchers.IO) {
         playlistDao.getPlaylistsNotHavingMediaList(mediaIds.distinct())
     }

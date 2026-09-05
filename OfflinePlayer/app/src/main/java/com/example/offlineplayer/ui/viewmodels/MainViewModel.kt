@@ -12,12 +12,18 @@ import com.example.offlineplayer.player.MediaControllerManager
 import com.example.offlineplayer.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +52,24 @@ class MainViewModel @Inject constructor(
     //Full db entry for the currently playing media item
     private val _currentMediaEntity = MutableStateFlow<MediaEntity?>(null)
     val currentMediaEntity = _currentMediaEntity.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentPlaylist: StateFlow<PlaylistEntity?> = currentPlaylistId
+        .flatMapLatest { id ->
+            if (id == null) flowOf(null)
+            else playlistRepository.getPlaylistById(id)
+        }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val isCurrentMediaInCurrentPlaylist: StateFlow<Boolean> = combine(
+        currentMediaEntity,
+        currentPlaylistId
+    ) { media, playlistId ->
+        if (playlistId == null || media == null) flowOf(false)
+        else playlistRepository.isMediaInPlaylist(media.mediaId, playlistId)
+    }.flatMapLatest { it }
+     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
 
     //Available playlists for playlist picker
     private val _availablePlaylists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
@@ -129,6 +153,11 @@ class MainViewModel @Inject constructor(
     fun manualQueueRemoveItemAtIndex(index: Int) = controllerManager.manualQueueRemoveItemAtIndex(index)
     fun upNextRemoveItemAtIndex(index: Int) = controllerManager.upNextRemoveItemAtIndex(index)
 
+    fun removeFromPlaylist(mediaId: Int, playlistId: Int) = launchWithoutLoading {
+        playlistRepository.removeMediaFromPlaylist(listOf(mediaId), playlistId)
+        sendUiEvent(UiEvent.ShowToast("Removed from playlist"))
+    }
+
     fun createPlaylist(playlist: PlaylistEntity, mediaIdContext: Int) = viewModelScope.launch {
         playlistRepository.insertPlaylist(playlist)
         refreshAvailablePlaylists(mediaIdContext)
@@ -139,8 +168,6 @@ class MainViewModel @Inject constructor(
         playlistRepository.addMediaToPlaylists(listOf(mediaId), playlistIds)
         sendUiEvent(UiEvent.ShowToast("Added to ${playlistIds.size} playlist${if (playlistIds.size > 1) "s" else ""}"))
     }
-
-    //fun getPlaylistNameById(id: Int) = //TODO: IMPLEMENT GET PLAYLIST NAME
 
     fun refreshAvailablePlaylists(mediaId: Int) {
         viewModelScope.launch {

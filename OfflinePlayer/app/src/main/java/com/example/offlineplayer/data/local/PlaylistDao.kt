@@ -59,6 +59,14 @@ interface PlaylistDao {
     suspend fun getMediaNotInPlaylist(playlistId: Int): List<MediaEntity>
 
     @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM ${PlaylistMediaItem.TABLE_NAME}
+            WHERE playlistId = :playlistId AND mediaId = :mediaId
+        )
+    """)
+    fun isMediaInPlaylist(mediaId: Int, playlistId: Int): Flow<Boolean>
+
+    @Query("""
         SELECT P.* 
         FROM ${PlaylistEntity.TABLE_NAME} P
         LEFT JOIN ${PlaylistMediaItem.TABLE_NAME} PMI

@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.offlineplayer.ui.components.common.SurfacedImage
+import com.example.offlineplayer.ui.components.dialogs.ConfirmationDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistFormDialog
 import com.example.offlineplayer.ui.components.dialogs.PlaylistPicker
 import com.example.offlineplayer.ui.components.optionsheets.MediaOption
@@ -88,13 +89,14 @@ fun ExpandedPlayerScreen(
     val manualQueue by viewModel.manualQueue.collectAsStateWithLifecycle()
     val upNext by viewModel.upNext.collectAsStateWithLifecycle()
     val availablePlaylists by viewModel.availablePlaylists.collectAsStateWithLifecycle()
-    val currentPlaylistId by viewModel.currentPlaylistId.collectAsStateWithLifecycle()
+    val currentPlaylist by viewModel.currentPlaylist.collectAsStateWithLifecycle()
+    val isCurrentMediaInCurrentPlaylist by viewModel.isCurrentMediaInCurrentPlaylist.collectAsStateWithLifecycle()
 
     var showQueueScreen by rememberSaveable { mutableStateOf(false) }
     var showMediaItemMenu by rememberSaveable { mutableStateOf(false) }
     var showPlaylistPicker by rememberSaveable { mutableStateOf(false) }
     var showPlaylistForm by rememberSaveable { mutableStateOf(false) }
-    var currentPlaylistName by rememberSaveable { mutableStateOf("Player") }
+    var showRemoveConfirmation by rememberSaveable { mutableStateOf(false) }
 
     //Sheet states
     val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -112,12 +114,6 @@ fun ExpandedPlayerScreen(
         if (showPlaylistPicker) currentMediaEntity?.let { viewModel.refreshAvailablePlaylists(it.mediaId) }
     }
 
-    //Get playlist name whenever current playlist id changes
-    LaunchedEffect(currentPlaylistId) {
-        currentPlaylistId?.let { id ->
-            //currentPlaylistName = viewModel.getPlaylistNameById(id) //TODO: IMPLEMENT GETTING PLAYLIST NAME
-        } ?: run { currentPlaylistName = "Player" }
-    }
 
     //Screen UI
     Box(modifier = Modifier.fillMaxSize()) {
@@ -149,7 +145,7 @@ fun ExpandedPlayerScreen(
 
                 //Title
                 Text(
-                    text = currentPlaylistName,
+                    text = currentPlaylist?.name ?: "Ad Hoc",
                     style = MaterialTheme.typography.titleLarge
                 )
 
@@ -420,15 +416,15 @@ fun ExpandedPlayerScreen(
                     media = media,
                     showEditOption = false,
                     showPlayOption = false,
-                    showRemoveOption = true,
+                    showRemoveOption = isCurrentMediaInCurrentPlaylist,
                     onOptionClick = { option ->
                         showMediaItemMenu = false
                         when (option) {
-                            MediaOption.EDIT -> { /* Not used in Expanded Player Screen */ }
+                            MediaOption.EDIT -> { /* TODO: MAYBE IMPLEMENT - OR DON'T, IDK */ }
                             MediaOption.PLAY_NOW -> { /* Not used in Expanded Player Screen (already playing) */ }
                             MediaOption.ADD_TO_QUEUE -> { viewModel.addMediaToQueue(listOf(media)) }
                             MediaOption.ADD_TO_PLAYLIST -> { showPlaylistPicker = true }
-                            MediaOption.REMOVE_FROM_PLAYLIST -> { /* TODO: REMOVE FROM PLAYLIST */ }
+                            MediaOption.REMOVE_FROM_PLAYLIST -> { showRemoveConfirmation = true }
                             MediaOption.DELETE -> { /* Not used in Expanded Player Screen */ }
                         }
                     }
@@ -467,6 +463,22 @@ fun ExpandedPlayerScreen(
                     showPlaylistPicker = true
                 }
             )
+        }
+
+        //Show confirmation dialog if user hits remove from playlist and both the current media entity and playlist is available
+        if (showRemoveConfirmation) currentMediaEntity?.let { media ->
+            currentPlaylist?.let { playlist ->
+                ConfirmationDialog(
+                    title = "Are you sure you want to remove ${media.title} from \"${playlist.name}\"?",
+                    text = "You can always re-add it",
+                    confirmText = "Remove",
+                    onDismiss = { showRemoveConfirmation = false },
+                    onConfirm = {
+                        viewModel.removeFromPlaylist(media.mediaId, playlist.playlistId)
+                        showRemoveConfirmation = false
+                    }
+                )
+            }
         }
     }
 }

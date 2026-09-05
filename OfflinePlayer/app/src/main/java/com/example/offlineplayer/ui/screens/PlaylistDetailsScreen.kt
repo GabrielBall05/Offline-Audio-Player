@@ -143,9 +143,6 @@ fun PlaylistDetailsScreen(
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
     var showDeletePlaylistConfirmation by rememberSaveable { mutableStateOf(false) }
 
-    val offsetX = remember { Animatable(0f) }
-    val scope = rememberCoroutineScope()
-    val velocityTracker = remember { VelocityTracker() }
 
     //Jump to top of list when list size changes
     LaunchedEffect(mediaList.size) {

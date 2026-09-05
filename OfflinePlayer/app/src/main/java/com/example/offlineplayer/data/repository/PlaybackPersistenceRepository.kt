@@ -17,6 +17,8 @@ import com.example.offlineplayer.data.local.toMediaItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +30,8 @@ class PlaybackPersistenceRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>
 ) {
+    private val saveMutex = Mutex()
+
     private object Keys {
         val LAST_POSITION = longPreferencesKey("last_position")
         val CURRENT_INDEX = intPreferencesKey("current_index")
@@ -46,27 +50,25 @@ class PlaybackPersistenceRepository @Inject constructor(
         timelineItems: List<MediaItem>,
         originalItems: List<MediaItem>
     ) = withContext(Dispatchers.IO) {
-        //Save metadata to DataStore
-        dataStore.edit { prefs ->
-            prefs[Keys.LAST_POSITION] = position
-            prefs[Keys.CURRENT_INDEX] = index
-            prefs[Keys.SHUFFLE_ON] = isShuffling
-            prefs[Keys.REPEATING_CURRENT] = isRepeating
-            if (playlistId != null) prefs[Keys.CURRENT_PLAYLIST_ID] = playlistId
-            else prefs.remove(Keys.CURRENT_PLAYLIST_ID)
+        saveMutex.withLock { //Prevent race conditions
+            //Save metadata to DataStore
+            dataStore.edit { prefs ->
+                prefs[Keys.LAST_POSITION] = position
+                prefs[Keys.CURRENT_INDEX] = index
+                prefs[Keys.SHUFFLE_ON] = isShuffling
+                prefs[Keys.REPEATING_CURRENT] = isRepeating
+                if (playlistId != null) prefs[Keys.CURRENT_PLAYLIST_ID] = playlistId
+                else prefs.remove(Keys.CURRENT_PLAYLIST_ID)
+            }
+
+            //Atomically save timeline and original playlist to Room
+            playbackDao.replaceQueue(timelineItems.toQueueEntities())
+            playbackDao.replaceOriginalPlaylist(originalItems.toOriginalEntities())
+
         }
-
-        //Save Live Timeline to Room
-        playbackDao.clearQueue()
-        playbackDao.insertQueue(timelineItems.toQueueEntities())
-
-        //Save Original Natural Order to Room
-        playbackDao.clearOriginalPlaylist()
-        playbackDao.insertOriginalPlaylist(originalItems.toOriginalEntities())
     }
 
     suspend fun savePlaybackPosition(index: Int, position: Long) = withContext(Dispatchers.IO) {
-
         dataStore.edit { prefs ->
             prefs[Keys.CURRENT_INDEX] = index
             prefs[Keys.LAST_POSITION] = position

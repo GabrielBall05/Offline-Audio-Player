@@ -1,10 +1,8 @@
 TODO:
 
-display playlist name on expanded player
-On toggle shuffe, save the new shuffle setting and just refer to it whenever playing new playlists or reloading player state
-	This will be done with saving player state
 when adding/removing/reordering playlists in playlistdetails, also trigger updating original playlist for media controller manager
 	may have to move original playlist somewhere else
+	so when a user makes a change (add to, remove from, reordering) to an actual playlist via  @PlaylistDetailsScreen.kt and  @PlaylistDetailsViewModel.kt , should I trigger an update to the originalPlaylist in  @MediaControllerManager.kt and  @PlaybackPersistenceRepository.kt ? This wouldn't stop or change the up next or the playback, just the source of truth (originalPlaylist). And how should I handle if the user deletes the actual playlist? Should I a) if the deleted playlist is currently playing (by looking at playlistId), then clear the player? or b) just let it be. 
 
 repeat original playlist at end of timeline
 
@@ -14,6 +12,7 @@ play button in playlistdetails: show pause if that playlist is playing. Also sav
 remove from playlist functionality on expanded player screen
 swipe image in explanded player screen to go next/prev
 
+definitely move around the add buttons
 no longer valid file path (attach new one)
 log statements everywhere (and improve its tag/message)
 horizontal orientation layouts - or just only allow vertical
