@@ -29,6 +29,7 @@ fun QueueItem(
     modifier: Modifier = Modifier,
     isFirst: Boolean,
     isLast: Boolean,
+    isPlaying: Boolean = false,
     onClick: () -> Unit = {  },
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
@@ -41,7 +42,10 @@ fun QueueItem(
     ) {
         //Artwork
         SurfacedImage(
-            modifier = Modifier.clickable(enabled = !(isFirst && isLast), onClick = onClick),
+            modifier = Modifier.clickable(
+                enabled = !isPlaying,
+                onClick = onClick
+            ),
             model = item.mediaMetadata.artworkUri.toString(),
             contentDescription = "Queue Item Artwork",
             sizeInDp = 50.dp

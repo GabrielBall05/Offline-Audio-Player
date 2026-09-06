@@ -77,6 +77,7 @@ fun QueueScreen(
                     item = current,
                     isFirst = true,
                     isLast = true,
+                    isPlaying = true,
                     onMoveUp = {  },
                     onMoveDown = {  }
                 )

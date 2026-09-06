@@ -6,8 +6,6 @@ when adding/removing/reordering playlists in playlistdetails, also trigger updat
 
 repeat original playlist at end of timeline
 
-clear entire player option in settings
-
 play button in playlistdetails: show pause if that playlist is playing. Also save which playlist is currently playing
 remove from playlist functionality on expanded player screen
 swipe image in explanded player screen to go next/prev

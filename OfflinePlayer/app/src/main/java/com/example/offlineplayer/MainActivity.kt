@@ -136,7 +136,7 @@ fun MainScreen(mainViewModel: MainViewModel = hiltViewModel()) {
 
             composable(route = Screen.Settings.route) {
                 SettingsScreen(
-
+                    onClearPlayer = { mainViewModel.clearPlayer() }
                 )
             }
 

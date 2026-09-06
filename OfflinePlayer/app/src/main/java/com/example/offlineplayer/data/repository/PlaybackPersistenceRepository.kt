@@ -92,6 +92,23 @@ class PlaybackPersistenceRepository @Inject constructor(
         }
     }
 
+    suspend fun clearPlaybackState() = withContext(Dispatchers.IO) {
+        saveMutex.withLock {
+            //Clear playback metadata from DataStore
+            dataStore.edit { prefs ->
+                prefs.remove(Keys.LAST_POSITION)
+                prefs.remove(Keys.CURRENT_INDEX)
+                prefs.remove(Keys.SHUFFLE_ON)
+                prefs.remove(Keys.REPEATING_CURRENT)
+                prefs.remove(Keys.CURRENT_PLAYLIST_ID)
+            }
+
+            //Clear lists from Room tables
+            playbackDao.clearQueue()
+            playbackDao.clearOriginalPlaylist()
+        }
+    }
+
     val playbackMetadata = dataStore.data.map { prefs ->
         PlaybackMetadata(
             position = prefs[Keys.LAST_POSITION] ?: 0L,

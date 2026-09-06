@@ -199,6 +199,10 @@ class MainViewModel @Inject constructor(
         playbackJob = null
     }
 
+    fun clearPlayer() {
+        controllerManager.nukePlayer()
+    }
+
     //Clean up controller when app truly closes
     override fun onCleared() {
         super.onCleared()

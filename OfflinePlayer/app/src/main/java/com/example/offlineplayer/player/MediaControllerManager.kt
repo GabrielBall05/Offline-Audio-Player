@@ -469,7 +469,30 @@ class MediaControllerManager @Inject constructor(
         }
     }
 
-    fun stop() { controller?.stop() }
+    fun nukePlayer() {
+        val player = controller ?: return
+
+        //Stop player and clear timeline
+        player.stop()
+        player.clearMediaItems()
+
+        //Reset internal states so UI reflects the empty nature
+        _currentMediaItem.value = null
+        _currentPosition.value = 0L
+        _duration.value = 0L
+        _isPlaying.value = false
+        _isShuffling.value = false
+        _repeatingCurrent.value = false
+        _manualQueueState.value = emptyList()
+        _upNextState.value = emptyList()
+        originalPlaylist = emptyList()
+        _currentPlaylistId.value = null
+
+        //Clear the saved state on disk
+        CoroutineScope(Dispatchers.IO).launch {
+            persistenceRepository.clearPlaybackState()
+        }
+    }
 
     fun releaseController() {
         controllerFuture?.let {

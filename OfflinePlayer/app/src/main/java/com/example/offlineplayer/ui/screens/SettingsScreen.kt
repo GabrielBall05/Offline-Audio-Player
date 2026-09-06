@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +36,8 @@ enum class ActiveDialogType {
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel() //Let Hilt inject the ViewModel
+    viewModel: SettingsViewModel = hiltViewModel(), //Let Hilt inject the ViewModel
+    onClearPlayer: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -45,6 +48,18 @@ fun SettingsScreen(
             .fillMaxSize()
             .padding(start = 16.dp, top = 16.dp, end = 16.dp)
     ) {
+        //Clear Player
+        item {
+            SettingsItem(
+                mainText = "Clear Player State",
+                subText = "This will completely clear the state of the player. Any media currently playing will be wiped for a clean slate."
+            ) {
+                Button(
+                    onClick = onClearPlayer,
+                ) { Text("Clear") }
+            }
+        }
+
         //Keep Screen On
         item {
             SettingsItem(
@@ -100,19 +115,6 @@ fun SettingsScreen(
             }
         }
 
-//        //Default Shuffle
-//        item {
-//            SettingsItem(
-//                mainText = "Set Default Play Mode To Shuffle",
-//                subText = "If enabled, shuffle will be the default play mode when playing from a playlist (Shuffle does not affect the queue)."
-//            ) {
-//                Switch(
-//                    checked = uiState.defaultShuffle,
-//                    onCheckedChange = { viewModel.setDefaultShuffle(it) }
-//                )
-//            }
-//        }
-
         item {
             Spacer(Modifier.height(16.dp))
         }
@@ -146,10 +148,3 @@ fun SettingsScreen(
         null -> { /* Do nothing */ }
     }
 }
-
-//private fun breakStringAtDelimiter(stringToFormat: String, delimiter: Char): String? {
-//    val delimiterIndex = stringToFormat.indexOf(delimiter)
-//    return if (delimiterIndex != -1)
-//        stringToFormat.take(delimiterIndex - 1) + "\n" + stringToFormat.takeLast(stringToFormat.length - delimiterIndex)
-//    else null
-//}
